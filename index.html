@@ -878,12 +878,12 @@ function renderPlayers(data) {
     const myVoteTarget = myVote===p.id;
 
     let canTarget = false;
-    if(amAlive && !isMe && p.alive) {
-      if(phase==='vote') canTarget=true;
+    if(amAlive && p.alive) {
+      if(phase==='vote' && !isMe) canTarget=true;
       else if(phase==='night') {
-        if(myRole==='werewolf'&&!nightActionDone) canTarget=true;
-        if(myRole==='doctor'&&!nightActionDone) canTarget=true;
-        if(myRole==='detective'&&!nightActionDone) canTarget=true;
+        if(myRole==='werewolf' && !isMe && !nightActionDone) canTarget=true;
+        if(myRole==='doctor' && !nightActionDone) canTarget=true; // Dokter bisa pilih diri sendiri
+        if(myRole==='detective' && !isMe && !nightActionDone) canTarget=true;
       }
     }
 
