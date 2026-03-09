@@ -665,6 +665,11 @@ function listenRoom() {
     gameState = data;
     const phase = data.phase;
 
+    // Pastikan status isHost sinkron dengan database (penting jika refresh)
+    if (data.players && data.players[myId]) {
+      isHost = data.players[myId].isHost || false;
+    }
+
     // Auto-set readyForGame if we are already in game phases
     if(['night','day','vote','night-result','day-result'].includes(phase)) {
        readyForGame = true;
@@ -798,8 +803,11 @@ function renderGame(data) {
         roomRef.child('timer').set(30);
         startNightTimer(30);
       } else if(phase === 'day' && (phaseChanged || data.timer === null)) {
-        startDayTimer(data.config?.dayTimer||90);
+        const t = data.config?.dayTimer || 90;
+        roomRef.child('timer').set(t);
+        startDayTimer(t);
       } else if(phase === 'vote' && (phaseChanged || data.timer === null)) {
+        roomRef.child('timer').set(30);
         startDayTimer(30);
       }
     }
@@ -1016,15 +1024,13 @@ function handleTimer(data) {
   const t = data.timer;
   if(t===undefined || t===null) { document.getElementById('timer-text').textContent='--'; return; }
   const maxT = (data.phase==='vote' || data.phase==='night') ? 30 : (data.config?.dayTimer||90);
-  document.getElementById('timer-text').textContent=t;
+  document.getElementById('timer-text').textContent=Math.max(0, t);
   const circ = 175.9;
-  const offset = circ*(1-t/maxT);
+  const progress = Math.max(0, Math.min(1, t / maxT));
+  const offset = circ * (1 - progress);
   document.getElementById('timer-arc').style.strokeDashoffset=offset;
   if(t<=10) document.getElementById('timer-arc').style.stroke='var(--crimson)';
   else document.getElementById('timer-arc').style.stroke='var(--ember)';
-
-  // Vote timer host processing
-  if(isHost && data.phase==='vote' && t<=0) processVoteResult(data);
 }
 
 function processVoteResult(data) {
