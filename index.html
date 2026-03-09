@@ -1191,7 +1191,7 @@ function renderEventLog(data) {
   const log=document.getElementById('event-log');
   const content=document.getElementById('event-log-content');
   const events=data.events||{};
-  const evArr=Object.values(events).sort((a,b)=>a.time-b.time);
+  const evArr=Object.values(events).sort((a,b)=>b.time-a.time);
   if(evArr.length===0) { log.style.display='none'; return; }
   log.style.display='block';
   content.innerHTML=evArr.map(e=>`<div>• ${e.msg}</div>`).join('');
