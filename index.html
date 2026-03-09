@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🐺 Werewolf Online</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --blood: #8B1A1A;
+    --crimson: #C41E3A;
+    --ember: #E8650A;
+    --moon: #F5E6C8;
+    --bone: #D4C5A9;
+    --shadow: #0A0608;
+    --dark: #120C10;
+    --mid: #1E1218;
+    --panel: rgba(30,18,24,0.92);
+    --glow: rgba(196,30,58,0.3);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background: var(--shadow);
+    color: var(--moon);
+    font-family: 'Crimson Pro', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Atmospheric background */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(139,26,26,0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(30,18,24,0.8) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238B1A1A' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events:none; z-index:0;
+  }
+
+  #app { position:relative; z-index:1; min-height:100vh; }
+
+  h1.logo {
+    font-family:'Cinzel Decorative', cursive;
+    font-size: clamp(22px,5vw,42px);
+    color: var(--moon);
+    text-shadow: 0 0 30px var(--glow), 0 0 60px rgba(139,26,26,0.4);
+    letter-spacing: 2px;
+  }
+  h2 { font-family:'Cinzel Decorative', cursive; font-size:clamp(16px,3vw,24px); color:var(--moon); }
+  h3 { font-family:'Cinzel Decorative', cursive; font-size:14px; color:var(--bone); letter-spacing:1px; }
+
+  .screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+  .screen.active { display:flex; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid rgba(139,26,26,0.4);
+    border-radius: 16px;
+    padding: 28px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  input, select {
+    background: rgba(10,6,8,0.7);
+    border: 1px solid rgba(139,26,26,0.5);
+    border-radius: 10px;
+    color: var(--moon);
+    font-family: 'Crimson Pro', serif;
+    font-size: 17px;
+    padding: 12px 16px;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--crimson);
+    box-shadow: 0 0 16px rgba(196,30,58,0.25);
+  }
+  select option { background: var(--dark); }
+
+  .btn {
+    background: linear-gradient(135deg, var(--blood), var(--crimson));
+    border: none; border-radius: 12px;
+    color: var(--moon); cursor: pointer;
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 14px; letter-spacing: 1px;
+    padding: 14px 28px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(139,26,26,0.4);
+    width: 100%;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(196,30,58,0.5); }
+  .btn:active { transform: translateY(0); }
+  .btn.secondary {
+    background: transparent;
+    border: 1px solid rgba(139,26,26,0.5);
+    box-shadow: none;
+  }
+  .btn.secondary:hover { background: rgba(139,26,26,0.15); }
+  .btn.danger { background: linear-gradient(135deg, #3a0a0a, #6b1414); }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+
+  .tag {
+    display:inline-block;
+    padding: 3px 12px; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+  }
+
+  /* Role colors */
+  .role-werewolf { color:#FF4444; }
+  .role-villager { color:#7EC8A4; }
+  .role-doctor { color:#6DB8E0; }
+  .role-detective { color:#F0C040; }
+
+  .badge-werewolf { background:rgba(255,68,68,0.15); border:1px solid rgba(255,68,68,0.4); color:#FF6B6B; }
+  .badge-villager { background:rgba(126,200,164,0.15); border:1px solid rgba(126,200,164,0.4); color:#7EC8A4; }
+  .badge-doctor { background:rgba(109,184,224,0.15); border:1px solid rgba(109,184,224,0.4); color:#6DB8E0; }
+  .badge-detective { background:rgba(240,192,64,0.15); border:1px solid rgba(240,192,64,0.4); color:#F0C040; }
+
+  /* Animations */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes moonrise { from{opacity:0;transform:translateY(-30px) scale(0.8)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.8} 75%{opacity:0.95} }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.08)} 28%{transform:scale(1)} }
+
+  .anim-fade { animation: fadeUp 0.5s ease both; }
+  .anim-moon { animation: moonrise 0.8s ease both; }
+  .flicker { animation: flicker 3s infinite; }
+
+  /* LOBBY */
+  #room-code-display {
+    font-family:'Cinzel Decorative', cursive;
+    font-size: 36px;
+    color: var(--ember);
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(232,101,10,0.6);
+    animation: heartbeat 2s infinite;
+  }
+  .player-slot {
+    display:flex; align-items:center; gap:12px;
+    padding: 10px 14px; border-radius: 10px;
+    background: rgba(10,6,8,0.5);
+    border: 1px solid rgba(139,26,26,0.2);
+    animation: slideIn 0.3s ease both;
+    transition: all 0.2s;
+  }
+  .player-slot.host { border-color: rgba(232,101,10,0.4); }
+  .player-slot .avatar {
+    width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; background:rgba(139,26,26,0.3);
+    border: 1px solid rgba(139,26,26,0.4);
+  }
+  .online-dot { width:8px; height:8px; border-radius:50%; background:#4CAF50; box-shadow:0 0 8px #4CAF50; animation:pulse 2s infinite; }
+
+  /* ROLE REVEAL */
+  .role-card {
+    width:200px; height:280px;
+    border-radius:20px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:20px;
+    position:relative; overflow:hidden;
+    border: 2px solid;
+    box-shadow: 0 0 40px;
+    animation: moonrise 0.6s ease both;
+  }
+  .role-card .role-icon { font-size:72px; }
+  .role-card .role-name { font-family:'Cinzel Decorative', cursive; font-size:18px; }
+  .role-card.werewolf { background: linear-gradient(160deg,#1a0505,#2d0a0a); border-color:rgba(255,68,68,0.5); box-shadow:0 0 40px rgba(255,68,68,0.2); }
+  .role-card.villager { background: linear-gradient(160deg,#051a0d,#0a2d18); border-color:rgba(126,200,164,0.5); box-shadow:0 0 40px rgba(126,200,164,0.15); }
+  .role-card.doctor { background: linear-gradient(160deg,#05101a,#0a1e2d); border-color:rgba(109,184,224,0.5); box-shadow:0 0 40px rgba(109,184,224,0.15); }
+  .role-card.detective { background: linear-gradient(160deg,#1a1505,#2d250a); border-color:rgba(240,192,64,0.5); box-shadow:0 0 40px rgba(240,192,64,0.15); }
+
+  /* GAME BOARD */
+  .phase-banner {
+    text-align:center; padding:16px 32px;
+    background: rgba(10,6,8,0.8);
+    border-bottom: 1px solid rgba(139,26,26,0.3);
+    position: sticky; top:0; z-index:10;
+    backdrop-filter: blur(10px);
+  }
+  .phase-night { border-bottom-color: rgba(70,80,140,0.5); }
+  .phase-day { border-bottom-color: rgba(232,180,80,0.3); }
+
+  .timer-ring {
+    width:64px; height:64px; position:relative;
+    flex-shrink:0;
+  }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring .timer-text {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel Decorative', cursive; font-size:18px;
+    color:var(--ember);
+  }
+
+  .player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+    gap: 12px;
+  }
+  .player-card {
+    background: rgba(10,6,8,0.6);
+    border: 1px solid rgba(139,26,26,0.25);
+    border-radius:14px; padding:16px 12px;
+    text-align:center; cursor:pointer;
+    transition: all 0.2s;
+    position:relative;
+  }
+  .player-card:hover:not(.dead):not(.self):not(.disabled) {
+    border-color: var(--crimson);
+    background: rgba(139,26,26,0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(196,30,58,0.3);
+  }
+  .player-card.dead {
+    opacity:0.35; filter:grayscale(0.8);
+    cursor: not-allowed;
+  }
+  .player-card.dead::after {
+    content:'✝';
+    position:absolute; top:6px; right:8px;
+    font-size:14px; color:var(--blood);
+  }
+  .player-card.self { border-color:rgba(232,101,10,0.5); background:rgba(232,101,10,0.08); }
+  .player-card.voted { border-color:var(--crimson); box-shadow:0 0 16px rgba(196,30,58,0.4); }
+  .player-card.selected { border-color:var(--ember); box-shadow:0 0 16px rgba(232,101,10,0.4); background:rgba(232,101,10,0.1); }
+  .player-card .p-avatar { font-size:32px; margin-bottom:8px; }
+  .player-card .p-name { font-size:14px; font-weight:600; color:var(--bone); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vote-count {
+    position:absolute; top:-8px; right:-8px;
+    background:var(--crimson); color:#fff;
+    width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700;
+    box-shadow: 0 0 10px rgba(196,30,58,0.6);
+  }
+
+  /* Chat */
+  #chat-box {
+    height:200px; overflow-y:auto;
+    background: rgba(10,6,8,0.5);
+    border: 1px solid rgba(139,26,26,0.2);
+    border-radius:12px; padding:12px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  #chat-box::-webkit-scrollbar { width:4px; }
+  #chat-box::-webkit-scrollbar-track { background: transparent; }
+  #chat-box::-webkit-scrollbar-thumb { background:rgba(139,26,26,0.5); border-radius:2px; }
+  .chat-msg { font-size:14px; line-height:1.4; animation: slideIn 0.2s ease; }
+  .chat-msg .sender { font-weight:700; color:var(--ember); }
+  .chat-msg.system { color:rgba(245,230,200,0.5); font-style:italic; font-size:13px; }
+  .chat-msg.wolf-chat .sender { color:#FF6B6B; }
+
+  .chat-input-row { display:flex; gap:8px; }
+  .chat-input-row input { flex:1; }
+  .send-btn {
+    background:rgba(139,26,26,0.4);
+    border:1px solid rgba(139,26,26,0.5);
+    border-radius:10px;
+    color:var(--moon); cursor:pointer;
+    padding:0 16px; font-size:18px;
+    transition: all 0.2s;
+  }
+  .send-btn:hover { background:rgba(196,30,58,0.4); }
+
+  /* Wolf Night Info Box */
+  .night-action-box {
+    background:rgba(10,6,8,0.7);
+    border:1px solid rgba(139,26,26,0.3);
+    border-radius:12px; padding:16px;
+    margin-bottom:16px;
+  }
+  .night-action-box.wolf { border-color:rgba(255,68,68,0.3); background:rgba(30,5,5,0.7); }
+  .night-action-box.doctor { border-color:rgba(109,184,224,0.3); background:rgba(5,16,26,0.7); }
+  .night-action-box.detective { border-color:rgba(240,192,64,0.3); background:rgba(26,21,5,0.7); }
+
+  /* Result overlay */
+  .result-overlay {
+    position:fixed; inset:0;
+    background: rgba(10,6,8,0.92);
+    z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:20px;
+    animation: fadeUp 0.4s ease;
+    backdrop-filter:blur(8px);
+  }
+  .result-overlay h1 { font-family:'Cinzel Decorative',cursive; font-size:clamp(24px,5vw,48px); }
+
+  /* Config row */
+  .config-row {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:12px; border-radius:10px;
+    background:rgba(10,6,8,0.4);
+    border:1px solid rgba(139,26,26,0.2);
+  }
+  .config-row label { font-size:15px; color:var(--bone); }
+
+  /* Notification toast */
+  #toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:rgba(20,10,14,0.95);
+    border:1px solid rgba(139,26,26,0.5);
+    border-radius:12px; padding:12px 24px;
+    font-size:15px; color:var(--moon);
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+    z-index:999; opacity:0;
+    transition: opacity 0.3s;
+    pointer-events:none;
+    text-align:center;
+  }
+
+  .divider {
+    width:100%; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(139,26,26,0.4), transparent);
+    margin: 12px 0;
+  }
+
+  .moon-icon { font-size:48px; animation:flicker 4s infinite; }
+  .scroll-list { max-height:300px; overflow-y:auto; }
+  .scroll-list::-webkit-scrollbar { width:4px; }
+  .scroll-list::-webkit-scrollbar-thumb { background:rgba(139,26,26,0.4); border-radius:2px; }
+
+  @media(max-width:500px) {
+    .card { padding:20px 16px; }
+    .player-grid { grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ===== LOADING ===== -->
+  <div id="screen-loading" class="screen active" style="text-align:center;gap:20px;">
+    <div class="moon-icon">🌕</div>
+    <h1 class="logo">WEREWOLF</h1>
+    <p style="color:rgba(245,230,200,0.5);font-size:15px;animation:pulse 1.5s infinite">Menghubungkan ke malam...</p>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <div id="screen-home" class="screen" style="gap:32px;">
+    <div class="anim-moon" style="text-align:center">
+      <div style="font-size:64px;margin-bottom:8px;animation:flicker 3s infinite">🐺</div>
+      <h1 class="logo">WEREWOLF</h1>
+      <p style="color:rgba(245,230,200,0.45);font-size:16px;margin-top:8px;font-style:italic">Siapa manusia, siapa serigala?</p>
+    </div>
+    <div class="card anim-fade" style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:13px;color:var(--bone);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Nama Panggilanmu</label>
+        <input id="input-name" type="text" placeholder="Masukkan nama..." maxlength="18"/>
+      </div>
+      <div class="divider"></div>
+      <button class="btn" onclick="goCreate()">✦ Buat Room Baru</button>
+      <div style="text-align:center;color:rgba(245,230,200,0.4);font-size:13px;">atau masukkan kode room</div>
+      <div style="display:flex;gap:8px;">
+        <input id="input-join-code" type="text" placeholder="KODE ROOM" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-family:'Cinzel Decorative',cursive;font-size:18px;"/>
+        <button class="btn secondary" style="width:auto;padding:14px 20px;white-space:nowrap;" onclick="goJoin()">Masuk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LOBBY ===== -->
+  <div id="screen-lobby" class="screen" style="gap:20px;padding-top:30px;padding-bottom:30px;">
+    <div style="text-align:center;animation:moonrise 0.6s ease both">
+      <p style="color:var(--bone);font-size:13px;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">Kode Room</p>
+      <div id="room-code-display">------</div>
+      <p style="color:rgba(245,230,200,0.4);font-size:13px;margin-top:6px">Bagikan kode ini ke temanmu</p>
+    </div>
+
+    <div class="card" style="width:100%;max-width:500px;display:flex;flex-direction:column;gap:16px;">
+      <!-- Config (host only) -->
+      <div id="host-config" style="display:none;flex-direction:column;gap:10px;">
+        <h3>⚙ PENGATURAN</h3>
+        <div class="config-row">
+          <label>🐺 Jumlah Werewolf</label>
+          <select id="cfg-wolves" style="width:80px;">
+            <option value="1">1</option><option value="2" selected>2</option>
+            <option value="3">3</option><option value="4">4</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>💉 Ada Dokter</label>
+          <select id="cfg-doctor" style="width:80px;">
+            <option value="1">Ya</option><option value="0">Tidak</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>🔍 Ada Detektif</label>
+          <select id="cfg-detective" style="width:80px;">
+            <option value="1">Ya</option><option value="0">Tidak</option>
+          </select>
+        </div>
+        <div class="config-row">
+          <label>⏱ Timer Siang (detik)</label>
+          <select id="cfg-daytimer" style="width:80px;">
+            <option value="60">60</option><option value="90" selected>90</option>
+            <option value="120">120</option><option value="180">180</option>
+          </select>
+        </div>
+        <div class="divider"></div>
+      </div>
+
+      <h3 style="display:flex;align-items:center;gap:8px;">
+        👥 PEMAIN <span id="player-count-badge" class="tag" style="background:rgba(139,26,26,0.3);border:1px solid rgba(139,26,26,0.4);font-family:'Crimson Pro',serif;font-size:13px;">0</span>
+      </h3>
+      <div id="player-list" class="scroll-list" style="display:flex;flex-direction:column;gap:8px;min-height:60px;">
+        <p style="color:rgba(245,230,200,0.3);font-size:14px;font-style:italic">Menunggu pemain...</p>
+      </div>
+
+      <div id="start-btn-container">
+        <button class="btn" id="btn-start" onclick="startGame()" style="display:none;">🌙 Mulai Permainan</button>
+        <p id="waiting-msg" style="text-align:center;color:rgba(245,230,200,0.45);font-size:14px;font-style:italic;">Menunggu host memulai...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROLE REVEAL ===== -->
+  <div id="screen-role" class="screen" style="gap:24px;text-align:center;">
+    <h2 class="anim-moon">Peranmu Malam Ini</h2>
+    <p style="color:rgba(245,230,200,0.5);font-size:15px;font-style:italic;">Jangan sampai ketahuan...</p>
+    <div id="role-card-container"></div>
+    <div id="role-description" style="max-width:320px;font-size:16px;line-height:1.6;color:var(--bone);"></div>
+    <div id="wolf-mates" style="display:none;padding:12px 20px;background:rgba(30,5,5,0.7);border:1px solid rgba(255,68,68,0.3);border-radius:12px;max-width:320px;font-size:15px;"></div>
+    <button class="btn" style="max-width:280px;" onclick="goToGame()">🌑 Siap Bermain</button>
+  </div>
+
+  <!-- ===== GAME ===== -->
+  <div id="screen-game" class="screen" style="padding:0;justify-content:flex-start;align-items:stretch;">
+    <!-- Phase Banner -->
+    <div class="phase-banner" id="phase-banner">
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+        <div id="phase-icon" style="font-size:28px;">🌙</div>
+        <div>
+          <h2 id="phase-title" style="font-size:18px;">Malam Hari</h2>
+          <p id="phase-subtitle" style="color:rgba(245,230,200,0.5);font-size:13px;margin-top:2px;">Desa tertidur...</p>
+        </div>
+        <div class="timer-ring" id="timer-ring">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(139,26,26,0.3)" stroke-width="4"/>
+            <circle id="timer-arc" cx="32" cy="32" r="28" fill="none" stroke="var(--ember)" stroke-width="4"
+              stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear"/>
+          </svg>
+          <div class="timer-text" id="timer-text">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:16px;max-width:700px;margin:0 auto;width:100%">
+      <!-- Night action panel -->
+      <div id="night-action-panel" style="display:none;"></div>
+
+      <!-- Players -->
+      <div>
+        <h3 style="margin-bottom:12px;">👥 PENDUDUK DESA</h3>
+        <div class="player-grid" id="game-player-grid"></div>
+      </div>
+
+      <!-- Vote confirm -->
+      <div id="vote-confirm" style="display:none;">
+        <button class="btn danger" id="btn-confirm-vote" onclick="confirmVote()">⚔ Konfirmasi Tuduhan</button>
+      </div>
+
+      <!-- Chat -->
+      <div>
+        <h3 style="margin-bottom:10px;" id="chat-label">💬 OBROLAN DESA</h3>
+        <div id="chat-box"></div>
+        <div class="chat-input-row" style="margin-top:8px;">
+          <input id="chat-input" type="text" placeholder="Tulis pesan..." maxlength="120" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="send-btn" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+
+      <!-- Day result log -->
+      <div id="event-log" style="display:none;">
+        <h3 style="margin-bottom:10px;">📜 CATATAN KEJADIAN</h3>
+        <div id="event-log-content" style="font-size:14px;color:var(--bone);line-height:1.8;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== END SCREEN ===== -->
+  <div id="screen-end" class="screen" style="gap:24px;text-align:center;">
+    <div id="end-icon" style="font-size:80px;animation:moonrise 0.6s ease both;"></div>
+    <h1 id="end-title" style="font-family:'Cinzel Decorative',cursive;font-size:clamp(22px,5vw,40px);"></h1>
+    <p id="end-desc" style="color:var(--bone);font-size:17px;max-width:360px;line-height:1.6;"></p>
+    <div id="end-roles" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:500px;"></div>
+    <button class="btn" style="max-width:280px;" onclick="goHome()">🏠 Kembali ke Beranda</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ===== FIREBASE CONFIG & GAME LOGIC ===== -->
+<script>
+// ============================================================
+// 🔥 FIREBASE CONFIG — GANTI DENGAN MILIKMU!
+// ============================================================
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAV6Mjt2J2VrnGddo-QLQMH_7fKNj_gSvk",
+    authDomain: "warewolf-e2603.firebaseapp.com",
+    databaseURL: "https://warewolf-e2603-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "warewolf-e2603",
+    storageBucket: "warewolf-e2603.firebasestorage.app",
+    messagingSenderId: "139725503395",
+    appId: "1:139725503395:web:daf23f57273f369b2c3816",
+    measurementId: "G-1N0QQZHECD"
+  };
+// ============================================================
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+// ---- State ----
+let myId = null;
+let myName = '';
+let roomCode = '';
+let roomRef = null;
+let isHost = false;
+let myRole = null;
+let gameState = null;
+let timerInterval = null;
+let selectedTarget = null;
+let myVote = null;
+let nightActionDone = false;
+let lastPhase = null;
+let readyForGame = false;
+
+const AVATARS = ['🧙','👨‍🌾','👩‍🌾','🧝','🧛','🧟','🧜','🧞','👸','🤴','🧑‍⚕️','🕵️'];
+const ROLE_INFO = {
+  werewolf: { icon:'🐺', name:'Werewolf', desc:'Setiap malam, kamu dan kawananmu memilih satu penduduk untuk dimangsa. Jangan sampai terbongkar saat siang!', badge:'badge-werewolf' },
+  villager:  { icon:'👨‍🌾', name:'Penduduk', desc:'Kamu hanya penduduk biasa. Gunakan logika dan kepercayaanmu untuk menemukan siapa werewolf!', badge:'badge-villager' },
+  doctor:    { icon:'💉', name:'Dokter', desc:'Setiap malam kamu bisa menyelamatkan satu orang (termasuk dirimu sendiri) dari serangan werewolf.', badge:'badge-doctor' },
+  detective: { icon:'🔍', name:'Detektif', desc:'Setiap malam kamu bisa memeriksa identitas satu orang — apakah dia Werewolf atau bukan.', badge:'badge-detective' },
+};
+
+// ---- Utils ----
+function uid() { return Math.random().toString(36).substr(2,9); }
+function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function toast(msg, dur=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity='1';
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.style.opacity='0', dur);
+}
+function beep(type='notify') {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if(type==='night') { osc.frequency.setValueAtTime(220,ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(110,ctx.currentTime+0.5); gain.gain.setValueAtTime(0.3,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8); }
+    else if(type==='day') { osc.frequency.setValueAtTime(440,ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(550,ctx.currentTime+0.3); gain.gain.setValueAtTime(0.2,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5); }
+    else if(type==='death') { osc.frequency.setValueAtTime(180,ctx.currentTime); gain.gain.setValueAtTime(0.4,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1); }
+    else { osc.frequency.setValueAtTime(660,ctx.currentTime); gain.gain.setValueAtTime(0.15,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3); }
+    osc.start(); osc.stop(ctx.currentTime+1.5);
+  } catch(e){}
+}
+
+// ---- Init ----
+window.onload = () => {
+  myId = localStorage.getItem('ww_uid') || uid();
+  localStorage.setItem('ww_uid', myId);
+  myName = localStorage.getItem('ww_name') || '';
+  if(myName) document.getElementById('input-name').value = myName;
+
+  // Check if FIREBASE_CONFIG is set
+  if(FIREBASE_CONFIG.apiKey === 'GANTI_API_KEY_KAMU') {
+    showScreen('home');
+    // Show setup instructions
+    document.getElementById('screen-home').innerHTML += `
+      <div class="card anim-fade" style="width:100%;max-width:480px;border-color:rgba(232,101,10,0.5);background:rgba(30,20,5,0.9);">
+        <h3 style="color:var(--ember);margin-bottom:12px;">⚠ SETUP FIREBASE DIPERLUKAN</h3>
+        <ol style="font-size:14px;line-height:2;color:var(--bone);padding-left:20px;">
+          <li>Buka <strong>console.firebase.google.com</strong></li>
+          <li>Buat project baru (gratis)</li>
+          <li>Klik <strong>Realtime Database</strong> → Buat Database → Mode Test</li>
+          <li>Klik ikon roda gigi → <strong>Project Settings</strong></li>
+          <li>Scroll ke bawah → Copy konfigurasi SDK</li>
+          <li>Buka file HTML ini, cari <strong>FIREBASE_CONFIG</strong></li>
+          <li>Ganti nilai dengan konfigurasi dari Firebase</li>
+        </ol>
+        <div class="divider"></div>
+        <p style="font-size:13px;color:rgba(245,230,200,0.5);">Setelah itu refresh halaman ini dan mulai bermain!</p>
+      </div>`;
+    return;
+  }
+  showScreen('home');
+};
+
+function goHome() {
+  if(roomRef) { roomRef.child('players/'+myId+'/online').set(false); }
+  roomRef=null; gameState=null; myRole=null; selectedTarget=null;
+  myVote=null; nightActionDone=false; lastPhase=null; readyForGame=false;
+  clearInterval(timerInterval);
+  showScreen('home');
+}
+
+// ---- Create Room ----
+async function goCreate() {
+  const name = document.getElementById('input-name').value.trim();
+  if(!name) { toast('⚠ Masukkan namamu dulu!'); return; }
+  myName = name; localStorage.setItem('ww_name', name);
+  roomCode = genCode();
+  isHost = true;
+  setupRoom();
+}
+
+// ---- Join Room ----
+async function goJoin() {
+  const name = document.getElementById('input-name').value.trim();
+  const code = document.getElementById('input-join-code').value.trim().toUpperCase();
+  if(!name) { toast('⚠ Masukkan namamu dulu!'); return; }
+  if(code.length < 4) { toast('⚠ Masukkan kode room!'); return; }
+  myName = name; localStorage.setItem('ww_name', name);
+  roomCode = code;
+  isHost = false;
+  setupRoom();
+}
+
+function setupRoom() {
+  roomRef = db.ref('rooms/' + roomCode);
+  const avatarIdx = Math.floor(Math.random()*AVATARS.length);
+
+  roomRef.once('value').then(snap => {
+    const data = snap.val();
+    if(!isHost && !data) { toast('❌ Room tidak ditemukan!'); return; }
+    if(data && data.phase && data.phase !== 'lobby') { toast('❌ Game sudah berjalan!'); return; }
+
+    const playerData = {
+      id: myId, name: myName, avatar: AVATARS[avatarIdx],
+      online: true, alive: true, isHost: isHost,
+      joinedAt: Date.now()
+    };
+
+    if(isHost) {
+      roomRef.set({
+        code: roomCode, phase: 'lobby', round: 0,
+        config: { wolves:2, doctor:1, detective:1, dayTimer:90 },
+        players: { [myId]: playerData },
+        votes: {}, nightActions: {}, chat: {}, events: {}
+      });
+    } else {
+      roomRef.child('players/'+myId).set(playerData);
+    }
+    showScreen('lobby');
+    document.getElementById('room-code-display').textContent = roomCode;
+    if(isHost) document.getElementById('host-config').style.display='flex';
+    listenRoom();
+  });
+}
+
+function listenRoom() {
+  roomRef.on('value', snap => {
+    const data = snap.val();
+    if(!data) return;
+    gameState = data;
+    const phase = data.phase;
+
+    // Auto-set readyForGame if we are already in game phases
+    if(['night','day','vote','night-result','day-result'].includes(phase)) {
+       readyForGame = true;
+    }
+
+    if(phase === 'lobby') renderLobby(data);
+    else if(phase === 'role-reveal' && !readyForGame) renderRoleReveal(data);
+    else if(['night','day','vote','night-result','day-result'].includes(phase)) renderGame(data);
+    else if(phase === 'end') renderEnd(data);
+  });
+}
+
+// ---- LOBBY ----
+function renderLobby(data) {
+  showScreen('lobby');
+  const players = Object.values(data.players||{});
+  document.getElementById('player-count-badge').textContent = players.length;
+
+  const list = document.getElementById('player-list');
+  list.innerHTML = '';
+  players.sort((a,b)=>a.joinedAt-b.joinedAt).forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'player-slot' + (p.isHost?' host':'');
+    div.innerHTML = `
+      <div class="avatar">${p.avatar}</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:600;">${p.name}${p.id===myId?' (Kamu)':''}</div>
+        <div style="font-size:12px;color:rgba(245,230,200,0.4);">${p.isHost?'👑 Host':''}</div>
+      </div>
+      <div class="online-dot"></div>`;
+    list.appendChild(div);
+  });
+
+  const startBtn = document.getElementById('btn-start');
+  const waitMsg = document.getElementById('waiting-msg');
+  if(isHost) {
+    startBtn.style.display = players.length>=4 ? 'block' : 'none';
+    waitMsg.textContent = players.length<4 ? `Butuh minimal 4 pemain (${players.length}/4)` : '';
+    waitMsg.style.display = players.length<4 ? 'block' : 'none';
+  }
+}
+
+async function startGame() {
+  const cfg = {
+    wolves: parseInt(document.getElementById('cfg-wolves').value),
+    doctor: parseInt(document.getElementById('cfg-doctor').value),
+    detective: parseInt(document.getElementById('cfg-detective').value),
+    dayTimer: parseInt(document.getElementById('cfg-daytimer').value)
+  };
+  const players = Object.values(gameState.players);
+  const n = players.length;
+
+  // Assign roles
+  let roles = [];
+  for(let i=0;i<cfg.wolves;i++) roles.push('werewolf');
+  if(cfg.doctor) roles.push('doctor');
+  if(cfg.detective) roles.push('detective');
+  while(roles.length < n) roles.push('villager');
+  roles.sort(()=>Math.random()-0.5);
+
+  const roleMap = {};
+  players.forEach((p,i) => roleMap[p.id]=roles[i]);
+
+  await roomRef.update({
+    phase:'role-reveal', config:cfg, roles:roleMap, round:1,
+    votes:{}, nightActions:{}, events:{}
+  });
+}
+
+// ---- ROLE REVEAL ----
+function renderRoleReveal(data) {
+  if(!data.roles || !data.roles[myId]) return;
+  showScreen('role');
+  myRole = data.roles[myId];
+  const info = ROLE_INFO[myRole];
+
+  document.getElementById('role-card-container').innerHTML = `
+    <div class="role-card ${myRole}">
+      <div class="role-icon">${info.icon}</div>
+      <div class="role-name role-${myRole}">${info.name}</div>
+    </div>`;
+  document.getElementById('role-description').textContent = info.desc;
+
+  const wolfMates = document.getElementById('wolf-mates');
+  if(myRole==='werewolf') {
+    const mates = Object.entries(data.roles)
+      .filter(([id,r])=>r==='werewolf'&&id!==myId)
+      .map(([id])=>data.players[id]?.name||'?');
+    if(mates.length>0) {
+      wolfMates.style.display='block';
+      wolfMates.innerHTML = `🐺 Kawananmu: <strong>${mates.join(', ')}</strong>`;
+    }
+  }
+  beep('night');
+}
+
+function goToGame() {
+  readyForGame = true;
+  showScreen('game');
+  
+  // HOST memulai night pertama
+  if(isHost && gameState && gameState.phase === "role-reveal"){
+    roomRef.update({
+      phase: "night",
+      timer: null,
+      nightActions: {}
+    });
+  }
+
+  if(gameState) renderGame(gameState);
+}
+
+// ---- MAIN GAME RENDER ----
+function renderGame(data) {
+  if(!readyForGame) return;
+  showScreen('game');
+  
+  const phase = data.phase;
+  const players = data.players||{};
+  const myPlayer = players[myId];
+  if(!myPlayer) return;
+
+  // Ensure myRole is set (important if page refreshed)
+  if(!myRole && data.roles) myRole = data.roles[myId];
+
+  const phaseChanged = phase !== lastPhase;
+  
+  if(isHost) {
+    if(phaseChanged || ((data.timer === undefined || data.timer === null) && (phase === 'night' || phase === 'day' || phase === 'vote'))) {
+      if(phase === 'night' && (phaseChanged || data.timer === null)) {
+        roomRef.child('timer').set(30);
+        startNightTimer(30);
+      } else if(phase === 'day' && (phaseChanged || data.timer === null)) {
+        startDayTimer(data.config?.dayTimer||90);
+      } else if(phase === 'vote' && (phaseChanged || data.timer === null)) {
+        startDayTimer(30);
+      }
+    }
+  }
+
+  if(phaseChanged) {
+    lastPhase = phase;
+    selectedTarget = null;
+    myVote = null;
+    nightActionDone = false;
+    document.getElementById('vote-confirm').style.display='none';
+    if(phase==='night') beep('night');
+    else if(phase==='day') beep('day');
+  }
+
+  updatePhaseBanner(data);
+  renderPlayers(data);
+  renderNightAction(data);
+  renderChat(data);
+  renderEventLog(data);
+  checkGameEnd(data);
+  handleTimer(data);
+}
+
+function updatePhaseBanner(data) {
+  const phase = data.phase;
+  const banner = document.getElementById('phase-banner');
+  const icon = document.getElementById('phase-icon');
+  const title = document.getElementById('phase-title');
+  const subtitle = document.getElementById('phase-subtitle');
+  banner.className = 'phase-banner';
+
+  if(phase==='night') {
+    banner.classList.add('phase-night');
+    icon.textContent='🌑'; title.textContent='Malam Hari — Ronde '+data.round;
+    subtitle.textContent='Aksi malam sedang berlangsung...';
+  } else if(phase==='day') {
+    banner.classList.add('phase-day');
+    icon.textContent='☀️'; title.textContent='Siang Hari — Ronde '+data.round;
+    subtitle.textContent='Diskusikan siapa yang mencurigakan!';
+  } else if(phase==='vote') {
+    banner.classList.add('phase-day');
+    icon.textContent='⚔️'; title.textContent='Waktu Pemungutan Suara!';
+    subtitle.textContent='Pilih siapa yang akan dieksekusi';
+  } else if(phase==='night-result'||phase==='day-result') {
+    icon.textContent='📜'; title.textContent='Pengumuman';
+    subtitle.textContent='Lihat apa yang terjadi...';
+  }
+}
+
+function renderPlayers(data) {
+  const grid = document.getElementById('game-player-grid');
+  const players = Object.values(data.players||{});
+  const phase = data.phase;
+  const votes = data.votes||{};
+  const myPlayer = data.players[myId];
+  const amAlive = myPlayer?.alive;
+
+  // Count votes
+  const voteCounts = {};
+  Object.values(votes).forEach(v=>{ voteCounts[v]=(voteCounts[v]||0)+1; });
+
+  grid.innerHTML='';
+  players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+    const isMe = p.id===myId;
+    const voteCount = voteCounts[p.id]||0;
+    const isSelected = selectedTarget===p.id;
+    const myVoteTarget = myVote===p.id;
+
+    let canTarget = false;
+    if(amAlive && !isMe && p.alive) {
+      if(phase==='vote') canTarget=true;
+      else if(phase==='night') {
+        if(myRole==='werewolf'&&!nightActionDone) canTarget=true;
+        if(myRole==='doctor'&&!nightActionDone) canTarget=true;
+        if(myRole==='detective'&&!nightActionDone) canTarget=true;
+      }
+    }
+
+    const div = document.createElement('div');
+    div.className = 'player-card'
+      + (!p.alive?' dead':'')
+      + (isMe?' self':'')
+      + (isSelected?' selected':'')
+      + (myVoteTarget?' voted':'')
+      + (!canTarget&&!isMe&&p.alive?' disabled':'');
+    div.innerHTML = `
+      ${voteCount>0?`<div class="vote-count">${voteCount}</div>`:''}
+      <div class="p-avatar">${p.avatar}</div>
+      <div class="p-name">${p.name}${isMe?' 👈':''}</div>
+      ${data.roles&&data.phase==='end'?`<div class="tag ${ROLE_INFO[data.roles[p.id]]?.badge||''}" style="margin-top:6px;font-size:11px;">${ROLE_INFO[data.roles[p.id]]?.icon||''} ${ROLE_INFO[data.roles[p.id]]?.name||''}</div>`:''}
+    `;
+    if(canTarget) div.onclick = () => selectTarget(p.id, data);
+    grid.appendChild(div);
+  });
+}
+
+function selectTarget(targetId, data) {
+  const phase = data.phase;
+  selectedTarget = targetId;
+  renderPlayers(data);
+
+  if(phase==='vote') {
+    document.getElementById('vote-confirm').style.display='block';
+  } else if(phase==='night') {
+    confirmNightAction(targetId, data);
+  }
+}
+
+function confirmVote() {
+  if(!selectedTarget) return;
+  myVote = selectedTarget;
+  roomRef.child('votes/'+myId).set(selectedTarget);
+  document.getElementById('vote-confirm').style.display='none';
+  toast('✓ Suaramu dicatat!');
+  selectedTarget=null;
+}
+
+function confirmNightAction(targetId, data) {
+  if(nightActionDone) return;
+  nightActionDone=true;
+  const targetName = data.players[targetId]?.name||'?';
+
+  if(myRole==='werewolf') {
+    roomRef.child('nightActions/wolfTarget/'+myId).set(targetId);
+    toast(`🐺 Kamu memilih ${targetName} sebagai mangsa`);
+  } else if(myRole==='doctor') {
+    roomRef.child('nightActions/doctorSave').set(targetId);
+    toast(`💉 Kamu menyelamatkan ${targetName}`);
+  } else if(myRole==='detective') {
+    const targetRole = data.roles?.[targetId]||'?';
+    const isWolf = targetRole==='werewolf';
+    roomRef.child('nightActions/detectiveCheck').set(targetId);
+    setTimeout(()=>{
+      toast(`🔍 ${targetName} adalah ${isWolf?'🐺 WEREWOLF!':'✅ Bukan Werewolf'}`, 4000);
+    }, 500);
+  }
+
+  // Host processes night when all special roles have acted (or timeout)
+  if(isHost) maybeEndNight(data);
+}
+
+function startNightTimer(seconds) {
+  if(!isHost) return;
+  let t = seconds || 30;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    t--;
+    roomRef.child('timer').set(t);
+    if(t <= 0) {
+      clearInterval(timerInterval);
+      roomRef.once('value').then(snap => {
+        const d = snap.val();
+        if(d?.phase === 'night') processNightResult(d);
+      });
+    }
+  }, 1000);
+}
+
+function maybeEndNight(data) {}
+
+function processNightResult(data) {
+  const actions = data.nightActions||{};
+  const players = {...data.players};
+  const wolfVotes = Object.values(actions.wolfTarget||{});
+  const doctorSave = actions.doctorSave;
+
+  // Find wolf consensus
+  const tally = {};
+  wolfVotes.forEach(v=>tally[v]=(tally[v]||0)+1);
+  const wolfTarget = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0]?.[0];
+
+  let killedId = null;
+  let killedName = '';
+  if(wolfTarget && wolfTarget!==doctorSave) {
+    players[wolfTarget].alive=false;
+    killedId=wolfTarget;
+    killedName=players[wolfTarget].name;
+  }
+
+  const eventMsg = killedId
+    ? `🩸 ${killedName} ditemukan tewas di pagi hari!`
+    : `🌟 Semua selamat tadi malam! Dokter berhasil menyelamatkan seseorang.`;
+
+  const eventKey = 'r'+data.round+'_night';
+  const updates = {
+    players, phase:'day', timer:null,
+    [`events/${eventKey}`]: { msg:eventMsg, time:Date.now() },
+    nightActions:{}, votes:{}
+  };
+  roomRef.update(updates);
+  beep('death');
+}
+
+function startDayTimer(seconds) {
+  if(!isHost) return;
+  let t=seconds;
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    t--;
+    roomRef.child('timer').set(t);
+    if(t<=0) {
+      clearInterval(timerInterval);
+      roomRef.once('value').then(snap=>{
+        const d=snap.val();
+        if(d?.phase==='day') roomRef.update({phase:'vote',timer:30});
+        else if(d?.phase==='vote') processVoteResult(d);
+      });
+    }
+  },1000);
+}
+
+function handleTimer(data) {
+  const t = data.timer;
+  if(t===undefined || t===null) { document.getElementById('timer-text').textContent='--'; return; }
+  const maxT = (data.phase==='vote' || data.phase==='night') ? 30 : (data.config?.dayTimer||90);
+  document.getElementById('timer-text').textContent=t;
+  const circ = 175.9;
+  const offset = circ*(1-t/maxT);
+  document.getElementById('timer-arc').style.strokeDashoffset=offset;
+  if(t<=10) document.getElementById('timer-arc').style.stroke='var(--crimson)';
+  else document.getElementById('timer-arc').style.stroke='var(--ember)';
+
+  // Vote timer host processing
+  if(isHost && data.phase==='vote' && t<=0) processVoteResult(data);
+}
+
+function processVoteResult(data) {
+  const votes=data.votes||{};
+  const players={...data.players};
+  const tally={};
+  Object.values(votes).forEach(v=>tally[v]=(tally[v]||0)+1);
+  const sorted=Object.entries(tally).sort((a,b)=>b[1]-a[1]);
+
+  let executedId=null, executedName='';
+  if(sorted.length>0 && sorted[0][1]>0) {
+    // Check for tie
+    const topVotes=sorted[0][1];
+    const tied=sorted.filter(e=>e[1]===topVotes);
+    if(tied.length===1) {
+      executedId=sorted[0][0];
+      executedName=players[executedId]?.name||'?';
+      players[executedId].alive=false;
+    }
+  }
+
+  const eventMsg = executedId
+    ? `⚔️ Desa memutuskan mengeksekusi ${executedName}! ${data.roles?.[executedId]==='werewolf'?'🎉 Dia adalah Werewolf!':'😢 Ternyata dia bukan Werewolf...'}`
+    : `🤷 Tidak ada konsensus! Tidak ada yang dieksekusi hari ini.`;
+
+  const eventKey='r'+data.round+'_day';
+  roomRef.update({
+    players, votes:{},
+    [`events/${eventKey}`]:{msg:eventMsg,time:Date.now()},
+    phase:'night', round:(data.round||1)+1, timer:null, nightActions:{}
+  });
+  checkWinCondition(players, data.roles||{});
+}
+
+function checkWinCondition(players, roles) {
+  const alive=Object.values(players).filter(p=>p.alive);
+  const aliveWolves=alive.filter(p=>roles[p.id]==='werewolf').length;
+  const aliveVillagers=alive.filter(p=>roles[p.id]!=='werewolf').length;
+
+  if(aliveWolves===0) {
+    roomRef.update({phase:'end', winner:'village'});
+  } else if(aliveWolves>=aliveVillagers) {
+    roomRef.update({phase:'end', winner:'werewolf'});
+  }
+}
+
+function checkGameEnd(data) {
+  if(data.phase==='end') renderEnd(data);
+}
+
+// ---- NIGHT ACTION PANEL ----
+function renderNightAction(data) {
+  const panel = document.getElementById('night-action-panel');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.querySelector('.send-btn');
+  const myPlayer = data.players[myId];
+  const amAlive = myPlayer?.alive;
+
+  if (data.phase === 'night' && amAlive) {
+    panel.style.display = 'block';
+    let html = '';
+    if (myRole === 'werewolf') {
+      const mates = Object.entries(data.roles || {}).filter(([id, r]) => r === 'werewolf' && id !== myId).map(([id]) => data.players[id]?.name || '?');
+      html = `<div class="night-action-box wolf">
+        <h3>🐺 AKSI WEREWOLF</h3>
+        <p style="font-size:15px;margin-top:8px;color:var(--bone);">Pilih korbanmu malam ini. Klik nama pemain di bawah.</p>
+        ${mates.length > 0 ? `<p style="font-size:13px;margin-top:6px;color:rgba(255,107,107,0.7);">Kawananmu: ${mates.join(', ')}</p>` : ''}
+        ${nightActionDone ? `<p style="color:#FF6B6B;font-size:14px;margin-top:8px;">✓ Mangsamu sudah dipilih</p>` : ''}
+      </div>`;
+      document.getElementById('chat-label').textContent = '💬 OBROLAN SERIGALA 🐺';
+    } else if (myRole === 'doctor') {
+      html = `<div class="night-action-box doctor">
+        <h3>💉 AKSI DOKTER</h3>
+        <p style="font-size:15px;margin-top:8px;color:var(--bone);">Pilih seseorang untuk kamu selamatkan malam ini (termasuk dirimu).</p>
+        ${nightActionDone ? `<p style="color:#6DB8E0;font-size:14px;margin-top:8px;">✓ Pasienmu sudah dipilih</p>` : ''}
+      </div>`;
+      document.getElementById('chat-label').textContent = '💬 OBROLAN DESA';
+    } else if (myRole === 'detective') {
+      html = `<div class="night-action-box detective">
+        <h3>🔍 AKSI DETEKTIF</h3>
+        <p style="font-size:15px;margin-top:8px;color:var(--bone);">Pilih seseorang untuk diperiksa identitasnya.</p>
+        ${nightActionDone ? `<p style="color:#F0C040;font-size:14px;margin-top:8px;">✓ Sudah memeriksa seseorang</p>` : ''}
+      </div>`;
+      document.getElementById('chat-label').textContent = '💬 OBROLAN DESA';
+    } else {
+      html = `<div class="night-action-box">
+        <p style="font-size:15px;color:var(--bone);font-style:italic;">🌙 Kamu tertidur... menunggu pagi hari.</p>
+      </div>`;
+      document.getElementById('chat-label').textContent = '💬 OBROLAN DESA';
+    }
+    panel.innerHTML = html;
+  } else {
+    panel.style.display = 'none';
+    document.getElementById('chat-label').textContent = '💬 OBROLAN DESA';
+  }
+
+  // Mute chat for non-wolves at night
+  if (!amAlive) {
+    chatInput.disabled = true;
+    chatInput.placeholder = 'Kamu sudah mati...';
+    sendBtn.disabled = true;
+  } else if (data.phase === 'night' && myRole !== 'werewolf') {
+    chatInput.disabled = true;
+    chatInput.placeholder = 'Desa tertidur...';
+    sendBtn.disabled = true;
+  } else {
+    chatInput.disabled = false;
+    chatInput.placeholder = 'Tulis pesan...';
+    sendBtn.disabled = false;
+  }
+}
+
+// ---- CHAT ----
+function renderChat(data) {
+  const box=document.getElementById('chat-box');
+  const chats=data.chat||{};
+  const phase=data.phase;
+  const isWolf=myRole==='werewolf';
+
+  // Filter: wolves see wolf-chat at night, village sees village-chat
+  const msgs=Object.values(chats).sort((a,b)=>a.ts-b.ts).filter(m=>{
+    if(m.wolfOnly) return isWolf; // wolves only
+    return true;
+  });
+
+  const wasAtBottom=box.scrollHeight-box.clientHeight<=box.scrollTop+5;
+  box.innerHTML='';
+  msgs.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='chat-msg'+(m.wolfOnly?' wolf-chat':'')+(m.system?' system':'');
+    div.innerHTML=m.system
+      ? `<em>${m.text}</em>`
+      : `<span class="sender">${m.sender}:</span> ${m.text}`;
+    box.appendChild(div);
+  });
+  if(wasAtBottom) box.scrollTop=box.scrollHeight;
+}
+
+function sendChat() {
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text) return;
+  const myPlayer=gameState?.players?.[myId];
+  if(!myPlayer?.alive) { toast('Kamu sudah mati, tidak bisa berbicara!'); return; }
+  const phase=gameState?.phase;
+  const isWolfNight=phase==='night'&&myRole==='werewolf';
+
+  const msg={
+    sender:myName, text, ts:Date.now(),
+    wolfOnly:isWolfNight, system:false
+  };
+  roomRef.child('chat').push(msg);
+  input.value='';
+}
+
+// ---- EVENT LOG ----
+function renderEventLog(data) {
+  const log=document.getElementById('event-log');
+  const content=document.getElementById('event-log-content');
+  const events=data.events||{};
+  const evArr=Object.values(events).sort((a,b)=>a.time-b.time);
+  if(evArr.length===0) { log.style.display='none'; return; }
+  log.style.display='block';
+  content.innerHTML=evArr.map(e=>`<div>• ${e.msg}</div>`).join('');
+}
+
+// ---- END SCREEN ----
+function renderEnd(data) {
+  showScreen('end');
+  clearInterval(timerInterval);
+  const winner=data.winner;
+  document.getElementById('end-icon').textContent=winner==='werewolf'?'🐺':'🌅';
+  document.getElementById('end-title').textContent=winner==='werewolf'?'Werewolf Menang!':'Desa Menang!';
+  document.getElementById('end-title').style.color=winner==='werewolf'?'#FF6B6B':'#7EC8A4';
+  document.getElementById('end-desc').textContent=winner==='werewolf'
+    ?'Para werewolf berhasil menguasai desa. Kegelapan menang malam ini...'
+    :'Desa berhasil menemukan dan mengusir semua werewolf. Perdamaian kembali!';
+
+  const rolesDiv=document.getElementById('end-roles');
+  rolesDiv.innerHTML='';
+  Object.values(data.players||{}).forEach(p=>{
+    const r=data.roles?.[p.id]||'villager';
+    const info=ROLE_INFO[r];
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);';
+    div.innerHTML=`<span>${p.avatar}</span><span style="font-weight:600">${p.name}</span><span class="tag ${info.badge}">${info.icon} ${info.name}</span>${!p.alive?'<span style="opacity:0.5">✝</span>':''}`;
+    rolesDiv.appendChild(div);
+  });
+  beep(winner==='werewolf'?'death':'day');
+}
+</script>
+</body>
+</html>
