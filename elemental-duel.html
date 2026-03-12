@@ -253,12 +253,12 @@ select option{background:#0d1020;}
       <div>🔥 <b>Fire</b> — Burn 2 rounds</div><div>💧 <b>Water</b> — Heal self 15HP</div>
       <div>⚡ <b>Thunder</b> — Stun 1 round</div><div>🌿 <b>Earth</b> — Shield 25 dmg</div>
       <div>🌪️ <b>Wind</b> — Steal a card</div><div>🌑 <b>Shadow</b> — ×2 if debuffed</div>
-      <div>✨ <b>Holy</b> — Cleanse + heal</div><div>🧊 <b>Ice</b> — Freeze + 25 dmg</div>
+      <div>✨ <b>Holy</b> — Cleanse + heal</div>
     </div>
     <div class="div"></div>
     <div style="font-size:11px;color:var(--muted);line-height:1.8;">
-      ⚡ Beats 🌿 &nbsp;|&nbsp; 🌿 Beats 🔥 &nbsp;|&nbsp; 🔥 Beats 🧊 &nbsp;|&nbsp; 🧊 Beats 🌿<br>
-      💧 Beats 🔥 &nbsp;|&nbsp; ⚡ Beats 💧 &nbsp;|&nbsp; 🌑 Beats ✨ &nbsp;|&nbsp; ✨ Beats 🌑
+      🔥 Beats 🌪️ &nbsp;|&nbsp; 🌪️ Beats 🌿 &nbsp;|&nbsp; 🌿 Beats ⚡<br>
+      ⚡ Beats 💧 &nbsp;|&nbsp; 💧 Beats 🔥 &nbsp;|&nbsp; 🌑 Beats ✨ &nbsp;|&nbsp; ✨ Beats 🌑
     </div>
   </div>
 </div>
@@ -370,7 +370,6 @@ const ELEMENTS = {
   wind:    { icon:'🌪️', name:'Wind',    color:'var(--wind)',    baseDmg:18, effect:'steal',  effectVal:1, desc:'Steal a card from target' },
   shadow:  { icon:'🌑', name:'Shadow',  color:'var(--shadow)',  baseDmg:20, effect:'double', effectVal:2, desc:'×2 damage if target has debuff' },
   holy:    { icon:'✨', name:'Holy',    color:'var(--holy)',    baseDmg:15, effect:'cleanse', effectVal:20, desc:'Cleanse debuffs + heal 20HP' },
-  ice:     { icon:'🧊', name:'Ice',     color:'var(--ice)',     baseDmg:22, effect:'freeze', effectVal:1, desc:'Freeze 1 round + 25 dmg' },
 };
 
 // Rare cards
@@ -382,14 +381,13 @@ const RARE_ELEMENTS = {
 
 // Advantage table: who beats who
 const ADVANTAGE = {
-  thunder:['earth', 'water'], 
-  earth:['fire','ice'], 
-  fire:['wind','ice'],
-  water:['fire'], 
-  ice:['earth'], 
-  shadow:['holy'], 
-  holy:['shadow'],
-  wind:['water'],
+  fire:    ['wind'],
+  wind:    ['earth'],
+  earth:   ['thunder'],
+  thunder: ['water'],
+  water:   ['fire'],
+  shadow:  ['holy'],
+  holy:    ['shadow'],
 };
 function getAdvantage(attacker, defender) {
   if(!attacker||!defender) return 'neutral';
@@ -503,7 +501,10 @@ function listenRoom(){
     gameState=data;
     const phase=data.phase;
     if(phase==='lobby') renderLobby(data);
-    else if(phase==='choose'||phase==='resolve') renderGame(data);
+    else if(phase==='choose'||phase==='resolve') {
+      renderGame(data);
+      if(isHost && phase==='choose') checkAllActed(data);
+    }
     else if(phase==='end') renderEnd(data);
   });
 }
@@ -709,17 +710,14 @@ async function confirmAction(){
   document.getElementById('confirm-wrap').style.display='none';
   document.getElementById('action-status').textContent='✅ Waiting for others...';
   toast('⚔️ Action locked in!');
-  if(isHost) checkAllActed();
 }
 
-function checkAllActed(){
-  roomRef.once('value').then(snap=>{
-    const d=snap.val(); if(!d||d.phase!=='choose') return;
-    const alive=Object.values(d.players||{}).filter(p=>p.alive);
-    const actions=Object.keys(d.actions||{});
-    const allActed=alive.every(p=>actions.includes(p.id));
-    if(allActed){ clearTimeout(hostPhaseTimeout); resolveRound(d); }
-  });
+function checkAllActed(d){
+  if(!d||d.phase!=='choose') return;
+  const alive=Object.values(d.players||{}).filter(p=>p.alive);
+  const actions=Object.keys(d.actions||{});
+  const allActed=alive.length>0 && alive.every(p=>actions.includes(p.id));
+  if(allActed){ clearTimeout(hostPhaseTimeout); resolveRound(d); }
 }
 
 // ═══════════════ TIMER ═══════════════
@@ -767,20 +765,18 @@ async function resolveRound(data){
 
     logs.push({msg: `⚔️ — Round ${roundNum} Results —`, type: 'system'});
 
-    // Capture who is stunned/frozen at the START of the round
+    // Capture who is stunned at the START of the round
     const stunnedAtStart = new Set();
-    const frozenAtStart = new Set();
     Object.values(players).forEach(p => {
       if ((p.statusEffects?.stun || 0) > 0) stunnedAtStart.add(p.id);
-      if ((p.statusEffects?.freeze || 0) > 0) frozenAtStart.add(p.id);
     });
 
     // Step 1: Pre-calculation
     Object.entries(actions).forEach(([pid, act]) => {
       const p = players[pid];
       if (!p || !p.alive) return;
-      // Skip if stunned/frozen at start
-      if (stunnedAtStart.has(pid) || frozenAtStart.has(pid)) return;
+      // Skip if stunned at start
+      if (stunnedAtStart.has(pid)) return;
 
       const el = getEl(act.card);
       if (!el) return;
@@ -809,8 +805,8 @@ async function resolveRound(data){
       attacker.hand.push(randCard());
 
       // Check if blocked by start-of-round status
-      if (stunnedAtStart.has(pid) || frozenAtStart.has(pid)) {
-        logs.push({msg: `🚫 ${attacker.name} is stunned/frozen!`, type: 'system'});
+      if (stunnedAtStart.has(pid)) {
+        logs.push({msg: `🚫 ${attacker.name} is stunned!`, type: 'system'});
         return;
       }
 
@@ -852,7 +848,7 @@ async function resolveRound(data){
       let dmg = el.baseDmg || 20;
       const adv = getAdvantage(act.card, (defender.hand || [])[0] || '');
       if (adv === 'advantage') dmg = Math.round(dmg * 1.5);
-      if (act.card === 'shadow' && Object.entries(defender.statusEffects || {}).some(([k,v]) => v > 0 && ['burn','stun','freeze'].includes(k))) dmg *= 2;
+      if (act.card === 'shadow' && Object.entries(defender.statusEffects || {}).some(([k,v]) => v > 0 && ['burn','stun'].includes(k))) dmg *= 2;
 
       const shield = defender.statusEffects?.shield || 0;
       const finalDmg = Math.max(0, dmg - shield);
@@ -866,10 +862,6 @@ async function resolveRound(data){
 
       if (act.card === 'thunder') { defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.stun = 2; }
       if (act.card === 'fire') { defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.burn = 2; }
-      if (act.card === 'ice') { 
-        defender.hp = clamp((defender.hp || 0) - 25, 0, defender.maxHp || 100); 
-        defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.freeze = 2; 
-      }
       if (act.card === 'wind' && (defender.hand || []).length > 0) {
         attacker.hand.push(defender.hand.splice(Math.floor(Math.random()*defender.hand.length), 1)[0]);
       }
@@ -880,7 +872,7 @@ async function resolveRound(data){
       if (!p.alive) return;
       if (!p.statusEffects) p.statusEffects = {};
       if (p.statusEffects.burn > 0) { p.hp = clamp(p.hp - 5, 0, p.maxHp); p.statusEffects.burn--; }
-      ['stun', 'freeze', 'immune'].forEach(k => { if (p.statusEffects[k] > 0) p.statusEffects[k]--; });
+      ['stun', 'immune'].forEach(k => { if (p.statusEffects[k] > 0) p.statusEffects[k]--; });
       if (p.hp > 0 && p.hp / p.maxHp < 0.3) { p.hand.push(randCard()); }
     });
 
