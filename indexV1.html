@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<head>
+  <title>Game Night Hub</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+</head>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --wolf-a: #C41E3A;
+  --wolf-b: #8B1A1A;
+  --know-a: #9B5DE5;
+  --know-b: #FF6B9D;
+  --bg: #080810;
+  --surface: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #F0EDF8;
+  --muted: rgba(240,237,248,0.4);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* Custom cursor */
+#cursor {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  transition: transform 0.1s;
+}
+#cursor-ring {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transition: transform 0.12s, width 0.2s, height 0.2s, border-color 0.2s;
+}
+
+/* Background canvas */
+#bg-canvas {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+}
+
+/* ---- Layout ---- */
+.page {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- NAV ---- */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 40px;
+  position: sticky; top: 0;
+  z-index: 100;
+  background: rgba(8,8,16,0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-logo span {
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.5) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.nav-badge {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted);
+}
+
+/* ---- HERO ---- */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 60px;
+  text-align: center;
+  gap: 20px;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 40px;
+  padding: 8px 18px;
+  font-size: 13px; font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: fadeDown 0.6s ease both;
+}
+.hero-eyebrow .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: pulse 2s infinite;
+}
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(44px, 9vw, 96px);
+  line-height: 0.95;
+  letter-spacing: -3px;
+  animation: fadeUp 0.7s ease 0.1s both;
+}
+.hero-title .line1 {
+  display: block;
+  background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.6));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-title .line2 {
+  display: block;
+  background: linear-gradient(135deg, rgba(155,93,229,0.9), rgba(255,107,157,0.9));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: clamp(15px, 2vw, 18px);
+  color: var(--muted);
+  max-width: 400px;
+  line-height: 1.6;
+  font-weight: 400;
+  animation: fadeUp 0.7s ease 0.2s both;
+}
+
+/* ---- GAME CARDS ---- */
+.games-wrapper {
+  padding: 0 24px 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  width: 100%;
+  max-width: 900px;
+  animation: fadeUp 0.8s ease 0.3s both;
+}
+
+.game-card {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  cursor: none;
+  text-decoration: none;
+  display: block;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid var(--border);
+}
+.game-card:hover { transform: translateY(-8px) scale(1.01); }
+.game-card:hover .card-arrow { transform: translate(4px, -4px); }
+.game-card:hover .card-glow { opacity: 1; }
+.game-card:hover .card-noise { opacity: 0.06; }
+
+.card-glow {
+  position: absolute; inset: -1px;
+  border-radius: 29px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 0;
+}
+.wolf-card .card-glow { background: linear-gradient(135deg, rgba(196,30,58,0.4), transparent 60%); }
+.know-card .card-glow { background: linear-gradient(135deg, rgba(155,93,229,0.4), rgba(255,107,157,0.2) 60%); }
+
+.card-noise {
+  position: absolute; inset: 0; z-index: 1;
+  opacity: 0.03; transition: opacity 0.3s;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+.card-inner {
+  position: relative; z-index: 2;
+  padding: 40px 36px;
+  min-height: 380px;
+  display: flex; flex-direction: column;
+  gap: 20px;
+}
+
+/* Wolf card */
+.wolf-card { background: linear-gradient(145deg, #0d0508 0%, #150a0c 50%, #1a0d10 100%); }
+.wolf-card .card-inner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 160px;
+  background: radial-gradient(ellipse at 30% 0%, rgba(196,30,58,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Know card */
+.know-card { background: linear-gradient(145deg, #0a080f 0%, #100c18 50%, #150e1f 100%); }
+.know-card .card-inner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 160px;
+  background: radial-gradient(ellipse at 70% 0%, rgba(155,93,229,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  width: fit-content;
+}
+.wolf-card .card-tag { background: rgba(196,30,58,0.15); border: 1px solid rgba(196,30,58,0.3); color: #FF6B6B; }
+.know-card .card-tag { background: rgba(155,93,229,0.15); border: 1px solid rgba(155,93,229,0.3); color: #C084FC; }
+
+.card-emoji {
+  font-size: 72px;
+  line-height: 1;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+  transition: transform 0.3s;
+}
+.game-card:hover .card-emoji { transform: scale(1.1) rotate(-5deg); }
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+.wolf-card .card-title { color: #fff; }
+.know-card .card-title { color: #fff; }
+
+.card-desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 400;
+  flex: 1;
+}
+
+.card-meta {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.meta-pill {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px; font-weight: 600;
+  color: var(--muted);
+}
+
+.card-cta {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  margin-top: auto;
+  transition: all 0.2s;
+}
+.wolf-card .card-cta {
+  background: linear-gradient(135deg, var(--wolf-a), var(--wolf-b));
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(196,30,58,0.3);
+}
+.know-card .card-cta {
+  background: linear-gradient(135deg, var(--know-a), var(--know-b));
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(155,93,229,0.3);
+}
+.game-card:hover .card-cta { filter: brightness(1.15); }
+
+.card-arrow {
+  font-size: 20px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- FOOTER INFO ---- */
+.info-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  max-width: 900px;
+  width: 100%;
+  animation: fadeUp 0.8s ease 0.5s both;
+}
+.info-item {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--muted); font-size: 14px; font-weight: 500;
+}
+.info-item .icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+/* ---- FOOTER ---- */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  color: var(--muted); font-size: 13px;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+
+/* ---- ANIMATIONS ---- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Floating orbs */
+.orb {
+  position: fixed; border-radius: 50%;
+  pointer-events: none; z-index: 0;
+  filter: blur(80px);
+  animation: float var(--dur) ease-in-out infinite;
+}
+
+/* ---- MOBILE ---- */
+@media (max-width: 600px) {
+  nav { padding: 16px 20px; }
+  .hero { padding: 60px 20px 40px; }
+  .games-wrapper { padding: 0 16px 80px; }
+  .games-grid { grid-template-columns: 1fr; }
+  .card-inner { padding: 28px 24px; min-height: 320px; }
+  footer { padding: 20px; }
+  body { cursor: auto; }
+  #cursor, #cursor-ring { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Background canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Ambient orbs -->
+<div class="orb" style="width:500px;height:500px;top:-100px;left:-150px;background:rgba(196,30,58,0.08);--dur:8s;"></div>
+<div class="orb" style="width:600px;height:600px;bottom:-200px;right:-100px;background:rgba(155,93,229,0.08);--dur:11s;animation-delay:-4s;"></div>
+
+<div class="page">
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <span>🎮</span>
+      <span>Game Night</span>
+    </div>
+    <div class="nav-badge">
+      <span style="color:#4ade80;margin-right:6px;">●</span> 3 Games Available
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">
+      <span class="dot"></span>
+      Play with friends · No download needed
+    </div>
+    <h1 class="hero-title">
+      <span class="line1">Game Night</span>
+      <span class="line2">Starts Here.</span>
+    </h1>
+    <p class="hero-sub">
+      Pick a game, share the room code, and let the chaos begin. Free forever.
+    </p>
+  </section>
+
+  <!-- GAME CARDS -->
+  <div class="games-wrapper">
+    <div class="games-grid">
+
+      <!-- WEREWOLF -->
+      <a href="warewolf.html" class="game-card wolf-card">
+        <div class="card-glow"></div>
+        <div class="card-noise"></div>
+        <div class="card-inner">
+          <div class="card-tag">🐺 Social Deduction</div>
+          <div class="card-emoji">🌙</div>
+          <div class="card-title">Werewolf<br>Online</div>
+          <p class="card-desc">
+            Liars, detectives, and villagers. Find the wolves before they eat everyone — or be the wolf nobody suspects.
+          </p>
+          <div class="card-meta">
+            <span class="meta-pill">👥 4–12 Players</span>
+            <span class="meta-pill">⏱ 15–30 min</span>
+            <span class="meta-pill">🔥 Intense</span>
+          </div>
+          <div class="card-cta">
+            Play Werewolf
+            <span class="card-arrow">↗</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- HOW WELL -->
+      <a href="howwell.html" class="game-card know-card">
+        <div class="card-glow"></div>
+        <div class="card-noise"></div>
+        <div class="card-inner">
+          <div class="card-tag">👯 Friendship Quiz</div>
+          <div class="card-emoji">💜</div>
+          <div class="card-title">How Well Do<br>You Know Me?</div>
+          <p class="card-desc">
+            Vote on who's most likely to survive a zombie apocalypse, go viral, or cry at a movie. Find out who really knows you.
+          </p>
+          <div class="card-meta">
+            <span class="meta-pill">👥 2–10 Players</span>
+            <span class="meta-pill">⏱ 10–20 min</span>
+            <span class="meta-pill">😂 Chaotic Fun</span>
+          </div>
+          <div class="card-cta">
+            Play Now
+            <span class="card-arrow">↗</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Elemental Duel -->
+      <a href="elemental-duel.html" class="game-card wolf-card">
+        <div class="card-glow"></div>
+        <div class="card-noise"></div>
+        <div class="card-inner">
+          <div class="card-tag">🐺 Social Deduction</div>
+          <div class="card-emoji">🔥</div>
+          <div class="card-title">Elemental Duel<br>Online</div>
+          <p class="card-desc">
+            Elemental Fight (masih prototype)
+          </p>
+          <div class="card-meta">
+            <span class="meta-pill">👥 2–5 Players</span>
+            <span class="meta-pill">⏱ 10-15 min</span>
+            <span class="meta-pill">🔥 Intense</span>
+          </div>
+          <div class="card-cta">
+            Play Elemental Duel
+            <span class="card-arrow">↗</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Info strip -->
+    <div class="info-strip">
+      <div class="info-item">
+        <div class="icon">🔗</div>
+        <span>Share a room code to play</span>
+      </div>
+      <div class="info-item">
+        <div class="icon">📱</div>
+        <span>Works on any device</span>
+      </div>
+      <div class="info-item">
+        <div class="icon">⚡</div>
+        <span>Real-time multiplayer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div style="font-weight:600;">🎮 Game Night Hub</div>
+    <div>Made with ❤️ for friends · <a href="https://github.com/LFandiX" target="_blank">@Jynix</a></div>
+  </footer>
+</div>
+
+<script>
+// ---- Custom cursor ----
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = -100, my = -100, rx = -100, ry = -100;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = (mx - 6) + 'px';
+  cursor.style.top = (my - 6) + 'px';
+});
+
+function animateRing() {
+  rx += (mx - rx - 18) * 0.12;
+  ry += (my - ry - 18) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    ring.style.width = '56px'; ring.style.height = '56px';
+    ring.style.borderColor = 'rgba(255,255,255,0.8)';
+    cursor.style.transform = 'scale(0.4)';
+  });
+  el.addEventListener('mouseleave', () => {
+    ring.style.width = '36px'; ring.style.height = '36px';
+    ring.style.borderColor = 'rgba(255,255,255,0.5)';
+    cursor.style.transform = 'scale(1)';
+  });
+});
+
+// ---- Background particle canvas ----
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.size = Math.random() * 1.5 + 0.3;
+    this.speedX = (Math.random() - 0.5) * 0.3;
+    this.speedY = (Math.random() - 0.5) * 0.3;
+    this.opacity = Math.random() * 0.4 + 0.05;
+    this.twinkle = Math.random() * Math.PI * 2;
+    this.twinkleSpeed = Math.random() * 0.02 + 0.005;
+  }
+  update() {
+    this.x += this.speedX; this.y += this.speedY;
+    this.twinkle += this.twinkleSpeed;
+    if(this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+  }
+  draw() {
+    const op = this.opacity * (0.6 + 0.4 * Math.sin(this.twinkle));
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${op})`;
+    ctx.fill();
+  }
+}
+
+for(let i = 0; i < 120; i++) particles.push(new Particle());
+
+function drawCanvas() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(drawCanvas);
+}
+drawCanvas();
+</script>
+</body>
+
+</html>
+

@@ -1,616 +1,1120 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<head>
-  <title>Game Night Hub</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>ALVERIX — Game Realm</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #04060f;
+      --bg2: #070b18;
+      --gold: #c9922a;
+      --gold2: #f0c060;
+      --gold3: #ffe8a0;
+      --red: #c41e3a;
+      --red2: #ff4466;
+      --silver: #9aaccf;
+      --silver2: #d0ddef;
+      --muted: rgba(154, 172, 207, 0.55);
+      --border: rgba(201, 146, 42, 0.18);
+      --surface: rgba(255, 255, 255, 0.03);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--silver2);
+      font-family: 'Crimson Pro', Georgia, serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    #cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--gold2);
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 12px var(--gold), 0 0 30px rgba(201, 146, 42, 0.3);
+      transition: transform 0.1s, width 0.2s, height 0.2s;
+    }
+
+    #cursor-ring {
+      position: fixed;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(201, 146, 42, 0.5);
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.18s ease, opacity 0.2s;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 200px;
+      opacity: 0.45;
+      mix-blend-mode: overlay;
+    }
+
+    #app {
+      position: relative;
+      z-index: 2;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(4, 6, 15, 0.95) 0%, transparent 100%);
+      backdrop-filter: blur(2px);
+    }
+
+    .logo {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 22px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), var(--gold3), var(--gold));
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 3px;
+      text-decoration: none;
+      animation: shimmer 4s linear infinite;
+      filter: drop-shadow(0 0 20px rgba(201, 146, 42, 0.4));
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .nav-link {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      position: relative;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transition: transform 0.3s;
+      transform-origin: left;
+    }
+
+    .nav-link:hover {
+      color: var(--gold2);
+    }
+
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
+
+    .nav-badge {
+      background: linear-gradient(135deg, var(--red), #8b0000);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 10px;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 40px 80px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s ease forwards;
+    }
+
+    .hero-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-weight: 900;
+      font-size: clamp(42px, 9vw, 96px);
+      line-height: 0.95;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s ease forwards;
+    }
+
+    .hero-title .line1 {
+      display: block;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold3) 50%, var(--gold) 100%);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 40px rgba(201, 146, 42, 0.5));
+      animation: fadeUp 0.8s 0.4s ease forwards, shimmer 5s 1.2s linear infinite;
+    }
+
+    .hero-title .line2 {
+      display: block;
+      font-size: 0.45em;
+      letter-spacing: 8px;
+      color: var(--silver);
+      -webkit-text-fill-color: var(--silver);
+      margin-top: 8px;
+      font-family: 'Cinzel', serif;
+      font-weight: 400;
+    }
+
+    .hero-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 32px 0;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s ease forwards;
+    }
+
+    .hero-divider-line {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .hero-divider-gem {
+      font-size: 18px;
+      filter: drop-shadow(0 0 10px var(--gold));
+    }
+
+    .hero-desc {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      font-style: italic;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s ease forwards;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 1s 1.4s ease forwards;
+    }
+
+    .scroll-arrow {
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    .section {
+      padding: 80px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-head {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .section-label {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(24px, 4vw, 40px);
+      font-weight: 700;
+      color: var(--silver2);
+      letter-spacing: 1px;
+    }
+
+    .section-sep {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .sep-line {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border));
+    }
+
+    .sep-line.r {
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    .sep-diamond {
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+      transform: rotate(45deg);
+      box-shadow: 0 0 12px var(--gold);
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 28px;
+    }
+
+    .game-card {
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.4s;
+      text-decoration: none;
+      display: block;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
+    }
+
+    .game-card:hover {
+      transform: translateY(-8px) scale(1.01);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(201, 146, 42, 0.3);
+    }
+
+    .game-card::before,
+    .game-card::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      z-index: 5;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      opacity: 0.5;
+    }
+
+    .game-card::before {
+      top: 0;
+      left: 0;
+      border-top: 2px solid var(--gold);
+      border-left: 2px solid var(--gold);
+    }
+
+    .game-card::after {
+      bottom: 0;
+      right: 0;
+      border-bottom: 2px solid var(--gold);
+      border-right: 2px solid var(--gold);
+    }
+
+    .game-card:hover::before,
+    .game-card:hover::after {
+      opacity: 1;
+    }
+
+    .card-banner {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-banner-bg {
+      position: absolute;
+      inset: 0;
+      transition: transform 0.6s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .game-card:hover .card-banner-bg {
+      transform: scale(1.08);
+    }
+
+    .card-banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(4, 6, 15, 0.9) 100%);
+    }
+
+    .card-icon {
+      position: relative;
+      z-index: 2;
+      font-size: 72px;
+      filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.8));
+      transition: transform 0.4s;
+    }
+
+    .game-card:hover .card-icon {
+      transform: scale(1.1) translateY(-4px);
+    }
+
+    .card-body {
+      padding: 22px 24px 26px;
+      position: relative;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 2px;
+      border: 1px solid;
+      opacity: 0.85;
+    }
+
+    .tag-multi {
+      color: var(--gold);
+      border-color: rgba(201, 146, 42, 0.4);
+      background: rgba(201, 146, 42, 0.06);
+    }
+
+    .tag-strategy {
+      color: var(--silver);
+      border-color: rgba(154, 172, 207, 0.3);
+      background: rgba(154, 172, 207, 0.05);
+    }
+
+    .tag-deduction {
+      color: #c77dff;
+      border-color: rgba(199, 125, 255, 0.3);
+      background: rgba(199, 125, 255, 0.05);
+    }
+
+    .tag-social {
+      color: #80ffdb;
+      border-color: rgba(128, 255, 219, 0.3);
+      background: rgba(128, 255, 219, 0.05);
+    }
+
+    .tag-card {
+      color: #ff9f1c;
+      border-color: rgba(255, 159, 28, 0.3);
+      background: rgba(255, 159, 28, 0.05);
+    }
+
+    .tag-new {
+      color: var(--red2);
+      border-color: rgba(255, 68, 102, 0.4);
+      background: rgba(255, 68, 102, 0.08);
+      animation: pulse 2s infinite;
+    }
+
+    .card-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+      color: var(--silver2);
+      margin-bottom: 8px;
+      transition: color 0.2s;
+    }
+
+    .game-card:hover .card-title {
+      color: var(--gold2);
+    }
+
+    .card-desc {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-style: italic;
+      margin-bottom: 18px;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid rgba(201, 146, 42, 0.12);
+    }
+
+    .card-players {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .card-cta {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--gold);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap 0.2s;
+    }
+
+    .game-card:hover .card-cta {
+      gap: 10px;
+    }
+
+    .card-cta-arrow {
+      transition: transform 0.2s;
+    }
+
+    .game-card:hover .card-cta-arrow {
+      transform: translateX(4px);
+    }
+
+    .card-soon {
+      opacity: 0.45;
+      pointer-events: none;
+      filter: grayscale(0.6);
+    }
+
+    .soon-label {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted);
+      background: rgba(4, 6, 15, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 4px 10px;
+    }
+
+    .stats-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(201, 146, 42, 0.03);
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .stat-item {
+      flex: 1;
+      text-align: center;
+      max-width: 200px;
+      padding: 0 24px;
+      position: relative;
+    }
+
+    .stat-item+.stat-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10%;
+      height: 80%;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .stat-num {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold), var(--gold3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .lore-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      padding: 80px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .lore-text .lore-label {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .lore-text h2 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(24px, 3.5vw, 38px);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      color: var(--silver2);
+    }
+
+    .lore-text p {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    .lore-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .lore-rune {
+      font-size: 120px;
+      filter: drop-shadow(0 0 40px rgba(201, 146, 42, 0.3));
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .lore-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 146, 42, 0.15);
+      animation: spin 20s linear infinite;
+    }
+
+    .lore-ring:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      animation-duration: 20s;
+    }
+
+    .lore-ring:nth-child(3) {
+      width: 280px;
+      height: 280px;
+      animation-duration: 30s;
+      animation-direction: reverse;
+      border-style: dashed;
+    }
+
+    .lore-ring:nth-child(4) {
+      width: 360px;
+      height: 360px;
+      animation-duration: 45s;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-logo {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 16px;
+      background: linear-gradient(135deg, var(--gold), var(--gold3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+    }
+
+    .footer-credit {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    .footer-credit span {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    .ember {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--gold2);
+      pointer-events: none;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 0% center
+      }
+
+      100% {
+        background-position: 200% center
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-14px)
+      }
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(8px)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.5
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg)
+      }
+
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes ember {
+      0% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: 0.8
+      }
+
+      100% {
+        transform: translateY(-120px) translateX(var(--dx)) scale(0);
+        opacity: 0
+      }
+    }
+
+    .ember {
+      animation: ember 2.5s ease-out infinite;
+    }
+
+    @media(max-width:768px) {
+      header {
+        padding: 16px 20px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 100px 20px 60px;
+      }
+
+      .section {
+        padding: 60px 20px;
+      }
+
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .lore-wrap {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+      }
+
+      .lore-visual {
+        display: none;
+      }
+
+      .stats-strip {
+        padding: 24px 20px;
+      }
+
+      .stat-num {
+        font-size: 22px;
+      }
+
+      footer {
+        padding: 24px 20px;
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
 
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --wolf-a: #C41E3A;
-  --wolf-b: #8B1A1A;
-  --know-a: #9B5DE5;
-  --know-b: #FF6B9D;
-  --bg: #080810;
-  --surface: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.08);
-  --text: #F0EDF8;
-  --muted: rgba(240,237,248,0.4);
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-  cursor: none;
-}
-
-/* Custom cursor */
-#cursor {
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: difference;
-  transition: transform 0.1s;
-}
-#cursor-ring {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.5);
-  position: fixed;
-  pointer-events: none;
-  z-index: 9998;
-  transition: transform 0.12s, width 0.2s, height 0.2s, border-color 0.2s;
-}
-
-/* Background canvas */
-#bg-canvas {
-  position: fixed; inset: 0;
-  pointer-events: none; z-index: 0;
-}
-
-/* ---- Layout ---- */
-.page {
-  position: relative; z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ---- NAV ---- */
-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 40px;
-  position: sticky; top: 0;
-  z-index: 100;
-  background: rgba(8,8,16,0.7);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-}
-.nav-logo {
-  font-family: 'Syne', sans-serif;
-  font-weight: 900;
-  font-size: 20px;
-  letter-spacing: -0.5px;
-  display: flex; align-items: center; gap: 10px;
-}
-.nav-logo span {
-  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.5) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.nav-badge {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 20px;
-  padding: 6px 14px;
-  font-size: 13px; font-weight: 500;
-  color: var(--muted);
-}
-
-/* ---- HERO ---- */
-.hero {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 24px 60px;
-  text-align: center;
-  gap: 20px;
-}
-
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 40px;
-  padding: 8px 18px;
-  font-size: 13px; font-weight: 600;
-  color: var(--muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  animation: fadeDown 0.6s ease both;
-}
-.hero-eyebrow .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 8px #4ade80;
-  animation: pulse 2s infinite;
-}
-
-.hero-title {
-  font-family: 'Syne', sans-serif;
-  font-weight: 900;
-  font-size: clamp(44px, 9vw, 96px);
-  line-height: 0.95;
-  letter-spacing: -3px;
-  animation: fadeUp 0.7s ease 0.1s both;
-}
-.hero-title .line1 {
-  display: block;
-  background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.6));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.hero-title .line2 {
-  display: block;
-  background: linear-gradient(135deg, rgba(155,93,229,0.9), rgba(255,107,157,0.9));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-
-.hero-sub {
-  font-size: clamp(15px, 2vw, 18px);
-  color: var(--muted);
-  max-width: 400px;
-  line-height: 1.6;
-  font-weight: 400;
-  animation: fadeUp 0.7s ease 0.2s both;
-}
-
-/* ---- GAME CARDS ---- */
-.games-wrapper {
-  padding: 0 24px 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-
-.games-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  width: 100%;
-  max-width: 900px;
-  animation: fadeUp 0.8s ease 0.3s both;
-}
-
-.game-card {
-  position: relative;
-  border-radius: 28px;
-  overflow: hidden;
-  cursor: none;
-  text-decoration: none;
-  display: block;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 1px solid var(--border);
-}
-.game-card:hover { transform: translateY(-8px) scale(1.01); }
-.game-card:hover .card-arrow { transform: translate(4px, -4px); }
-.game-card:hover .card-glow { opacity: 1; }
-.game-card:hover .card-noise { opacity: 0.06; }
-
-.card-glow {
-  position: absolute; inset: -1px;
-  border-radius: 29px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-  z-index: 0;
-}
-.wolf-card .card-glow { background: linear-gradient(135deg, rgba(196,30,58,0.4), transparent 60%); }
-.know-card .card-glow { background: linear-gradient(135deg, rgba(155,93,229,0.4), rgba(255,107,157,0.2) 60%); }
-
-.card-noise {
-  position: absolute; inset: 0; z-index: 1;
-  opacity: 0.03; transition: opacity 0.3s;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-}
-
-.card-inner {
-  position: relative; z-index: 2;
-  padding: 40px 36px;
-  min-height: 380px;
-  display: flex; flex-direction: column;
-  gap: 20px;
-}
-
-/* Wolf card */
-.wolf-card { background: linear-gradient(145deg, #0d0508 0%, #150a0c 50%, #1a0d10 100%); }
-.wolf-card .card-inner::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 160px;
-  background: radial-gradient(ellipse at 30% 0%, rgba(196,30,58,0.25) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-/* Know card */
-.know-card { background: linear-gradient(145deg, #0a080f 0%, #100c18 50%, #150e1f 100%); }
-.know-card .card-inner::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 160px;
-  background: radial-gradient(ellipse at 70% 0%, rgba(155,93,229,0.2) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.card-tag {
-  display: inline-flex; align-items: center; gap: 6px;
-  border-radius: 20px; padding: 6px 14px;
-  font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 1px;
-  width: fit-content;
-}
-.wolf-card .card-tag { background: rgba(196,30,58,0.15); border: 1px solid rgba(196,30,58,0.3); color: #FF6B6B; }
-.know-card .card-tag { background: rgba(155,93,229,0.15); border: 1px solid rgba(155,93,229,0.3); color: #C084FC; }
-
-.card-emoji {
-  font-size: 72px;
-  line-height: 1;
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
-  transition: transform 0.3s;
-}
-.game-card:hover .card-emoji { transform: scale(1.1) rotate(-5deg); }
-
-.card-title {
-  font-family: 'Syne', sans-serif;
-  font-weight: 900;
-  font-size: clamp(26px, 4vw, 36px);
-  line-height: 1.1;
-  letter-spacing: -1px;
-}
-.wolf-card .card-title { color: #fff; }
-.know-card .card-title { color: #fff; }
-
-.card-desc {
-  font-size: 15px;
-  color: var(--muted);
-  line-height: 1.6;
-  font-weight: 400;
-  flex: 1;
-}
-
-.card-meta {
-  display: flex; gap: 8px; flex-wrap: wrap;
-}
-.meta-pill {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 12px; font-weight: 600;
-  color: var(--muted);
-}
-
-.card-cta {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 20px;
-  border-radius: 16px;
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.3px;
-  margin-top: auto;
-  transition: all 0.2s;
-}
-.wolf-card .card-cta {
-  background: linear-gradient(135deg, var(--wolf-a), var(--wolf-b));
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(196,30,58,0.3);
-}
-.know-card .card-cta {
-  background: linear-gradient(135deg, var(--know-a), var(--know-b));
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(155,93,229,0.3);
-}
-.game-card:hover .card-cta { filter: brightness(1.15); }
-
-.card-arrow {
-  font-size: 20px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ---- FOOTER INFO ---- */
-.info-strip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  flex-wrap: wrap;
-  max-width: 900px;
-  width: 100%;
-  animation: fadeUp 0.8s ease 0.5s both;
-}
-.info-item {
-  display: flex; align-items: center; gap: 10px;
-  color: var(--muted); font-size: 14px; font-weight: 500;
-}
-.info-item .icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-}
-
-/* ---- FOOTER ---- */
-footer {
-  border-top: 1px solid var(--border);
-  padding: 24px 40px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 12px;
-  color: var(--muted); font-size: 13px;
-}
-footer a { color: var(--muted); text-decoration: none; }
-footer a:hover { color: var(--text); }
-
-/* ---- ANIMATIONS ---- */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeDown {
-  from { opacity: 0; transform: translateY(-16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.85); }
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Floating orbs */
-.orb {
-  position: fixed; border-radius: 50%;
-  pointer-events: none; z-index: 0;
-  filter: blur(80px);
-  animation: float var(--dur) ease-in-out infinite;
-}
-
-/* ---- MOBILE ---- */
-@media (max-width: 600px) {
-  nav { padding: 16px 20px; }
-  .hero { padding: 60px 20px 40px; }
-  .games-wrapper { padding: 0 16px 80px; }
-  .games-grid { grid-template-columns: 1fr; }
-  .card-inner { padding: 28px 24px; min-height: 320px; }
-  footer { padding: 20px; }
-  body { cursor: auto; }
-  #cursor, #cursor-ring { display: none; }
-}
-</style>
-</head>
 <body>
+  <canvas id="bg-canvas"></canvas>
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
+  <div id="app">
 
-<!-- Custom cursor -->
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
+    <header>
+      <a class="logo" href="#">ALVERIX</a>
+      <nav class="nav-links">
+        <!-- <a class="nav-link" href="#games">Games</a>
+        <a class="nav-link" href="#about">About</a> -->
+        <span class="nav-badge">3 Games</span>
+      </nav>
+    </header>
 
-<!-- Background canvas -->
-<canvas id="bg-canvas"></canvas>
-
-<!-- Ambient orbs -->
-<div class="orb" style="width:500px;height:500px;top:-100px;left:-150px;background:rgba(196,30,58,0.08);--dur:8s;"></div>
-<div class="orb" style="width:600px;height:600px;bottom:-200px;right:-100px;background:rgba(155,93,229,0.08);--dur:11s;animation-delay:-4s;"></div>
-
-<div class="page">
-  <!-- NAV -->
-  <nav>
-    <div class="nav-logo">
-      <span>🎮</span>
-      <span>Game Night</span>
-    </div>
-    <div class="nav-badge">
-      <span style="color:#4ade80;margin-right:6px;">●</span> 3 Games Available
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-eyebrow">
-      <span class="dot"></span>
-      Play with friends · No download needed
-    </div>
-    <h1 class="hero-title">
-      <span class="line1">Game Night</span>
-      <span class="line2">Starts Here.</span>
-    </h1>
-    <p class="hero-sub">
-      Pick a game, share the room code, and let the chaos begin. Free forever.
-    </p>
-  </section>
-
-  <!-- GAME CARDS -->
-  <div class="games-wrapper">
-    <div class="games-grid">
-
-      <!-- WEREWOLF -->
-      <a href="warewolf.html" class="game-card wolf-card">
-        <div class="card-glow"></div>
-        <div class="card-noise"></div>
-        <div class="card-inner">
-          <div class="card-tag">🐺 Social Deduction</div>
-          <div class="card-emoji">🌙</div>
-          <div class="card-title">Werewolf<br>Online</div>
-          <p class="card-desc">
-            Liars, detectives, and villagers. Find the wolves before they eat everyone — or be the wolf nobody suspects.
-          </p>
-          <div class="card-meta">
-            <span class="meta-pill">👥 4–12 Players</span>
-            <span class="meta-pill">⏱ 15–30 min</span>
-            <span class="meta-pill">🔥 Intense</span>
-          </div>
-          <div class="card-cta">
-            Play Werewolf
-            <span class="card-arrow">↗</span>
-          </div>
-        </div>
-      </a>
-
-      <!-- HOW WELL -->
-      <a href="howwell.html" class="game-card know-card">
-        <div class="card-glow"></div>
-        <div class="card-noise"></div>
-        <div class="card-inner">
-          <div class="card-tag">👯 Friendship Quiz</div>
-          <div class="card-emoji">💜</div>
-          <div class="card-title">How Well Do<br>You Know Me?</div>
-          <p class="card-desc">
-            Vote on who's most likely to survive a zombie apocalypse, go viral, or cry at a movie. Find out who really knows you.
-          </p>
-          <div class="card-meta">
-            <span class="meta-pill">👥 2–10 Players</span>
-            <span class="meta-pill">⏱ 10–20 min</span>
-            <span class="meta-pill">😂 Chaotic Fun</span>
-          </div>
-          <div class="card-cta">
-            Play Now
-            <span class="card-arrow">↗</span>
-          </div>
-        </div>
-      </a>
-
-      <!-- Elemental Duel -->
-      <a href="elemental-duel.html" class="game-card wolf-card">
-        <div class="card-glow"></div>
-        <div class="card-noise"></div>
-        <div class="card-inner">
-          <div class="card-tag">🐺 Social Deduction</div>
-          <div class="card-emoji">🔥</div>
-          <div class="card-title">Elemental Duel<br>Online</div>
-          <p class="card-desc">
-            Elemental Fight (masih prototype)
-          </p>
-          <div class="card-meta">
-            <span class="meta-pill">👥 2–5 Players</span>
-            <span class="meta-pill">⏱ 10-15 min</span>
-            <span class="meta-pill">🔥 Intense</span>
-          </div>
-          <div class="card-cta">
-            Play Elemental Duel
-            <span class="card-arrow">↗</span>
-          </div>
-        </div>
-      </a>
-
-    </div>
-
-    <!-- Info strip -->
-    <div class="info-strip">
-      <div class="info-item">
-        <div class="icon">🔗</div>
-        <span>Share a room code to play</span>
+    <section class="hero">
+      <p class="hero-eyebrow">⚔ Welcome to the Realm</p>
+      <h1 class="hero-title">
+        <span class="line1">ALVERIX</span>
+        <span class="line2">Game Realm</span>
+      </h1>
+      <div class="hero-divider">
+        <div class="hero-divider-line"></div>
+        <div class="hero-divider-gem">✦</div>
+        <div class="hero-divider-line"></div>
       </div>
-      <div class="info-item">
-        <div class="icon">📱</div>
-        <span>Works on any device</span>
+      <p class="hero-desc">Enter a world of strategy, deception, and elemental mastery. Gather your allies, choose your
+        battles, and forge your legend.</p>
+      <div class="hero-scroll"><span>SCROLL</span><span class="scroll-arrow">↓</span></div>
+    </section>
+
+    <div class="stats-strip">
+      <div class="stat-item">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Games Available</div>
       </div>
-      <div class="info-item">
-        <div class="icon">⚡</div>
-        <span>Real-time multiplayer</span>
+      <div class="stat-item">
+        <div class="stat-num">2–8</div>
+        <div class="stat-label">Players Per Game</div>
+      </div>
+      
+      <div class="stat-item">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Replayability</div>
       </div>
     </div>
+
+    <section class="section" id="games">
+      <div class="section-head">
+        <div class="section-label">⚔ Choose Your Battle</div>
+        <h2 class="section-title">The Game Realm</h2>
+        <div class="section-sep">
+          <div class="sep-line"></div>
+          <div class="sep-diamond"></div>
+          <div class="sep-line r"></div>
+        </div>
+      </div>
+      <div class="games-grid">
+
+        <a href="elemental-duel.html" class="game-card" style="animation-delay:0.1s;">
+          <div class="card-banner">
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 30% 40%,rgba(255,69,0,0.35) 0%,rgba(255,215,0,0.15) 40%,rgba(155,77,202,0.2) 70%,transparent 100%);">
+            </div>
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 70% 60%,rgba(0,191,255,0.2) 0%,transparent 60%);"></div>
+            <div class="card-banner-overlay"></div>
+            <div class="ember" style="left:30%;bottom:0;--dx:20px;animation-delay:0s;"></div>
+            <div class="ember" style="left:45%;bottom:0;--dx:-15px;animation-delay:0.7s;background:#ff6b00;"></div>
+            <div class="ember" style="left:60%;bottom:0;--dx:10px;animation-delay:1.4s;"></div>
+            <div class="ember" style="left:38%;bottom:0;--dx:-25px;animation-delay:2s;background:#ff4500;"></div>
+            <div class="card-icon">⚔️</div>
+          </div>
+          <div class="card-body">
+            <div class="card-tags">
+              <span class="tag tag-multi">Multiplayer</span>
+              <span class="tag tag-card">Card Game</span>
+              <span class="tag tag-strategy">Strategy</span>
+              <span class="tag tag-new">New</span>
+            </div>
+            <h3 class="card-title">Elemental Duel</h3>
+            <p class="card-desc">Wield the primal forces of nature. Draw elemental cards, exploit weaknesses, and
+              outlast your enemies in a battle of wit and power.</p>
+            <div class="card-footer">
+              <div class="card-players">⚔ 2 – 6 Warriors</div>
+              <div class="card-cta">Enter Arena <span class="card-cta-arrow">→</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="warewolf.html" class="game-card" style="animation-delay:0.2s;">
+          <div class="card-banner">
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 40% 50%,rgba(196,30,58,0.3) 0%,rgba(80,0,0,0.4) 50%,transparent 80%);">
+            </div>
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 80% 20%,rgba(255,200,100,0.08) 0%,transparent 40%);"></div>
+            <div class="card-banner-overlay"></div>
+            <div class="card-icon">🐺</div>
+          </div>
+          <div class="card-body">
+            <div class="card-tags">
+              <span class="tag tag-multi">Multiplayer</span>
+              <span class="tag tag-deduction">Deduction</span>
+              <span class="tag tag-social">Social</span>
+            </div>
+            <h3 class="card-title">Werewolf</h3>
+            <p class="card-desc">Night falls on the village. Wolves lurk among the innocent. Unravel the deception
+              before dawn — or fall prey to the darkness.</p>
+            <div class="card-footer">
+              <div class="card-players">🐺 4 – 12 Players</div>
+              <div class="card-cta">Enter Village <span class="card-cta-arrow">→</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a href="howwell.html" class="game-card" style="animation-delay:0.2s;">
+          <div class="card-banner">
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 30% 50%,rgba(255,80,180,0.25) 0%,rgba(140,40,200,0.3) 50%,transparent 80%);">
+            </div>
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 75% 25%,rgba(255,200,80,0.12) 0%,transparent 45%);"></div>
+            <div class="card-banner-overlay"></div>
+            <div class="card-icon">💬</div>
+          </div>
+          <div class="card-body">
+            <div class="card-tags">
+              <span class="tag tag-multi">Multiplayer</span>
+              <span class="tag tag-social">Social</span>
+              <span class="tag tag-deduction">Party</span>
+            </div>
+            <h3 class="card-title">How Well Do You Know Me?</h3>
+            <p class="card-desc">Put your friendships to the test. Answer questions about each other, vote for who fits
+              best — and discover who truly knows you.</p>
+            <div class="card-footer">
+              <div class="card-players">💬 3 – 8 Players</div>
+              <div class="card-cta">Play Now <span class="card-cta-arrow">→</span></div>
+            </div>
+          </div>
+        </a>
+
+        <div class="game-card card-soon" style="animation-delay:0.3s;">
+          <div class="soon-label">Coming Soon</div>
+          <div class="card-banner">
+            <div class="card-banner-bg"
+              style="background:radial-gradient(ellipse at 50% 50%,rgba(100,100,180,0.2) 0%,transparent 70%);"></div>
+            <div class="card-banner-overlay"></div>
+            <div class="card-icon" style="font-size:60px;opacity:0.4;">🏰</div>
+          </div>
+          <div class="card-body">
+            <div class="card-tags"><span class="tag tag-strategy">Strategy</span></div>
+            <h3 class="card-title" style="color:var(--muted);">Unknown Realm</h3>
+            <p class="card-desc">A new battle is being forged in the darkness. Its true nature remains hidden...</p>
+            <div class="card-footer">
+              <div class="card-players">? – ? Players</div>
+              <div class="card-cta" style="color:var(--muted);">Sealed 🔒</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- <section id="about">
+      <div class="lore-wrap">
+        <div class="lore-text">
+          <div class="lore-label">✦ The Realm</div>
+          <h2>Forged for Those Who Dare</h2>
+          <p>ALVERIX is a collection of multiplayer games crafted for those who seek more than just entertainment — a
+            test of strategy, cunning, and alliance.</p>
+          <p>No downloads required. No installs. Just you, your allies, and the arena. Every session tells a different
+            story.</p>
+        </div>
+        <div class="lore-visual">
+          <div class="lore-ring"></div>
+          <div class="lore-ring"></div>
+          <div class="lore-ring"></div>
+          <div class="lore-rune">⚜️</div>
+        </div>
+      </div>
+    </section> -->
+
+    <footer>   
+      <div class="footer-credit">Crafted by <span>@LFandiX</span></div>
   </div>
 
-  <!-- FOOTER -->
-  <footer>
-    <div style="font-weight:600;">🎮 Game Night Hub</div>
-    <div>Made with ❤️ for friends · <a href="https://github.com/LFandiX" target="_blank">@Jynix</a></div>
-  </footer>
-</div>
+  <script>
+    const cursor = document.getElementById('cursor'), ring = document.getElementById('cursor-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx + 'px'; cursor.style.top = my + 'px'; });
+    function animRing() { rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; requestAnimationFrame(animRing); }
+    animRing();
+    document.querySelectorAll('a,.game-card').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.width = '20px'; cursor.style.height = '20px'; ring.style.transform = 'translate(-50%,-50%) scale(1.5)'; ring.style.opacity = '0.4'; });
+      el.addEventListener('mouseleave', () => { cursor.style.width = '10px'; cursor.style.height = '10px'; ring.style.transform = 'translate(-50%,-50%) scale(1)'; ring.style.opacity = '1'; });
+    });
 
-<script>
-// ---- Custom cursor ----
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-let mx = -100, my = -100, rx = -100, ry = -100;
+    const canvas = document.getElementById('bg-canvas'), ctx = canvas.getContext('2d');
+    let W, H;
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
 
-document.addEventListener('mousemove', e => {
-  mx = e.clientX; my = e.clientY;
-  cursor.style.left = (mx - 6) + 'px';
-  cursor.style.top = (my - 6) + 'px';
-});
+    const stars = Array.from({ length: 220 }, () => ({
+      x: Math.random() * 2, y: Math.random(), r: Math.random() * 1.2 + 0.2,
+      op: Math.random() * 0.6 + 0.1, speed: Math.random() * 0.0003 + 0.00005,
+      phase: Math.random() * Math.PI * 2,
+      color: Math.random() < 0.15 ? '#f0c060' : Math.random() < 0.1 ? '#c0d8ff' : '#ffffff'
+    }));
+    const nebulas = [
+      { x: 0.15, y: 0.2, r: 0.35, c: 'rgba(196,30,58,' },
+      { x: 0.85, y: 0.75, r: 0.3, c: 'rgba(40,20,100,' },
+      { x: 0.5, y: 0.5, r: 0.4, c: 'rgba(10,30,80,' },
+      { x: 0.7, y: 0.2, r: 0.25, c: 'rgba(201,146,42,' },
+    ];
+    let t = 0;
+    function drawBg() {
+      ctx.clearRect(0, 0, W, H);
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#03040d'); grad.addColorStop(0.5, '#060916'); grad.addColorStop(1, '#04060f');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+      nebulas.forEach(n => {
+        const grd = ctx.createRadialGradient(n.x * W, n.y * H, 0, n.x * W, n.y * H, n.r * W);
+        grd.addColorStop(0, n.c + '0.06)'); grd.addColorStop(1, n.c + '0)');
+        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      });
+      t += 0.008;
+      stars.forEach(s => {
+        const px = ((s.x + t * s.speed * 10) % 1) * W, py = s.y * H;
+        const op = s.op * (0.5 + 0.5 * Math.sin(t * 2 + s.phase));
+        ctx.beginPath(); ctx.arc(px, py, s.r, 0, Math.PI * 2);
+        ctx.globalAlpha = op; ctx.fillStyle = s.color; ctx.fill(); ctx.globalAlpha = 1;
+        if (s.color === '#f0c060' && op > 0.5) { ctx.beginPath(); ctx.arc(px, py, s.r * 3, 0, Math.PI * 2); ctx.fillStyle = `rgba(201,146,42,${op * 0.15})`; ctx.fill(); }
+      });
+      requestAnimationFrame(drawBg);
+    }
+    drawBg();
 
-function animateRing() {
-  rx += (mx - rx - 18) * 0.12;
-  ry += (my - ry - 18) * 0.12;
-  ring.style.left = rx + 'px';
-  ring.style.top = ry + 'px';
-  requestAnimationFrame(animateRing);
-}
-animateRing();
-
-document.querySelectorAll('a, button').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    ring.style.width = '56px'; ring.style.height = '56px';
-    ring.style.borderColor = 'rgba(255,255,255,0.8)';
-    cursor.style.transform = 'scale(0.4)';
-  });
-  el.addEventListener('mouseleave', () => {
-    ring.style.width = '36px'; ring.style.height = '36px';
-    ring.style.borderColor = 'rgba(255,255,255,0.5)';
-    cursor.style.transform = 'scale(1)';
-  });
-});
-
-// ---- Background particle canvas ----
-const canvas = document.getElementById('bg-canvas');
-const ctx = canvas.getContext('2d');
-let particles = [];
-let W, H;
-
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
-
-class Particle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * W;
-    this.y = Math.random() * H;
-    this.size = Math.random() * 1.5 + 0.3;
-    this.speedX = (Math.random() - 0.5) * 0.3;
-    this.speedY = (Math.random() - 0.5) * 0.3;
-    this.opacity = Math.random() * 0.4 + 0.05;
-    this.twinkle = Math.random() * Math.PI * 2;
-    this.twinkleSpeed = Math.random() * 0.02 + 0.005;
-  }
-  update() {
-    this.x += this.speedX; this.y += this.speedY;
-    this.twinkle += this.twinkleSpeed;
-    if(this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
-  }
-  draw() {
-    const op = this.opacity * (0.6 + 0.4 * Math.sin(this.twinkle));
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,255,255,${op})`;
-    ctx.fill();
-  }
-}
-
-for(let i = 0; i < 120; i++) particles.push(new Particle());
-
-function drawCanvas() {
-  ctx.clearRect(0, 0, W, H);
-  particles.forEach(p => { p.update(); p.draw(); });
-  requestAnimationFrame(drawCanvas);
-}
-drawCanvas();
-</script>
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.style.animationPlayState = 'running'; observer.unobserve(e.target); } });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.game-card').forEach(el => { el.style.animationPlayState = 'paused'; observer.observe(el); });
+  </script>
 </body>
 
 </html>
-
