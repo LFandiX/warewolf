@@ -218,9 +218,7 @@ select option{background:#0d1020;}
     <a href="rules.html" target="_blank" style="text-decoration:none;">
       <button class="btn btn-ghost" style="width:100%;font-family:'Exo 2',sans-serif;font-size:13px;letter-spacing:0.5px;">📖 View Rules & Element Guide</button>
     </a>
-
   </div>
-   
 </div>
 
 <!-- ── LOBBY ── -->
@@ -384,9 +382,14 @@ const RARE_ELEMENTS = {
 
 // Advantage table: who beats who
 const ADVANTAGE = {
-  thunder:['earth'], earth:['fire','ice'], fire:['wind','ice'],
-  water:['fire'], ice:['earth'], shadow:['holy'], holy:['shadow'],
-  wind:['water'], thunder:['water'],
+  thunder:['earth', 'water'], 
+  earth:['fire','ice'], 
+  fire:['wind','ice'],
+  water:['fire'], 
+  ice:['earth'], 
+  shadow:['holy'], 
+  holy:['shadow'],
+  wind:['water'],
 };
 function getAdvantage(attacker, defender) {
   if(!attacker||!defender) return 'neutral';
@@ -764,10 +767,21 @@ async function resolveRound(data){
 
     logs.push({msg: `⚔️ — Round ${roundNum} Results —`, type: 'system'});
 
+    // Capture who is stunned/frozen at the START of the round
+    const stunnedAtStart = new Set();
+    const frozenAtStart = new Set();
+    Object.values(players).forEach(p => {
+      if ((p.statusEffects?.stun || 0) > 0) stunnedAtStart.add(p.id);
+      if ((p.statusEffects?.freeze || 0) > 0) frozenAtStart.add(p.id);
+    });
+
     // Step 1: Pre-calculation
     Object.entries(actions).forEach(([pid, act]) => {
       const p = players[pid];
       if (!p || !p.alive) return;
+      // Skip if stunned/frozen at start
+      if (stunnedAtStart.has(pid) || frozenAtStart.has(pid)) return;
+
       const el = getEl(act.card);
       if (!el) return;
       if (!p.statusEffects) p.statusEffects = {};
@@ -793,6 +807,12 @@ async function resolveRound(data){
       const cIdx = attacker.hand.indexOf(act.card);
       if (cIdx >= 0) attacker.hand.splice(cIdx, 1);
       attacker.hand.push(randCard());
+
+      // Check if blocked by start-of-round status
+      if (stunnedAtStart.has(pid) || frozenAtStart.has(pid)) {
+        logs.push({msg: `🚫 ${attacker.name} is stunned/frozen!`, type: 'system'});
+        return;
+      }
 
       // Self-effects
       if (act.card === 'water') {
@@ -823,8 +843,8 @@ async function resolveRound(data){
       }
 
       if (!defender || !defender.alive) return;
-      if ((defender.statusEffects?.immune || 0) > 0 || (attacker.statusEffects?.stun || 0) > 0 || (attacker.statusEffects?.freeze || 0) > 0) {
-        logs.push({msg: `🚫 ${attacker.name} action blocked!`, type: 'system'});
+      if ((defender.statusEffects?.immune || 0) > 0) {
+        logs.push({msg: `🛡️ ${defender.name} is immune!`, type: 'system'});
         return;
       }
 
@@ -844,11 +864,11 @@ async function resolveRound(data){
 
       logs.push({msg: `${el.icon} ${attacker.name} → ${defender.name}: ${finalDmg} dmg!`, type: 'dmg'});
 
-      if (act.card === 'thunder') { defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.stun = 1; }
+      if (act.card === 'thunder') { defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.stun = 2; }
       if (act.card === 'fire') { defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.burn = 2; }
       if (act.card === 'ice') { 
         defender.hp = clamp((defender.hp || 0) - 25, 0, defender.maxHp || 100); 
-        defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.freeze = 1; 
+        defender.statusEffects = defender.statusEffects || {}; defender.statusEffects.freeze = 2; 
       }
       if (act.card === 'wind' && (defender.hand || []).length > 0) {
         attacker.hand.push(defender.hand.splice(Math.floor(Math.random()*defender.hand.length), 1)[0]);
