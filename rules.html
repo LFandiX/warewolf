@@ -369,19 +369,6 @@ body::before{content:'';position:fixed;inset:0;
         <div class="el-effect-desc">"A divine purification. Remove all debuffs (burn, stun, freeze) and restore 20 HP instantly."</div>
       </div>
 
-      <div class="el-card card-ice" style="animation-delay:0.26s">
-        <div class="el-card-head">
-          <div class="el-icon-big" style="color:var(--ice)">🧊</div>
-          <div><div class="el-card-title" style="color:var(--ice)">Ice</div><div class="el-card-type" style="color:var(--ice)">Freeze + Bonus Dmg</div></div>
-        </div>
-        <div class="el-stat"><span class="el-stat-label">Base Damage</span><span class="el-stat-val" style="color:var(--ice)">22 HP</span></div>
-        <div class="el-stat"><span class="el-stat-label">Bonus Damage</span><span class="el-stat-val" style="color:var(--ice)">+25 HP</span></div>
-        <div class="el-stat"><span class="el-stat-label">Total Damage</span><span class="el-stat-val" style="color:#FF6B6B">47 HP!</span></div>
-        <div class="el-stat"><span class="el-stat-label">Special Effect</span><span class="el-stat-val" style="color:var(--ice)">🧊 Freeze 1 round</span></div>
-        <div class="el-stat"><span class="el-stat-label">Weak to</span><span class="el-stat-val" style="color:var(--fire)">🔥 Fire, 🌿 Earth</span></div>
-        <div class="el-effect-desc">"Encase your enemy in ice — massive 47 total damage AND they skip their next action."</div>
-      </div>
-
     </div>
   </div>
 
@@ -451,14 +438,13 @@ body::before{content:'';position:fixed;inset:0;
           </tr>
         </thead>
         <tbody>
-          <tr><td>🔥 Fire</td><td><span class="adv-pill adv-beats">🌪️ Wind</span> <span class="adv-pill adv-beats">🧊 Ice</span></td><td><span class="adv-pill adv-weak">💧 Water</span></td></tr>
-          <tr><td>💧 Water</td><td><span class="adv-pill adv-beats">🔥 Fire</span></td><td><span class="adv-pill adv-weak">⚡ Thunder</span> <span class="adv-pill adv-weak">🌪️ Wind</span></td></tr>
-          <tr><td>⚡ Thunder</td><td><span class="adv-pill adv-beats">🌿 Earth</span> <span class="adv-pill adv-beats">💧 Water</span></td><td><span class="adv-pill adv-weak">—</span></td></tr>
-          <tr><td>🌿 Earth</td><td><span class="adv-pill adv-beats">🔥 Fire</span> <span class="adv-pill adv-beats">🧊 Ice</span></td><td><span class="adv-pill adv-weak">⚡ Thunder</span></td></tr>
-          <tr><td>🌪️ Wind</td><td><span class="adv-pill adv-beats">💧 Water</span></td><td><span class="adv-pill adv-weak">🔥 Fire</span></td></tr>
+          <tr><td>🔥 Fire</td><td><span class="adv-pill adv-beats">🌪️ Wind</span> </td><td><span class="adv-pill adv-weak">💧 Water</span></td></tr>
+          <tr><td>💧 Water</td><td><span class="adv-pill adv-beats">🔥 Fire</span></td><td><span class="adv-pill adv-weak">⚡ Thunder</span></td></tr>
+          <tr><td>⚡ Thunder</td><td><span class="adv-pill adv-beats">💧 Water</span> </td><td><span class="adv-pill adv-weak">🌿 Earth</span></td></tr>
+          <tr><td>🌿 Earth</td><td><span class="adv-pill adv-beats">⚡ Thunder</span> </td><td><span class="adv-pill adv-weak">🌪️ Wind</span></td></tr>
+          <tr><td>🌪️ Wind</td><td><span class="adv-pill adv-beats">🌿 Earth</span></td><td><span class="adv-pill adv-weak">🔥 Fire</span></td></tr>
           <tr><td>🌑 Shadow</td><td><span class="adv-pill adv-beats">✨ Holy</span></td><td><span class="adv-pill adv-weak">✨ Holy</span></td></tr>
           <tr><td>✨ Holy</td><td><span class="adv-pill adv-beats">🌑 Shadow</span></td><td><span class="adv-pill adv-weak">🌑 Shadow</span></td></tr>
-          <tr><td>🧊 Ice</td><td><span class="adv-pill adv-beats">🌿 Earth</span></td><td><span class="adv-pill adv-weak">🔥 Fire</span> <span class="adv-pill adv-weak">🌿 Earth</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -485,11 +471,6 @@ body::before{content:'';position:fixed;inset:0;
         <div style="font-size:26px;">⚡</div>
         <div class="status-name" style="color:var(--thunder)">Stun</div>
         <div class="status-desc">Cannot choose or play any card next round. Your action is completely skipped.</div>
-      </div>
-      <div class="status-card" style="background:rgba(176,240,255,0.1);border-color:rgba(176,240,255,0.3);animation-delay:0.11s">
-        <div style="font-size:26px;">🧊</div>
-        <div class="status-name" style="color:var(--ice)">Freeze</div>
-        <div class="status-desc">Same as stun — skip your next action. Lasts 1 round. Cleansable by Holy.</div>
       </div>
       <div class="status-card" style="background:rgba(124,186,60,0.1);border-color:rgba(124,186,60,0.3);animation-delay:0.14s">
         <div style="font-size:26px;">🌿</div>
