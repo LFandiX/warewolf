@@ -52,13 +52,11 @@ Answer questions about each other, vote for who fits best, and see who truly kno
 ```
 /
 ├── index.html                  # Game Hub landing page
-├── elemental-duel/
-│   ├── index.html              # Elemental Duel game
-│   └── rules.html              # Element guide & rules
-├── warewolf/
-│   └── index.html              # Werewolf game
-└── howwellyouknowme/
-    └── index.html              # How Well Do You Know Me
+├── elemental-duel.html         # Elemental Duel game    
+│── rules.html                  # Element guide & rules
+├── warewolf.html               # Werewolf game          
+└── howwell.html                # How Well Do You Know Me
+           
 ```
 
 ---
@@ -164,16 +162,14 @@ For production, replace the default Test Mode rules in Firebase with:
 ---
 
 ## 📸 Preview
+<img width="1899" height="864" alt="image" src="https://github.com/user-attachments/assets/5ec7abab-615c-4228-bd2d-0c0a9db13a9e" />
 
-| Game Hub | Elemental Duel | Werewolf |
-|---|---|---|
-| `index.html` | `elemental-duel/` | `warewolf/` |
 
 ---
 
 ## 👤 Credits
 
-Made with ❤️ by **[@LFandiX](https://github.com/LFandiX)**
+Made by **[@LFandiX](https://github.com/LFandiX)**
 
 - 🌐 Live site: [alverix.site](https://alverix.site)
 - 💬 All games are free to play — no account required
