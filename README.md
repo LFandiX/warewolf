@@ -2,8 +2,6 @@
 
 > A collection of browser-based multiplayer games built with vanilla HTML/CSS/JS and Firebase Realtime Database. No downloads, no installs — just share a code and play.
 
-🌐 **Live:** [alverix.site](https://game.alverix.site)
-
 ---
 
 ## 🎮 Games
