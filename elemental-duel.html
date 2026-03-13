@@ -416,7 +416,7 @@ function toast(msg,dur=3000){ const t=document.getElementById('toast'); t.textCo
 function randEl(){ const keys=Object.keys(ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; }
 function randCard(){
   const roll=Math.random();
-  if(roll<0.18){ const keys=Object.keys(RARE_ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; }
+  if(roll<0.1){ const keys=Object.keys(RARE_ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; }
   return randEl();
 }
 function dealCards(n){ return Array.from({length:n},()=>randCard()); }
