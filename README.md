@@ -2,7 +2,7 @@
 
 > A collection of browser-based multiplayer games built with vanilla HTML/CSS/JS and Firebase Realtime Database. No downloads, no installs — just share a code and play.
 
-🌐 **Live:** [alverix.site](https://alverix.site)
+🌐 **Live:** [alverix.site](https://game.alverix.site)
 
 ---
 
@@ -170,9 +170,6 @@ For production, replace the default Test Mode rules in Firebase with:
 ## 👤 Credits
 
 Made by **[@LFandiX](https://github.com/LFandiX)**
-
-- 🌐 Live site: [alverix.site](https://alverix.site)
-- 💬 All games are free to play — no account required
 
 ---
 
