@@ -398,6 +398,14 @@ select option { background: #1a1030; }
             <option value="100">100</option><option value="200" selected>200</option><option value="500">500</option>
           </select>
         </div>
+        <div class="cfg-row">
+          <label>🎭 Question Category</label>
+          <select id="cfg-category">
+            <option value="friendship" selected>Friendship 👯</option>
+            <option value="personality">Personality Traits 🧠</option>
+            <option value="love">Love & Romance ❤️</option>
+          </select>
+        </div>
         <div class="divider"></div>
       </div>
       <h3 style="font-size:16px;display:flex;align-items:center;gap:8px;">
@@ -456,15 +464,8 @@ select option { background: #1a1030; }
         <div class="emoji-bar" id="emoji-bar"></div>
       </div>
 
-      <!-- Host controls -->
-      <div id="host-controls" style="display:none;">
-        <div class="divider"></div>
-        <p style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center;">HOST CONTROLS 👑</p>
-        <div class="host-ctrl">
-          <button class="btn btn-secondary" style="flex:1;" onclick="hostPause()" id="btn-pause">⏸ Pause & Discuss</button>
-          <button class="btn btn-cyan" style="flex:1;" onclick="hostNext()">Next Round →</button>
-        </div>
-      </div>
+      <!-- Host controls removed from question phase as requested -->
+      <div id="host-controls" style="display:none;"></div>
     </div>
   </div>
 
@@ -473,6 +474,11 @@ select option { background: #1a1030; }
     <div style="text-align:center;padding:0 20px;">
       <div id="lb-round-result" style="font-size:14px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;"></div>
       <h2 id="lb-answer-reveal" style="font-size:clamp(16px,4vw,24px);line-height:1.3;"></h2>
+    </div>
+
+    <!-- Auto-advance timer display -->
+    <div id="lb-timer-display" style="text-align:center; font-family:'Baloo 2', cursive; font-weight:800; color:var(--cyan); font-size:18px;">
+      Next round in <span id="lb-timer-num">4</span>s...
     </div>
 
     <!-- Vote breakdown -->
@@ -488,8 +494,7 @@ select option { background: #1a1030; }
     <!-- Host next / wait -->
     <div style="width:100%;max-width:540px;padding:0 16px;" id="lb-actions">
       <div id="lb-host-btn" style="display:none;display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-primary" onclick="hostContinue()" id="btn-continue">▶ Continue to Next Round</button>
-        <button class="btn btn-secondary" onclick="hostPauseFromLB()" id="btn-pause-lb">💬 Keep Discussing...</button>
+        <button class="btn btn-secondary" onclick="hostPauseFromLB()" id="btn-pause-lb">⏸ Pause & Discuss</button>
       </div>
       <p id="lb-wait-msg" style="text-align:center;color:var(--muted);font-weight:700;font-size:14px;display:none;">Waiting for host<span class="dots"></span></p>
     </div>
@@ -552,7 +557,7 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 
 // ===================== QUESTIONS =====================
-const ALL_QUESTIONS = [
+const QUESTIONS_FRIENDSHIP = [
   "Who would become famous overnight if they started a TikTok account?",
   "Who is most likely to survive a zombie apocalypse?",
   "Who would cry the most during a sad movie?",
@@ -614,6 +619,132 @@ const ALL_QUESTIONS = [
   "Who is most likely to start a business that actually works?",
   "Who would be the most likely to accidentally overshare on social media?",
 ];
+
+const QUESTIONS_PERSONALITY = [
+  "Who has the shortest temper?",
+  "Who is the most optimistic person you know?",
+  "Who is most likely to overthink a simple text message?",
+  "Who is the most organized person in this group?",
+  "Who is the biggest perfectionist?",
+  "Who is the most adventurous person here?",
+  "Who has the most unique sense of humor?",
+  "Who is the most empathetic listener?",
+  "Who is the most outgoing person in the group?",
+  "Who is the most introverted among your friends?",
+  "Who is the most talkative at a party?",
+  "Who is the most likely to start a conversation with a stranger?",
+  "Who is the most sociable person you know?",
+  "Who is the most charming in your circle?",
+  "Who is the most likely to become the life of the party?",
+  "Who is the most awkward in social situations?",
+  "Who is the most emotionally sensitive?",
+  "Who is the most empathetic person you know?",
+  "Who is the most likely to cry during a sad movie?",
+  "Who is the most hot-tempered in the group?",
+  "Who is the most calm under pressure?",
+  "Who is the most likely to overthink every decision?",
+  "Who is the most emotionally mature?",
+  "Who is the most anxious about the future?",
+  "Who is the most moody person you know?",
+  "Who is the most creative thinker in the group?",
+  "Who is the most curious and eager to learn?",
+  "Who is the most likely to come up with a unique idea?",
+  "Who is the most open-minded about new concepts?",
+  "Who is the most analytical when solving problems?",
+  "Who is the most detail-oriented in the group?",
+  "Who is the most likely to think outside the box?",
+  "Who is the most organized and structured?",
+  "Who is the most caring and nurturing?",
+  "Who is the most likely to check on a friend first?",
+  "Who is the most loyal in a friendship?",
+  "Who is the most likely to keep a secret?",
+  "Who is the most forgiving when hurt by others?",
+  "Who is the most understanding when someone makes mistakes?",
+  "Who is the most patient person in the group?",
+  "Who is the most likely to offer help without being asked?",
+  "Who is the most honest even if it hurts?",
+  "Who is the most likely to stand up for what's right?",
+  "Who is the most responsible in the group?",
+  "Who is the most trustworthy person you know?",
+  "Who is the most likely to admit when they're wrong?",
+  "Who is the most principled and value-driven?",
+  "Who is the most likely to tell a white lie to avoid conflict?",
+  "Who is the most ambitious and driven?",
+  "Who is the most likely to take a risk?",
+  "Who is the most adventurous in the group?",
+  "Who is the most competitive among your friends?",
+  "Who is the most spontaneous and unpredictable?",
+  "Who is the most disciplined and self-controlled?",
+  "Who is the most energetic and enthusiastic?",
+  "Who is the most laid-back and easy-going?",
+  "Who is the most likely to procrastinate on important tasks?",
+  "Who is the most likely to inspire others with their attitude?",
+];
+
+const QUESTIONS_LOVE = [
+  "Who is most likely to fall in love at first sight?",
+  "Who is the best at giving relationship advice?",
+  "Who is most likely to forget their anniversary?",
+  "Who would write a love song for their partner?",
+  "Who is most likely to go on a blind date?",
+  "Who is the most loyal partner?",
+  "Who is the most romantic person in the group?",
+  "Who is the most likely to plan a surprise date?",
+  "Who is the most likely to write a love letter?",
+  "Who is the most likely to fall in love at first sight?",
+  "Who is the most likely to serenade their partner?",
+  "Who is the most likely to fill a room with flowers for their partner?",
+  "Who is the most hopeless romantic?",
+  "Who is the most likely to re-enact a scene from a romance movie?",
+  "Who is the most likely to have a secret crush right now?",
+  "Who is the most likely to shoot their shot first?",
+  "Who is the most likely to flirt without even realizing it?",
+  "Who is the most likely to send a risky text at 2am?",
+  "Who is the most likely to slide into someone's DMs?",
+  "Who is the most likely to ask someone out on the first meeting?",
+  "Who is the most likely to play hard to get?",
+  "Who is the most likely to catch feelings too fast?",
+  "Who is the most clingy in a relationship?",
+  "Who is the most likely to check their partner's phone?",
+  "Who is the most likely to get jealous easily?",
+  "Who is the most likely to still be texting their ex?",
+  "Who is the most afraid of commitment?",
+  "Who is the most likely to be in a long-distance relationship?",
+  "Who is the most likely to stay with someone out of comfort?",
+  "Who is the most likely to ghost someone after a date?",
+  "Who is the most likely to avoid confrontation in a relationship?",
+  "Who is the most likely to win an argument with their partner?",
+  "Who is the most likely to give the silent treatment?",
+  "Who is the most likely to forgive a cheating partner?",
+  "Who is the most likely to break up over a text message?",
+  "Who is the most likely to hold a grudge after a breakup?",
+  "Who is the most likely to cry the most after a breakup?",
+  "Who is the most likely to over-share about their relationship problems?",
+  "Who is the most affectionate with their partner in public?",
+  "Who is the most likely to know their partner's love language?",
+  "Who is the most emotionally vulnerable in a relationship?",
+  "Who is the most likely to say 'I love you' first?",
+  "Who is the most likely to make their partner feel truly understood?",
+  "Who is the most likely to remember every anniversary and special date?",
+  "Who is the most likely to put their partner's needs above their own?",
+  "Who is the most likely to marry their first love?",
+  "Who is the most likely to get married first in the group?",
+  "Who is the most likely to have a big dream wedding?",
+  "Who is the most likely to elope with their partner?",
+  "Who is the most likely to fall in love with their best friend?",
+  "Who is the most likely to stay single the longest by choice?",
+  "Who is the most likely to have a love story worth turning into a movie?",
+  "Who is the most likely to end up with someone unexpected?",
+  "Who is the most likely to move to another city for love?",
+  "Who is the most likely to be in a relationship right now and not tell anyone?",
+  "Who is the most likely to find their soulmate?",
+];
+
+const ALL_QUESTIONS = {
+  friendship: QUESTIONS_FRIENDSHIP,
+  personality: QUESTIONS_PERSONALITY,
+  love: QUESTIONS_LOVE
+};
 
 const REACTION_EMOJIS = ['😂','🔥','👏','🤯'];
 
@@ -735,10 +866,35 @@ function listenRoom() {
     if(!data) return;
     gameState=data;
     const phase=data.phase;
-    if(phase==='lobby') renderLobby(data);
-    else if(phase==='question' || phase==='paused') renderGame(data);
-    else if(phase==='leaderboard') renderLeaderboard(data);
-    else if(phase==='end') renderEnd(data);
+
+    // AUTO-ADVANCE logic for Host
+    if(isHost && phase === 'question') {
+      const players = Object.values(data.players || {});
+      const votes = Object.keys(data.votes || {}).length;
+      if(votes >= players.length) {
+        // Everyone has voted! Advance immediately.
+        // We use a small delay to ensure everyone's UI has a chance to catch up
+        if(!hostPhaseTimeout || gameState.timerEnd - Date.now() > 2000) {
+           clearTimeout(hostPhaseTimeout);
+           hostPhaseTimeout = setTimeout(() => goToLeaderboard(data), 1000);
+        }
+      }
+    }
+
+    // PHASE ROUTING
+    if(phase==='lobby') {
+      renderLobby(data);
+    } else if(phase==='question') {
+      renderGame(data);
+    } else if(phase==='leaderboard') {
+      renderLeaderboard(data);
+    } else if(phase==='paused') {
+      // If paused, stay on the last active screen
+      if(data.lastPhaseBeforePause === 'leaderboard') renderLeaderboard(data);
+      else renderGame(data);
+    } else if(phase==='end') {
+      renderEnd(data);
+    }
   });
 }
 
@@ -771,11 +927,15 @@ async function hostStartGame() {
   const rounds=parseInt(document.getElementById('cfg-rounds').value);
   const timer=parseInt(document.getElementById('cfg-timer').value);
   const points=parseInt(document.getElementById('cfg-points').value);
-  const qs=shuffle(ALL_QUESTIONS).slice(0,rounds);
+  const category=document.getElementById('cfg-category').value;
+  
+  const questionPool = ALL_QUESTIONS[category] || ALL_QUESTIONS.friendship;
+  const qs=shuffle(questionPool).slice(0,rounds);
+  
   const timerEnd=Date.now()+timer*1000;
   await roomRef.update({
     phase:'question', currentRound:1,
-    config:{rounds,timer,points},
+    config:{rounds,timer,points,category},
     questions:qs, votes:{}, timerEnd
   });
 }
@@ -783,16 +943,16 @@ async function hostStartGame() {
 // ===================== GAME =====================
 function renderGame(data) {
   const phase=data.phase;
-  if(phase==='paused'){
-    showScreen('paused');
-    document.getElementById('resume-btn-wrap').style.display=isHost?'block':'none';
-    renderPausedEmojis();
+  const isPaused = phase === 'paused';
+  
+  showScreen('game');
+  
+  if(isPaused){
     if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
     if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
-    return;
+    lastPhase = null; 
   }
 
-  showScreen('game');
   const round=data.currentRound||1;
   const qs=data.questions||[];
   const q=qs[round-1];
@@ -837,14 +997,24 @@ function renderGame(data) {
     : `${voteCount}/${players.length} have voted`;
 
   // Host controls
-  document.getElementById('host-controls').style.display=isHost?'block':'none';
+  const hostCtrl = document.getElementById('host-controls');
+  if(isHost) {
+    hostCtrl.style.display = 'block';
+    hostCtrl.innerHTML = isPaused 
+      ? '<div class="divider"></div><p style="text-align:center;color:var(--yellow);font-weight:700;">GAME PAUSED</p><button class="btn btn-primary" onclick="hostResume()">▶ Resume Game</button>'
+      : ''; 
+  } else {
+    hostCtrl.style.display = 'none';
+  }
 
   // Timer — only restart if phase or round changed
-  const phaseKey=`${phase}_${round}`;
-  if(phaseKey!==lastPhase){
-    lastPhase=phaseKey;
-    myVoteThisRound=null; // reset vote tracking for new round
-    startLocalTimer(data);
+  if(!isPaused) {
+    const phaseKey=`${phase}_${round}`;
+    if(phaseKey!==lastPhase){
+      lastPhase=phaseKey;
+      myVoteThisRound=null; // reset vote tracking for new round
+      startLocalTimer(data);
+    }
   }
 }
 
@@ -855,6 +1025,7 @@ async function castVote(targetId) {
   toast('✅ Voted!');
   // Refresh render
   if(gameState) renderGame(gameState);
+  
   // If all voted, host can auto-advance
   if(isHost) checkAllVoted();
 }
@@ -864,10 +1035,10 @@ function checkAllVoted() {
     const d=snap.val(); if(!d) return;
     const players=Object.values(d.players||{});
     const votes=Object.keys(d.votes||{}).length;
-    if(votes>=players.length) {
-      // All voted — go to leaderboard after short delay
+    // If everyone in the room has voted, move to leaderboard immediately
+    if(votes >= players.length) {
       clearTimeout(hostPhaseTimeout);
-      hostPhaseTimeout=setTimeout(()=>goToLeaderboard(d),1500);
+      goToLeaderboard(d);
     }
   });
 }
@@ -878,14 +1049,30 @@ function startLocalTimer(data) {
   if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
   const timerEnd=data.timerEnd;
   if(!timerEnd) return;
-  const maxT=data.config?.timer||20;
+  const maxT=data.phase === 'leaderboard' ? 4 : (data.config?.timer||20);
+  const isLB = data.phase === 'leaderboard';
+
+  // Show/Hide LB timer display
+  const lbTimerDisplay = document.getElementById('lb-timer-display');
+  if(lbTimerDisplay) lbTimerDisplay.style.display = isLB ? 'block' : 'none';
 
   function tick(){
     const remaining=Math.max(0,Math.round((timerEnd-Date.now())/1000));
-    document.getElementById('timer-num').textContent=remaining;
-    const circ=213.6;
-    document.getElementById('timer-arc').style.strokeDashoffset=circ*(1-remaining/maxT);
-    document.getElementById('timer-arc').style.stroke=remaining<=5?'var(--pink)':remaining<=10?'var(--orange)':'var(--yellow)';
+    
+    // Update question timer if active
+    const qTimerNum = document.getElementById('timer-num');
+    const qTimerArc = document.getElementById('timer-arc');
+    if(qTimerNum) qTimerNum.textContent=remaining;
+    if(qTimerArc) {
+      const circ=213.6;
+      qTimerArc.style.strokeDashoffset=circ*(1-remaining/maxT);
+      qTimerArc.style.stroke=remaining<=5?'var(--pink)':remaining<=10?'var(--orange)':'var(--yellow)';
+    }
+
+    // Update leaderboard timer if active
+    const lbTimerNum = document.getElementById('lb-timer-num');
+    if(lbTimerNum) lbTimerNum.textContent=remaining;
+
     if(remaining<=0){clearInterval(localTimerInterval);localTimerInterval=null;}
   }
   tick();
@@ -898,14 +1085,20 @@ function startLocalTimer(data) {
       roomRef.once('value').then(snap=>{
         const d=snap.val();
         if(d && d.phase==='question') goToLeaderboard(d);
+        else if(d && d.phase==='leaderboard') hostContinue();
       });
-    }, delay+800);
+    }, delay+500);
   }
 }
 
 // ===================== HOST CONTROLS =====================
 function hostPause() {
   if(!isHost) return;
+  // Note: Host pause is disabled in question phase as per request, 
+  // but keeping this function for potential future use or internal logic.
+  // Actually, let's just make it do nothing if called in question phase.
+  if(gameState && gameState.phase === 'question') return; 
+
   if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
   if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
   const pausedAt=Date.now();
@@ -915,17 +1108,15 @@ function hostPause() {
 
 function hostResume() {
   if(!isHost) return;
-  const remaining=(gameState?.pausedRemaining||10);
+  const lastPh = gameState?.lastPhaseBeforePause || 'question';
+  const remaining=(gameState?.pausedRemaining||4);
   const newEnd=Date.now()+remaining*1000;
-  roomRef.update({phase:'question', timerEnd:newEnd, pausedRemaining:null});
+  roomRef.update({phase:lastPh, timerEnd:newEnd, pausedRemaining:null, lastPhaseBeforePause:null});
 }
 
 function hostNext() {
-  if(!isHost) return;
-  roomRef.once('value').then(snap=>{
-    const d=snap.val(); if(!d) return;
-    goToLeaderboard(d);
-  });
+  // Manual skip disabled as requested
+  return;
 }
 
 // ===================== LEADERBOARD =====================
@@ -939,28 +1130,32 @@ function goToLeaderboard(data) {
   const tally={};
   Object.values(votes).forEach(v=>{ tally[v]=(tally[v]||0)+1; });
   const sortedTally=Object.entries(tally).sort((a,b)=>b[1]-a[1]);
-  const winner=sortedTally[0]?.[0];
-  const winnerVotes=sortedTally[0]?.[1]||0;
-  const totalVoters=Object.keys(votes).length;
+  
+  // Handle case where no one voted
+  const winner = sortedTally.length > 0 ? sortedTally[0][0] : null;
+  const winnerVotes = sortedTally.length > 0 ? sortedTally[0][1] : 0;
+  const totalVoters = Object.keys(votes).length;
 
-  // Award points — those who voted for the winner get points
-  // Points = base * (speed bonus if voted early) — simple: base points per correct
   const newPlayers=JSON.parse(JSON.stringify(players));
   const roundStats={};
 
-  Object.entries(votes).forEach(([voterId, votedId])=>{
-    if(votedId===winner){
-      const bonus=Math.round(cfg.points*(winnerVotes/Math.max(1,totalVoters)));
-      newPlayers[voterId].score=(newPlayers[voterId].score||0)+bonus;
-      roundStats[voterId]={ correct:true, bonus };
-    } else {
-      roundStats[voterId]={ correct:false, bonus:0 };
-    }
-  });
+  if(winner) {
+    Object.entries(votes).forEach(([voterId, votedId])=>{
+      if(votedId===winner){
+        const bonus=Math.round(cfg.points*(winnerVotes/Math.max(1,totalVoters)));
+        newPlayers[voterId].score=(newPlayers[voterId].score||0)+bonus;
+        roundStats[voterId]={ correct:true, bonus };
+      } else {
+        roundStats[voterId]={ correct:false, bonus:0 };
+      }
+    });
+  }
 
-  // Track vote history for fun stats
   const voteHistory=data.voteHistory||{};
   voteHistory[`r${round}`]={ votes, winner, question:data.questions?.[round-1]||'' };
+
+  // Set 4 second timer for leaderboard
+  const lbTimerEnd = Date.now() + 4000;
 
   roomRef.update({
     phase:'leaderboard',
@@ -968,14 +1163,31 @@ function goToLeaderboard(data) {
     roundStats,
     currentWinner:winner,
     voteHistory,
-    timerEnd:null
+    timerEnd:lbTimerEnd
   });
 }
 
 function renderLeaderboard(data) {
+  const phase = data.phase;
+  const isPaused = phase === 'paused';
+  
   showScreen('lb');
+  
   if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
   if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+
+  if(isPaused) {
+    lastPhase = null; 
+    document.getElementById('lb-timer-display').style.display = 'none';
+  } else {
+    // Timer logic for leaderboard
+    const round=data.currentRound||1;
+    const phaseKey=`lb_${round}`;
+    if(phaseKey!==lastPhase){
+      lastPhase=phaseKey;
+      startLocalTimer(data);
+    }
+  }
 
   const round=data.currentRound||1;
   const cfg=data.config||{rounds:8};
@@ -1051,15 +1263,16 @@ function renderLeaderboard(data) {
   // Actions
   const hostBtn=document.getElementById('lb-host-btn');
   const waitMsg=document.getElementById('lb-wait-msg');
-  const continueBtn=document.getElementById('btn-continue');
-  const isLastRound=round>=cfg.rounds;
   if(isHost){
     hostBtn.style.display='flex';
     waitMsg.style.display='none';
-    continueBtn.textContent=isLastRound?'🎉 See Final Results!':'▶ Next Round';
+    hostBtn.innerHTML = isPaused 
+      ? '<button class="btn btn-primary" onclick="hostResume()">▶ Resume Game</button>'
+      : '<button class="btn btn-secondary" onclick="hostPauseFromLB()">⏸ Pause & Discuss</button>';
   } else {
     hostBtn.style.display='none';
     waitMsg.style.display='block';
+    waitMsg.textContent = isPaused ? 'Game Paused (Host is discussing...)' : 'Next round starting soon...';
   }
 }
 
@@ -1079,7 +1292,17 @@ function hostContinue() {
 
 function hostPauseFromLB() {
   if(!isHost) return;
-  roomRef.update({phase:'paused', timerEnd:null, pausedRemaining:0});
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  
+  const pausedAt=Date.now();
+  const remaining = (gameState && gameState.timerEnd) ? Math.max(0, Math.round((gameState.timerEnd - pausedAt) / 1000)) : 4;
+  
+  roomRef.update({
+    phase:'paused', 
+    lastPhaseBeforePause: 'leaderboard',
+    pausedRemaining: remaining
+  });
 }
 
 // ===================== EMOJI SYSTEM =====================
