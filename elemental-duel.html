@@ -559,6 +559,97 @@ let lastPhase=null, lastRound=null;
 let actionSubmitted=false;
 let isBridgeShowing=false, bridgeShownForRound=null;
 
+// ── SOUND SYSTEM ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function playSfx(type) {
+  try {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    switch(type) {
+      case 'click':
+        osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+        break;
+      case 'cast':
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+        break;
+      case 'meteor':
+        // Deep rumble/explosion
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.5);
+        osc.start(now); osc.stop(now + 0.5);
+        // Add a second high-pitched crackle
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'square'; osc2.connect(gain2); gain2.connect(audioCtx.destination);
+        osc2.frequency.setValueAtTime(1000, now);
+        osc2.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+        gain2.gain.setValueAtTime(0.1, now); gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc2.start(now); osc2.stop(now + 0.1);
+        break;
+      case 'fire':
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now);
+        osc.frequency.linearRampToValueAtTime(600, now + 0.3);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+        break;
+      case 'water':
+      case 'heal':
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
+        break;
+      case 'thunder':
+      case 'stun':
+        osc.type = 'square'; osc.frequency.setValueAtTime(50, now);
+        osc.frequency.linearRampToValueAtTime(1000, now + 0.05);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+        break;
+      case 'earth':
+      case 'shield':
+        osc.type = 'sine'; osc.frequency.setValueAtTime(100, now);
+        osc.frequency.linearRampToValueAtTime(150, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+        break;
+      case 'win':
+        [0, 0.1, 0.2].forEach((d, i) => {
+          const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+          o.connect(g); g.connect(audioCtx.destination);
+          o.frequency.setValueAtTime(400 + (i * 100), now + d);
+          g.gain.setValueAtTime(0.1, now + d); g.gain.exponentialRampToValueAtTime(0.01, now + d + 0.3);
+          o.start(now + d); o.stop(now + d + 0.3);
+        });
+        break;
+      case 'death':
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(50, now + 0.6);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.6);
+        osc.start(now); osc.stop(now + 0.6);
+        break;
+    }
+  } catch(e) { console.warn("Audio not supported or blocked"); }
+}
+
 // ── TEAM BATTLE STATE ──
 let gameMode='ffa'; // 'ffa' | 'team'
 let myTeam=null;    // 'A' | 'B'
@@ -568,6 +659,7 @@ let ultActive=false;
 
 // ═══════════════ MODE SELECTOR ═══════════════
 function setMode(mode){
+  playSfx('click');
   gameMode=mode;
   document.getElementById('tab-ffa').classList.toggle('active', mode==='ffa');
   document.getElementById('tab-team').classList.toggle('active', mode==='team');
@@ -576,6 +668,7 @@ function setMode(mode){
 // ═══════════════ TEAM ASSIGNMENT ═══════════════
 function joinTeam(team){
   if(!roomRef) return;
+  playSfx('click');
   myTeam=team;
   roomRef.child('players/'+myId+'/team').set(team);
   document.getElementById('role-select-section').style.display='block';
@@ -584,6 +677,7 @@ function joinTeam(team){
 
 function selectRole(role){
   if(!roomRef||!myTeam) return;
+  playSfx('click');
   myRole=role;
   const hp = role==='vanguard' ? 120 : 100;
   roomRef.child('players/'+myId).update({role, maxHp:hp, hp});
@@ -628,6 +722,7 @@ function getSynergy(card1, card2){
 // ═══════════════ COVER & ULTIMATE ═══════════════
 function toggleCover(){
   if(actionSubmitted) return;
+  playSfx('click');
   coverActive=!coverActive;
   const btn=document.getElementById('btn-cover');
   btn.classList.toggle('active', coverActive);
@@ -653,6 +748,7 @@ function activateUltimate(){
   if(!me||!me.alive||actionSubmitted) return;
   const ult=me.ultimateCharge||0;
   if(ult<100){ toast('⚡ Ultimate not ready yet!'); return; }
+  playSfx('win');
   ultActive=true;
   const role=me.role||'vanguard';
   if(role==='sentinel'){
@@ -751,6 +847,7 @@ function goHome(){
 async function goCreate(){
   const name=document.getElementById('inp-name').value.trim();
   if(!name){toast('⚠️ Enter your name!');return;}
+  playSfx('click');
   myName=name; localStorage.setItem('ed_name',name);
   roomCode=genCode(); isHost=true; setupRoom();
 }
@@ -759,6 +856,7 @@ async function goJoin(){
   const code=document.getElementById('inp-code').value.trim().toUpperCase();
   if(!name){toast('⚠️ Enter your name!');return;}
   if(code.length<4){toast('⚠️ Enter arena code!');return;}
+  playSfx('click');
   myName=name; localStorage.setItem('ed_name',name);
   roomCode=code; isHost=false; setupRoom();
 }
@@ -814,6 +912,7 @@ function listenRoom(){
 function showBridge(data, roundNum) {
   isBridgeShowing = true;
   bridgeShownForRound = roundNum;
+  playSfx('win');
   const bridge = document.getElementById('screen-bridge');
   const roundTxt = document.getElementById('bridge-round-txt');
   roundTxt.textContent = `ROUND ${roundNum}`;
@@ -1085,6 +1184,7 @@ async function confirmAction(){
   if(!target&&!selfCards.includes(cardKey)&&getEl(cardKey)?.effect!=='aoe'){
     toast('⚠️ Select a target first!'); return;
   }
+  playSfx('cast');
   actionSubmitted=true;
   const isBurst=!!(ultActive&&me.role==='vanguard');
   await roomRef.child('actions/'+myId).set({card:cardKey,target:target||'self',cardIdx:selectedCard,isBurst});
@@ -1126,6 +1226,7 @@ function renderHand(data){
 }
 
 function selectCard(idx,data){
+  playSfx('click');
   selectedCard=idx;
   renderHand(data);
   renderConfirmButton();
@@ -1525,12 +1626,26 @@ function renderRevealOverlay(data){
 function renderCombatLog(data){
   const logEl=document.getElementById('combat-log'); if(!logEl) return;
   const logs=data.log||[];
+  const isNew = logs.length > (logEl.children.length);
+  
   logEl.innerHTML='';
-  logs.forEach(l=>{
+  logs.forEach((l, i)=>{
     const div=document.createElement('div');
     div.className='log-entry '+(l.type||'');
     div.textContent=l.msg;
     logEl.appendChild(div);
+
+    // Play sound for the most recent log if it's new
+    if (isNew && i === logs.length - 1) {
+       if (l.type === 'dmg') playSfx('cast');
+       if (l.type === 'heal') playSfx('heal');
+       if (l.type === 'death') playSfx('death');
+       if (l.type === 'synergy' || l.type === 'combo') playSfx('win');
+       if (l.msg.includes('Meteor')) playSfx('meteor');
+       if (l.msg.includes('Fire')) playSfx('fire');
+       if (l.msg.includes('Thunder') || l.msg.includes('stun')) playSfx('thunder');
+       if (l.msg.includes('Earth') || l.msg.includes('shield')) playSfx('earth');
+    }
   });
   logEl.scrollTop=logEl.scrollHeight;
 }
