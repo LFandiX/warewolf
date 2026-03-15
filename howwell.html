@@ -404,6 +404,7 @@ select option { background: #1a1030; }
             <option value="friendship" selected>Friendship 👯</option>
             <option value="personality">Personality Traits 🧠</option>
             <option value="love">Love & Romance ❤️</option>
+            <option value="spice">Spice Duel 🌶️</option>
           </select>
         </div>
         <div class="divider"></div>
@@ -740,10 +741,64 @@ const QUESTIONS_LOVE = [
   "Who is the most likely to find their soulmate?",
 ];
 
+const QUESTIONS_SPICE = [
+  "Who would have a problem with {P} if it had something to do with a girl?",
+  "Who is most likely to accidentally hit {P} while aiming for someone else?",
+  "Who secretly thinks {P} has the worst fashion sense here?",
+  "Who would {P} trust the most with their life (and regret it)?",
+  "If {P} was a movie villain, who would be their incompetent sidekick?",
+  "Who here is most likely to be {P}'s secret admirer?",
+  "Who would {P} sell to a dragon for 5 gold coins?",
+  "Who is the first person {P} would eliminate if they could?",
+  "Who thinks {P} is the 'main character' of this duel?",
+  "Who would {P} share a prison cell with?",
+  "Who is most likely to cry if {P} wins the game?",
+  "Who would {P} hire as their personal bodyguard?",
+  "Who thinks {P} is trying too hard to look cool?",
+  "Who is most likely to haunt {P} after being eliminated?",
+  "Who would {P} invite to a dinner party just to poison them?",
+  "Who does {P} think is the biggest threat in this room?",
+  "Who would {P} rather swap bodies with for a day?",
+  "Who is most likely to forget {P}'s name during the duel?",
+  "Who would {P} choose to be their duo in a zombie apocalypse?",
+  "Who thinks {P} is the most annoying player here?",
+  "Who would {P} sacrifice to save themselves?",
+  "Who is most likely to let {P} win because they feel bad?",
+  "Who would {P} trust to keep a secret?",
+  "Who thinks {P} is a 'noob' at this game?",
+  "Who would {P} most want to see wearing a clown costume?",
+  "Who is {P}'s biggest rival in real life?",
+  "Who would {P} call if they were stuck in the middle of the night?",
+  "Who thinks {P} is the 'smartest' player here?",
+  "Who would {P} challenge to a dance-off?",
+  "Who is most likely to steal a card from {P} in real life?",
+  "Who would {P} definitely NOT want as a teammate?",
+  "Who thinks {P} is actually a softie inside?",
+  "Who would {P} pay to do their homework/work?",
+  "Who is most likely to laugh if {P} hits 0 HP?",
+  "Who would {P} choose as their personal chef?",
+  "Who thinks {P} is the most unpredictable player?",
+  "Who would {P} trust with their phone password?",
+  "Who is most likely to fake their death to avoid fighting {P}?",
+  "Who would {P} bring to a desert island?",
+  "Who thinks {P} is the 'luckiest' player here?",
+  "Who would {P} nominate for 'King/Queen of the Arena'?",
+  "Who is most likely to apologize after hitting {P}?",
+  "Who would {P} rather fight: 100 duck-sized versions of {P} or 1 giant {P}?",
+  "Who thinks {P} is the loudest person here?",
+  "Who would {P} let borrow their car (or most expensive item)?",
+  "Who is most likely to rage-quit if {P} wins?",
+  "Who would {P} choose to narrate their life?",
+  "Who thinks {P} is the most likely to become a celebrity?",
+  "Who would {P} share their last slice of pizza with?",
+  "Who thinks {P} is a 'traitor' in the making?"
+];
+
 const ALL_QUESTIONS = {
   friendship: QUESTIONS_FRIENDSHIP,
   personality: QUESTIONS_PERSONALITY,
-  love: QUESTIONS_LOVE
+  love: QUESTIONS_LOVE,
+  spice: QUESTIONS_SPICE
 };
 
 const REACTION_EMOJIS = ['😂','🔥','👏','🤯'];
@@ -929,8 +984,17 @@ async function hostStartGame() {
   const points=parseInt(document.getElementById('cfg-points').value);
   const category=document.getElementById('cfg-category').value;
   
+  const players = Object.values(gameState.players || {});
   const questionPool = ALL_QUESTIONS[category] || ALL_QUESTIONS.friendship;
-  const qs=shuffle(questionPool).slice(0,rounds);
+  let qs=shuffle(questionPool).slice(0,rounds);
+
+  // If spice mode, replace {P} with random player names
+  if (category === 'spice') {
+    qs = qs.map(q => {
+      const randomPlayer = players[Math.floor(Math.random() * players.length)];
+      return q.replace(/{P}/g, `<strong>${randomPlayer.name}</strong>`);
+    });
+  }
   
   const timerEnd=Date.now()+timer*1000;
   await roomRef.update({
@@ -964,7 +1028,7 @@ function renderGame(data) {
   document.getElementById('pb-sub').textContent='Who is most likely to...?';
   document.getElementById('q-num').textContent=round;
   document.getElementById('q-total').textContent=cfg.rounds;
-  document.getElementById('q-text').textContent=q||'Loading question...';
+  document.getElementById('q-text').innerHTML=q||'Loading question...';
 
   // Round pips
   const pipsEl=document.getElementById('round-pips');
