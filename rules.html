@@ -14,6 +14,8 @@
   --fire:#FF4500;--water:#00BFFF;--thunder:#FFD700;--earth:#7CBA3C;
   --wind:#A0E9FF;--shadow:#9B4DCA;--holy:#FFE566;--ice:#B0F0FF;
   --meteor:#FF6B6B;--barrier:#C0C0C0;--alchemy:#00FFB3;
+  --teamA:#FF4500;--teamA-bg:rgba(255,69,0,0.1);--teamA-border:rgba(255,69,0,0.35);
+  --teamB:#00BFFF;--teamB-bg:rgba(0,191,255,0.1);--teamB-border:rgba(0,191,255,0.35);
   --bg:#060912;--surface:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.09);
   --text:#EEF2FF;--muted:rgba(238,242,255,0.45);
 }
@@ -175,6 +177,103 @@ body::before{content:'';position:fixed;inset:0;
   .mechanic-grid{grid-template-columns:1fr 1fr;}
   .status-grid{grid-template-columns:1fr 1fr;}
 }
+
+/* ── TEAM BATTLE STYLES ── */
+.team-mode-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;}
+.badge-new{background:rgba(255,68,102,0.15);border:1px solid rgba(255,68,102,0.4);color:#ff4466;}
+.badge-team{background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);color:#FFD700;}
+
+/* Role cards */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.role-card{border-radius:18px;border:2px solid;padding:22px 20px;position:relative;overflow:hidden;transition:transform 0.2s;}
+.role-card:hover{transform:translateY(-4px);}
+.role-card.vanguard{background:linear-gradient(135deg,rgba(255,69,0,0.12),rgba(255,69,0,0.04));border-color:rgba(255,69,0,0.4);}
+.role-card.vanguard:hover{box-shadow:0 8px 32px rgba(255,69,0,0.2);}
+.role-card.sentinel{background:linear-gradient(135deg,rgba(0,191,255,0.12),rgba(0,191,255,0.04));border-color:rgba(0,191,255,0.4);}
+.role-card.sentinel:hover{box-shadow:0 8px 32px rgba(0,191,255,0.2);}
+.role-icon{font-size:40px;margin-bottom:10px;}
+.role-name{font-family:'Cinzel',serif;font-weight:900;font-size:18px;margin-bottom:4px;}
+.role-hp{font-size:13px;font-weight:700;margin-bottom:12px;}
+.role-stat{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12px;}
+.role-stat:last-child{border-bottom:none;}
+.role-stat-label{color:var(--muted);}
+.role-stat-val{font-weight:700;}
+.role-ult{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.5;}
+.role-ult.vanguard-ult{background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);}
+.role-ult.sentinel-ult{background:rgba(0,191,255,0.1);border:1px solid rgba(0,191,255,0.3);}
+.role-ult strong{display:block;font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;margin-bottom:3px;}
+
+/* Team visual */
+.team-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:20px;}
+.team-block{border-radius:16px;padding:16px;text-align:center;}
+.team-block.red{background:var(--teamA-bg);border:1.5px solid var(--teamA-border);}
+.team-block.blue{background:var(--teamB-bg);border:1.5px solid var(--teamB-border);}
+.team-block-name{font-family:'Cinzel',serif;font-size:15px;font-weight:900;margin-bottom:8px;}
+.team-block.red .team-block-name{color:var(--teamA);}
+.team-block.blue .team-block-name{color:var(--teamB);}
+.team-block-roles{font-size:12px;color:var(--muted);line-height:1.8;}
+.vs-badge{font-family:'Cinzel',serif;font-weight:900;font-size:20px;text-align:center;background:linear-gradient(135deg,var(--teamA),var(--teamB));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+/* Synergy table */
+.synergy-grid{display:flex;flex-direction:column;gap:8px;}
+.synergy-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--border);transition:border-color 0.2s;animation:fadeUp 0.5s ease both;}
+.synergy-row:hover{border-color:rgba(255,215,0,0.3);}
+.synergy-combo{display:flex;align-items:center;gap:6px;min-width:90px;flex-shrink:0;}
+.synergy-combo span{font-size:22px;}
+.synergy-plus{font-size:14px;color:var(--muted);font-weight:700;}
+.synergy-arrow{color:var(--muted);font-size:14px;flex-shrink:0;}
+.synergy-info{flex:1;}
+.synergy-name{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#FFD700;margin-bottom:2px;}
+.synergy-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+.synergy-badge{flex-shrink:0;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.syn-dmg{background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);color:#ff8888;}
+.syn-heal{background:rgba(68,255,136,0.12);border:1px solid rgba(68,255,136,0.3);color:#44FF88;}
+.syn-shield{background:rgba(124,186,60,0.15);border:1px solid rgba(124,186,60,0.3);color:#7CBA3C;}
+.syn-buff{background:rgba(155,77,202,0.15);border:1px solid rgba(155,77,202,0.3);color:#c77dff;}
+.syn-debuff{background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);color:#FFD700;}
+
+/* Resolve order timeline */
+.resolve-timeline{display:flex;flex-direction:column;gap:0;}
+.resolve-step{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05);animation:fadeUp 0.4s ease both;}
+.resolve-step:last-child{border-bottom:none;}
+.resolve-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:900;font-size:13px;flex-shrink:0;background:rgba(255,165,0,0.1);border:1.5px solid rgba(255,165,0,0.3);color:#FFD700;}
+.resolve-body h4{font-family:'Cinzel',serif;font-size:13px;font-weight:700;margin-bottom:3px;}
+.resolve-body p{font-size:12px;color:var(--muted);line-height:1.5;}
+.resolve-body .resolve-note{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.25);color:rgba(255,165,0,0.9);}
+
+/* Cover diagram */
+.cover-diagram{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;}
+.cover-row{display:flex;align-items:center;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.cover-row:last-child{border-bottom:none;}
+.cover-arrow{color:var(--muted);font-size:18px;}
+.cover-result{font-weight:700;}
+.cover-result.blocked{color:#66DDFF;}
+.cover-result.hit{color:#FF8888;}
+.cover-result.reduced{color:#FFD700;}
+
+/* Ult gauge visual */
+.ult-visual{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:12px;}
+.ult-label{font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;}
+.ult-bar-wrap{width:100%;height:12px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;margin-bottom:6px;}
+.ult-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#9B4DCA,#FFD700);}
+.ult-bar-fill.ready{background:linear-gradient(90deg,#FFD700,#FF6B00);animation:pulse 1.5s infinite;}
+.ult-sources{font-size:12px;color:var(--muted);line-height:1.7;}
+
+/* Win condition */
+.win-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.win-card{border-radius:14px;padding:16px;border:1px solid;text-align:center;}
+.win-card.team-win{background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.3);}
+.win-card.ffa-win{background:rgba(255,69,0,0.08);border-color:rgba(255,69,0,0.3);}
+.win-card-icon{font-size:32px;margin-bottom:8px;}
+.win-card-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;margin-bottom:6px;}
+.win-card-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+@media(max-width:600px){
+  .role-grid{grid-template-columns:1fr;}
+  .team-vs{grid-template-columns:1fr;}
+  .win-grid{grid-template-columns:1fr;}
+  .synergy-combo{min-width:70px;}
+}
 </style>
 </head>
 <body>
@@ -204,6 +303,13 @@ body::before{content:'';position:fixed;inset:0;
       <a href="#rare-cards" class="toc-item">⭐ Rare Cards</a>
       <a href="#advantages" class="toc-item">⚡ Advantages</a>
       <a href="#status-effects" class="toc-item">💫 Status Effects</a>
+      <a href="#team-battle" class="toc-item" style="background:rgba(255,165,0,0.1);border-color:rgba(255,165,0,0.35);color:#FFD700;">🛡️ 2v2 Team Battle</a>
+      <a href="#roles" class="toc-item">⚔️ Roles</a>
+      <a href="#cover" class="toc-item">🛡️ Cover</a>
+      <a href="#ultimate" class="toc-item">⚡ Ultimate</a>
+      <a href="#synergy" class="toc-item">💥 Synergy</a>
+      <a href="#resolve-order" class="toc-item">📋 Resolve Order</a>
+      <a href="#last-stand" class="toc-item">🔥 Last Stand</a>
     </div>
   </div>
 
@@ -495,6 +601,363 @@ body::before{content:'';position:fixed;inset:0;
   </div>
 
   
+  <!-- ══════════════════════════════════════ -->
+  <!-- 2v2 TEAM BATTLE                        -->
+  <!-- ══════════════════════════════════════ -->
+
+  <!-- SECTION: Team Battle Overview -->
+  <div class="section" id="team-battle">
+    <div class="section-label">
+      <div class="icon" style="background:linear-gradient(135deg,rgba(255,69,0,0.2),rgba(0,191,255,0.2));">🛡️</div>
+      <h2>2v2 Team Battle <span class="team-mode-badge badge-new" style="font-size:11px;margin-left:8px;">NEW MODE</span></h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:15px;color:var(--muted);margin-bottom:20px;line-height:1.7;">Team Battle adalah mode dimana 4 player dibagi menjadi 2 tim yang saling berhadapan. Berbeda dari Free For All, kamu tidak bermain sendiri — kamu memiliki teammate dan harus berkoordinasi untuk memenangkan pertempuran bersama.</p>
+
+    <!-- Team visual -->
+    <div class="team-vs">
+      <div class="team-block red">
+        <div class="team-block-name">🔥 Team Red</div>
+        <div class="team-block-roles">⚔️ Vanguard (120 HP)<br>🛡️ Sentinel (100 HP)</div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="team-block blue">
+        <div class="team-block-name">💧 Team Blue</div>
+        <div class="team-block-roles">⚔️ Vanguard (120 HP)<br>🛡️ Sentinel (100 HP)</div>
+      </div>
+    </div>
+
+    <!-- Setup steps -->
+    <div class="steps">
+      <div class="step" style="animation-delay:0.05s">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Pilih Mode di Home Screen</h3>
+          <p>Sebelum membuat room, host memilih <strong>🛡 2v2 Team</strong> di bagian Battle Mode. Player yang join akan otomatis masuk ke mode yang sama.</p>
+        </div>
+      </div>
+      <div class="step" style="animation-delay:0.1s">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Join Tim di Lobby</h3>
+          <p>Setiap player memilih tim: <strong style="color:var(--teamA)">🔥 Team Red (A)</strong> atau <strong style="color:var(--teamB)">💧 Team Blue (B)</strong>. Idealnya setiap tim punya 2 player.</p>
+          <div class="tag">⚠️ Minimal 1 player per tim untuk bisa start</div>
+        </div>
+      </div>
+      <div class="step" style="animation-delay:0.15s">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Pilih Role</h3>
+          <p>Setelah join tim, setiap player wajib memilih role: <strong>⚔️ Vanguard</strong> atau <strong>🛡️ Sentinel</strong>. Role menentukan HP, kemampuan spesial, dan Ultimate yang tersedia. Lihat section Roles di bawah untuk detail lengkap.</p>
+          <div class="tag">⚠️ Host tidak bisa start sebelum semua player punya role</div>
+        </div>
+      </div>
+      <div class="step" style="animation-delay:0.2s">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Battle Dimulai</h3>
+          <p>Game berjalan seperti biasa — pilih kartu, pilih target musuh, dan semua aksi diproses serentak setiap ronde. Yang berbeda: kamu hanya bisa menyerang player dari tim lawan, bukan teammatemu sendiri.</p>
+        </div>
+      </div>
+      <div class="step" style="animation-delay:0.25s">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Kondisi Menang</h3>
+          <p>Tim menang jika <strong>semua anggota tim lawan telah fallen</strong>. Player yang mati tetap spectate sampai game berakhir — tidak ada yang keluar lebih awal.</p>
+          <div class="tag">🏆 Tim terakhir dengan anggota hidup = pemenang</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Roles -->
+  <div class="section" id="roles">
+    <div class="section-label">
+      <div class="icon">⚔️</div>
+      <h2>Roles</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">Setiap player memilih satu role sebelum battle. Role mempengaruhi HP, cara bermain, dan Ultimate yang bisa digunakan.</p>
+
+    <div class="role-grid">
+      <!-- Vanguard -->
+      <div class="role-card vanguard">
+        <div class="role-icon">⚔️</div>
+        <div class="role-name" style="color:var(--fire)">Vanguard</div>
+        <div class="role-hp" style="color:var(--fire)">❤️ 120 HP</div>
+        <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Damage Dealer</span></div>
+        <div class="role-stat"><span class="role-stat-label">HP</span><span class="role-stat-val" style="color:var(--fire)">120 (lebih besar)</span></div>
+        <div class="role-stat"><span class="role-stat-label">Kemampuan Khusus</span><span class="role-stat-val">Elemental Burst</span></div>
+        <div class="role-stat"><span class="role-stat-label">Cover</span><span class="role-stat-val" style="color:var(--muted)">❌ Tidak bisa</span></div>
+        <div class="role-ult vanguard-ult">
+          <strong>💥 ULTIMATE — ELEMENTAL BURST</strong>
+          Mainkan kartu apapun dengan damage ×2. Meteor jadi 80 dmg ke semua musuh. Aktif saat gauge penuh 100%.
+        </div>
+      </div>
+      <!-- Sentinel -->
+      <div class="role-card sentinel">
+        <div class="role-icon">🛡️</div>
+        <div class="role-name" style="color:var(--water)">Sentinel</div>
+        <div class="role-hp" style="color:var(--water)">❤️ 100 HP</div>
+        <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Support / Tank</span></div>
+        <div class="role-stat"><span class="role-stat-label">HP</span><span class="role-stat-val" style="color:var(--water)">100 (standar)</span></div>
+        <div class="role-stat"><span class="role-stat-label">Kemampuan Khusus</span><span class="role-stat-val">Cover + Aegis</span></div>
+        <div class="role-stat"><span class="role-stat-label">Cover</span><span class="role-stat-val" style="color:#44FF88">✅ Bisa setiap ronde</span></div>
+        <div class="role-ult sentinel-ult">
+          <strong>✨ ULTIMATE — AEGIS</strong>
+          Seluruh tim (Sentinel + Vanguard) mendapat Immune 1 ronde + heal 20 HP masing-masing. Submit langsung tanpa pilih kartu.
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.2);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.7;">
+      💡 <strong style="color:var(--text)">Tips Pemilihan Role:</strong> Untuk tim yang solid, idealnya satu Vanguard + satu Sentinel. Vanguard menghajar, Sentinel melindungi dan support. Dua Vanguard lebih agresif tapi rentan. Dua Sentinel sangat defensif tapi damage rendah.
+    </div>
+  </div>
+
+  <!-- SECTION: Cover -->
+  <div class="section" id="cover">
+    <div class="section-label">
+      <div class="icon">🛡️</div>
+      <h2>Cover — Sentinel Exclusive</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.7;">Cover adalah kemampuan eksklusif Sentinel. Alih-alih menyerang, Sentinel bisa memilih untuk <strong style="color:var(--text)">melindungi teammate</strong> ronde itu. Jika musuh menyerang teammate yang di-cover, damage dialihkan ke Sentinel dengan pengurangan 30%.</p>
+
+    <!-- Cover diagram -->
+    <div class="cover-diagram">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">CARA KERJA COVER</div>
+      <div class="cover-row">
+        <span>😈 Musuh menyerang</span>
+        <span class="cover-arrow">→</span>
+        <span>⚔️ Vanguard (target asli)</span>
+        <span class="cover-arrow">→</span>
+        <span class="cover-result blocked">🛡️ Dialihkan ke Sentinel!</span>
+      </div>
+      <div class="cover-row">
+        <span style="color:var(--muted);font-size:12px;">Damage asli: 30 HP</span>
+        <span class="cover-arrow">→</span>
+        <span style="color:var(--muted);font-size:12px;">×0.7 (30% reduction)</span>
+        <span class="cover-arrow">→</span>
+        <span class="cover-result reduced">Sentinel terima 21 HP</span>
+      </div>
+      <div class="cover-row">
+        <span>😈 Musuh menyerang</span>
+        <span class="cover-arrow">→</span>
+        <span>🛡️ Sentinel langsung</span>
+        <span class="cover-arrow">→</span>
+        <span class="cover-result hit">Sentinel tetap kena normal</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="tip" style="animation-delay:0.05s">
+        <div class="tip-icon">✅</div>
+        <div class="tip-text"><strong>Cover aktif:</strong> Sentinel tidak bisa menyerang ronde itu. Aksinya langsung terkunci sebagai Cover — tidak perlu pilih kartu.</div>
+      </div>
+      <div class="tip" style="animation-delay:0.1s">
+        <div class="tip-icon">⚠️</div>
+        <div class="tip-text"><strong>Cover bisa salah sasaran:</strong> Sentinel tidak tahu musuh akan menyerang siapa. Kalau musuh justru menyerang Sentinel langsung, Cover tidak berguna ronde itu.</div>
+      </div>
+      <div class="tip" style="animation-delay:0.15s">
+        <div class="tip-icon">🛡️</div>
+        <div class="tip-text"><strong>Shield tetap berlaku:</strong> Jika Sentinel punya Shield aktif (dari Earth), shield menyerap damage sebelum HP Sentinel berkurang.</div>
+      </div>
+      <div class="tip" style="animation-delay:0.2s">
+        <div class="tip-icon">☄️</div>
+        <div class="tip-text"><strong>Meteor juga bisa di-cover:</strong> Jika musuh pakai Meteor, cover tetap mengalihkan damage ke Sentinel untuk target yang dilindungi.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Ultimate -->
+  <div class="section" id="ultimate">
+    <div class="section-label">
+      <div class="icon">⚡</div>
+      <h2>Ultimate Gauge</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.7;">Setiap player di mode Team memiliki Ultimate Gauge (0–100%). Gauge naik setiap ronde saat melakukan aksi. Saat mencapai 100%, Ultimate siap digunakan.</p>
+
+    <!-- Gauge visual -->
+    <div class="ult-visual">
+      <div class="ult-label">ULTIMATE GAUGE</div>
+      <div class="ult-bar-wrap"><div class="ult-bar-fill" style="width:65%;"></div></div>
+      <div style="font-size:12px;color:var(--muted);">65% — terus bertarung untuk mengisi!</div>
+    </div>
+    <div class="ult-visual" style="margin-top:10px;">
+      <div class="ult-label">SIAP DIGUNAKAN!</div>
+      <div class="ult-bar-wrap"><div class="ult-bar-fill ready" style="width:100%;"></div></div>
+      <div style="font-size:12px;color:#FFD700;font-weight:700;">100% — tekan tombol Ultimate sekarang!</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:16px 0;">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">CARA MENGISI ULTIMATE</div>
+      <div class="ult-sources">
+        ⚡ Setiap ronde melakukan aksi: <strong style="color:var(--text)">+15 poin</strong><br>
+        💥 Bonus berdasarkan damage dealt: <strong style="color:var(--text)">+1 poin per 5 dmg (max +20)</strong><br>
+        📊 Total max per ronde: <strong style="color:var(--text)">~35 poin → penuh dalam ~3 ronde aktif</strong><br>
+        🔄 Setelah digunakan: <strong style="color:var(--text)">reset ke 0%</strong>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;">
+      <div style="background:rgba(255,69,0,0.08);border:1.5px solid rgba(255,69,0,0.3);border-radius:16px;padding:18px;">
+        <div style="font-size:28px;margin-bottom:8px;">💥</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:var(--fire);margin-bottom:6px;">Elemental Burst</div>
+        <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);margin-bottom:8px;">VANGUARD ONLY</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">Pilih kartu apapun → damage kartu itu <strong style="color:var(--text)">×2</strong>. Berlaku untuk semua elemen termasuk Meteor (80 dmg ke semua musuh!).</div>
+      </div>
+      <div style="background:rgba(0,191,255,0.08);border:1.5px solid rgba(0,191,255,0.3);border-radius:16px;padding:18px;">
+        <div style="font-size:28px;margin-bottom:8px;">✨</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:14px;color:var(--water);margin-bottom:6px;">Aegis</div>
+        <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);margin-bottom:8px;">SENTINEL ONLY</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">Seluruh tim dapat <strong style="color:var(--text)">Immune 1 ronde + heal 20 HP</strong> masing-masing. Submit otomatis tanpa pilih kartu — efeknya langsung ke kedua teammate.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Synergy -->
+  <div class="section" id="synergy">
+    <div class="section-label">
+      <div class="icon">💥</div>
+      <h2>Synergy</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:6px;line-height:1.7;">Synergy aktif jika <strong style="color:var(--text)">kedua teammate memainkan elemen yang cocok</strong> di ronde yang sama — tidak peduli siapa targetnya. Tidak perlu koordinasi eksplisit, murni dari kecocokan pilihan kartu!</p>
+    <p style="font-size:13px;color:rgba(255,215,0,0.7);margin-bottom:20px;">💡 Kamu tidak tahu kartu apa yang dipilih teammate sebelum reveal — ini yang membuat synergy terasa seperti kejutan atau reward dari strategi yang terencana.</p>
+
+    <div class="synergy-grid">
+      <div class="synergy-row" style="animation-delay:0.05s">
+        <div class="synergy-combo"><span>🔥</span><span class="synergy-plus">+</span><span>🌪️</span></div>
+        <div class="synergy-arrow">→</div>
+        <div class="synergy-info">
+          <div class="synergy-name">🌪️ Firestorm</div>
+          <div class="synergy-desc">45 damage langsung ke <strong>kedua musuh</strong> sekaligus. Efek terkuat untuk tekanan AOE.</div>
+        </div>
+        <span class="synergy-badge syn-dmg">AOE 45 dmg</span>
+      </div>
+      <div class="synergy-row" style="animation-delay:0.08s">
+        <div class="synergy-combo"><span>💧</span><span class="synergy-plus">+</span><span>✨</span></div>
+        <div class="synergy-arrow">→</div>
+        <div class="synergy-info">
+          <div class="synergy-name">💫 Sanctuary</div>
+          <div class="synergy-desc">Heal 25 HP ke <strong>kedua teammate</strong>. Efek terbaik saat tim sedang tertekan.</div>
+        </div>
+        <span class="synergy-badge syn-heal">Team +25 HP</span>
+      </div>
+      <div class="synergy-row" style="animation-delay:0.11s">
+        <div class="synergy-combo"><span>⚡</span><span class="synergy-plus">+</span><span>🌑</span></div>
+        <div class="synergy-arrow">→</div>
+        <div class="synergy-info">
+          <div class="synergy-name">⚡ Void Storm</div>
+          <div class="synergy-desc">Shadow ronde itu damage <strong>×3</strong> bukan ×2. Combo mematikan kalau target sudah kena debuff.</div>
+        </div>
+        <span class="synergy-badge syn-buff">Shadow ×3</span>
+      </div>
+      <div class="synergy-row" style="animation-delay:0.14s">
+        <div class="synergy-combo"><span>🌿</span><span class="synergy-plus">+</span><span>🌿</span></div>
+        <div class="synergy-arrow">→</div>
+        <div class="synergy-info">
+          <div class="synergy-name">🏔️ Fortress</div>
+          <div class="synergy-desc">+40 shield ke <strong>kedua teammate</strong>. Dikombinasikan sebelum ronde damage besar.</div>
+        </div>
+        <span class="synergy-badge syn-shield">Team +40 shield</span>
+      </div>
+      <div class="synergy-row" style="animation-delay:0.17s">
+        <div class="synergy-combo"><span>🔥</span><span class="synergy-plus">+</span><span>🔥</span></div>
+        <div class="synergy-arrow">→</div>
+        <div class="synergy-info">
+          <div class="synergy-name">🔥 Inferno</div>
+          <div class="synergy-desc">Burn musuh yang terkena diperpanjang jadi <strong>3 ronde</strong> (normal 2 ronde) — total 15 damage burn.</div>
+        </div>
+        <span class="synergy-badge syn-debuff">Burn 3 ronde</span>
+      </div>
+      <div class="synergy-row" style="animation-delay:0.2s">
+        <div class="synergy-combo"><span>💧</span><span class="synergy-plus">+</span><span>💧</span></div>
+        <div class="synergy-arrow">→</div>
+        <div class="synergy-info">
+          <div class="synergy-name">🌊 Tidal Wave</div>
+          <div class="synergy-desc">Heal 20 HP ke <strong>kedua teammate</strong>. Lebih ringan dari Sanctuary, lebih mudah di-trigger.</div>
+        </div>
+        <span class="synergy-badge syn-heal">Team +20 HP</span>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.2);border-radius:14px;padding:14px 18px;margin-top:16px;font-size:13px;color:var(--muted);line-height:1.7;">
+      ⚠️ <strong style="color:var(--text)">Catatan:</strong> Synergy <em>tidak aktif</em> jika salah satu atau kedua player memilih Cover atau Aegis (Ultimate Sentinel) — karena kartu tersebut bukan elemen biasa.
+    </div>
+  </div>
+
+ 
+
+  <!-- SECTION: Last Stand -->
+  <div class="section" id="last-stand">
+    <div class="section-label">
+      <div class="icon">⚡</div>
+      <h2>Last Stand</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.7;">Last Stand adalah <strong style="color:var(--text)">mekanik comeback</strong> yang aktif ketika seorang player kehilangan teammatnya. Sendirian bukan berarti kalah — dengan Last Stand, kamu punya fighting chance untuk membalik keadaan!</p>
+
+    <div style="background:linear-gradient(135deg,rgba(255,165,0,0.1),rgba(255,69,0,0.08));border:1.5px solid rgba(255,165,0,0.3);border-radius:18px;padding:22px;margin-bottom:20px;">
+      <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#FFD700;margin-bottom:12px;">⚡ Saat Last Stand aktif pertama kali:</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted);">
+        <div>🃏 <strong style="color:var(--text)">+2 kartu bonus</strong> langsung masuk ke tangan</div>
+        <div>⚡ <strong style="color:var(--text)">+30 poin Ultimate</strong> bonus langsung (dari kode sebelumnya)</div>
+        <div>🌟 Badge <strong style="color:#FFD700">"⚡ LAST STAND"</strong> berkedip di arena card</div>
+        <div>💪 Setiap ronde berikutnya di bawah 30% HP: <strong style="color:var(--text)">+1 kartu bonus</strong> (comeback mechanic biasa)</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="tip" style="animation-delay:0.05s">
+        <div class="tip-icon">🎯</div>
+        <div class="tip-text"><strong>Fokus target:</strong> Jika musuh dalam Last Stand, mereka punya lebih banyak kartu dan sangat berbahaya. Prioritaskan menyerang mereka sebelum terlambat.</div>
+      </div>
+      <div class="tip" style="animation-delay:0.1s">
+        <div class="tip-icon">🛡️</div>
+        <div class="tip-text"><strong>Jangan underestimate:</strong> Player Last Stand dengan tangan penuh kartu bisa melancarkan synergy sendirian tidak berlaku, tapi combo element advantage + burst bisa sangat mematikan.</div>
+      </div>
+      <div class="tip" style="animation-delay:0.15s">
+        <div class="tip-icon">⚡</div>
+        <div class="tip-text"><strong>Ultimate jadi kunci:</strong> Dengan bonus +30 Ultimate charge saat last stand, Vanguard bisa langsung mendekati ultimate untuk Elemental Burst.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: Win Condition Summary -->
+  <div class="section" id="win-condition">
+    <div class="section-label">
+      <div class="icon">🏆</div>
+      <h2>Kondisi Menang</h2>
+      <div class="line"></div>
+    </div>
+    <div class="win-grid">
+      <div class="win-card team-win">
+        <div class="win-card-icon">🛡️</div>
+        <div class="win-card-title" style="color:#FFD700;">2v2 Team Battle</div>
+        <div class="win-card-desc">Tim menang jika <strong>semua anggota tim lawan fallen</strong>. Cukup satu anggota tim yang masih hidup untuk memenangkan pertandingan. Player yang mati tetap spectate sampai akhir.</div>
+      </div>
+      <div class="win-card ffa-win">
+        <div class="win-card-icon">⚔️</div>
+        <div class="win-card-title" style="color:var(--fire);">Free For All</div>
+        <div class="win-card-desc">Player terakhir yang masih hidup menang. Semua player lain menjadi spectator setelah fallen. Last man standing = pemenang.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">END SCREEN — TEAM MODE</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+        🏆 Tim pemenang ditampilkan dengan highlight emas<br>
+        📊 Leaderboard dipisah per tim (Tim Menang vs Tim Kalah)<br>
+        🎭 Setiap player tampil dengan role badge (⚔️ Vanguard / 🛡️ Sentinel)<br>
+        ✅ Status hidup/fallen ditampilkan per player<br>
+        📈 Battle stats: Top Damage, Most Tanky, Most Kills, Survivor
+      </div>
+    </div>
+  </div>
+
   <!-- BACK TO TOP -->
   <div class="back-top">
     <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ Back to Top</a>
@@ -532,7 +995,7 @@ loop();
 const observer = new IntersectionObserver(entries=>{
   entries.forEach(e=>{ if(e.isIntersecting) e.target.style.animationPlayState='running'; });
 },{threshold:0.1});
-document.querySelectorAll('.el-card,.rare-card,.mechanic-card,.status-card,.tip,.step,.lb-row').forEach(el=>{
+document.querySelectorAll('.el-card,.rare-card,.mechanic-card,.status-card,.tip,.step,.lb-row,.synergy-row,.resolve-step,.role-card,.win-card').forEach(el=>{
   el.style.animationPlayState='paused'; observer.observe(el);
 });
 </script>
