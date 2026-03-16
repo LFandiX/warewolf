@@ -1,0 +1,2457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<head>
+  <title>Elemental Duel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+</head>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+:root {
+  --fire:#FF4500; --water:#00BFFF; --thunder:#FFD700; --earth:#7CBA3C;
+  --wind:#A0E9FF; --shadow:#9B4DCA; --holy:#FFE566; --ice:#B0F0FF;
+  --bg:#060912; --surface:rgba(255,255,255,0.05); --border:rgba(255,255,255,0.1);
+  --text:#EEF2FF; --muted:rgba(238,242,255,0.45);
+  --danger:#FF4444; --success:#44FF88;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 15% 20%,rgba(255,69,0,0.08) 0%,transparent 50%),
+             radial-gradient(ellipse at 85% 80%,rgba(0,191,255,0.08) 0%,transparent 50%),
+             radial-gradient(ellipse at 50% 50%,rgba(155,77,202,0.05) 0%,transparent 60%);
+  pointer-events:none;z-index:0;}
+#app{position:relative;z-index:1;min-height:100vh;}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.screen.active{display:flex;}
+
+/* ── TYPOGRAPHY ── */
+.cinzel{font-family:'Cinzel',serif;}
+h1,h2{font-family:'Cinzel',serif;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+
+/* ── INPUTS ── */
+input,select{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:16px;padding:12px 16px;width:100%;outline:none;transition:all 0.2s;}
+input:focus,select:focus{border-color:rgba(255,165,0,0.6);box-shadow:0 0 16px rgba(255,165,0,0.15);}
+select option{background:#0d1020;}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:14px;cursor:pointer;font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:1px;padding:14px 28px;width:100%;transition:all 0.2s;position:relative;overflow:hidden;}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:scale(0.97);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.btn-primary{background:linear-gradient(135deg,#FF6B00,#FF4500);color:#fff;box-shadow:0 6px 20px rgba(255,69,0,0.35);}
+.btn-primary:hover{box-shadow:0 10px 30px rgba(255,69,0,0.5);}
+.btn-secondary{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:var(--text);}
+.btn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,0.2);color:var(--muted);padding:10px 20px;font-size:12px;}
+
+/* ── ELEMENT COLORS ── */
+.el-fire{color:var(--fire);} .el-water{color:var(--water);} .el-thunder{color:var(--thunder);}
+.el-earth{color:var(--earth);} .el-wind{color:var(--wind);} .el-shadow{color:var(--shadow);}
+.el-holy{color:var(--holy);} .el-ice{color:var(--ice);}
+.bg-fire{background:rgba(255,69,0,0.15);border-color:rgba(255,69,0,0.4);}
+.bg-water{background:rgba(0,191,255,0.15);border-color:rgba(0,191,255,0.4);}
+.bg-thunder{background:rgba(255,215,0,0.15);border-color:rgba(255,215,0,0.4);}
+.bg-earth{background:rgba(124,186,60,0.15);border-color:rgba(124,186,60,0.4);}
+.bg-wind{background:rgba(160,233,255,0.12);border-color:rgba(160,233,255,0.35);}
+.bg-shadow{background:rgba(155,77,202,0.15);border-color:rgba(155,77,202,0.4);}
+.bg-holy{background:rgba(255,229,102,0.12);border-color:rgba(255,229,102,0.4);}
+.bg-ice{background:rgba(176,240,255,0.12);border-color:rgba(176,240,255,0.35);}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.6) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 10px currentColor}50%{box-shadow:0 0 30px currentColor,0 0 60px currentColor}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes hpBar{from{width:var(--from)}to{width:var(--to)}}
+@keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.4)}}
+@keyframes revealCard{0%{transform:rotateY(90deg) scale(0.8);opacity:0}100%{transform:rotateY(0deg) scale(1);opacity:1}}
+@keyframes comboFlash{0%,100%{background:transparent}50%{background:rgba(255,215,0,0.15)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes growWidth{from{width:0}to{width:200px}}
+@keyframes bridgeContentIn{from{opacity:0;transform:scale(0.8) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.anim-fade{animation:fadeUp 0.5s ease both;}
+.anim-pop{animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;}
+
+/* ── BRIDGE SCREEN ── */
+#screen-bridge{position:fixed;inset:0;z-index:2000;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
+#screen-bridge.active{display:flex;}
+.bridge-door{position:absolute;left:0;width:100%;height:50%;background:#0a0e1a;z-index:2001;transition:transform 0.8s cubic-bezier(0.7,0,0.3,1);}
+.bridge-door.top{top:0;border-bottom:2px solid var(--fire);box-shadow:0 10px 30px rgba(255,69,0,0.2);}
+.bridge-door.bottom{bottom:0;border-top:2px solid var(--water);box-shadow:0 -10px 30px rgba(0,191,255,0.2);}
+.bridge-open .bridge-door.top{transform:translateY(-100%);}
+.bridge-open .bridge-door.bottom{transform:translateY(100%);}
+.bridge-content{position:relative;z-index:2002;text-align:center;animation:bridgeContentIn 0.8s cubic-bezier(0.175,0.885,0.32,1.27) both;transition:opacity 0.4s ease-out;}
+.bridge-open .bridge-content{opacity:0;}
+.bridge-line{height:2px;background:linear-gradient(90deg,transparent,var(--fire),var(--water),transparent);margin:24px auto;animation:growWidth 1.2s ease-in-out forwards 0.4s;width:0;}
+.bridge-bg-icons{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.05;font-size:180px;pointer-events:none;animation:spin 20s linear infinite;}
+
+/* ── ROOM CODE ── */
+.room-code{font-family:'Cinzel',serif;font-weight:900;font-size:48px;letter-spacing:6px;
+  background:linear-gradient(135deg,#FFD700,#FF6B00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(255,165,0,0.4));}
+
+/* ── PLAYER CHIPS ── */
+.player-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:40px;padding:8px 16px;font-weight:700;font-size:14px;animation:popIn 0.3s ease both;}
+.player-chip.host{border-color:rgba(255,215,0,0.5);background:rgba(255,215,0,0.08);}
+
+/* ── HEALTH BAR ── */
+.hp-wrap{width:100%;height:10px;background:rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;}
+.hp-bar{height:100%;border-radius:10px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);}
+.hp-bar.high{background:linear-gradient(90deg,#44FF88,#00E676);}
+.hp-bar.mid{background:linear-gradient(90deg,#FFD700,#FF9800);}
+.hp-bar.low{background:linear-gradient(90deg,#FF4444,#FF0000);animation:pulse 1s infinite;}
+
+/* ── PLAYER ARENA CARD ── */
+.arena-player{background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:16px;transition:all 0.3s;position:relative;overflow:hidden;}
+.arena-player.dead{opacity:0.4;filter:grayscale(0.8);}
+.arena-player.targeted{border-color:rgba(255,68,68,0.7);box-shadow:0 0 20px rgba(255,68,68,0.3);animation:shake 0.4s ease;}
+.arena-player.selected-target{border-color:#FF4444;background:rgba(255,68,68,0.1);box-shadow:0 0 24px rgba(255,68,68,0.4);}
+.arena-player.self-card{border-color:rgba(255,165,0,0.4);background:rgba(255,165,0,0.05);}
+.dead-banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);font-family:'Cinzel',serif;font-weight:900;font-size:18px;color:rgba(255,68,68,0.8);letter-spacing:2px;backdrop-filter:blur(2px);}
+.spectate-banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);font-family:'Cinzel',serif;font-weight:900;font-size:14px;color:rgba(100,150,255,0.9);letter-spacing:2px;backdrop-filter:blur(2px);}
+
+/* ── ELEMENT CARD ── */
+.el-card{border-radius:16px;border:2px solid;padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;user-select:none;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+.el-card:hover:not(.disabled):not(.used){transform:translateY(-6px) scale(1.04);z-index:2;}
+.el-card.selected{transform:translateY(-12px) scale(1.06);z-index:3;box-shadow:0 12px 32px rgba(255,165,0,0.4);border-color:#FFD700 !important;}
+.el-card.disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.el-card.used{opacity:0.3;cursor:not-allowed;}
+.el-card .el-icon{font-size:32px;line-height:1;}
+.el-card .el-name{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:0.5px;}
+.el-card .el-dmg{font-size:11px;color:var(--muted);}
+.el-card.rare{animation:glow 2s ease-in-out infinite;}
+
+/* Cards grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;}
+
+/* ── STATUS EFFECTS ── */
+.status-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.status-burn{background:rgba(255,69,0,0.2);border:1px solid rgba(255,69,0,0.4);color:#FF6B00;}
+.status-stun{background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4);color:#FFD700;}
+.status-freeze{background:rgba(176,240,255,0.2);border:1px solid rgba(176,240,255,0.4);color:#B0F0FF;}
+.status-shield{background:rgba(124,186,60,0.2);border:1px solid rgba(124,186,60,0.4);color:#7CBA3C;}
+.status-immune{background:rgba(255,229,102,0.2);border:1px solid rgba(255,229,102,0.4);color:#FFE566;}
+
+/* ── COMBAT LOG ── */
+.combat-log{height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:8px;}
+.combat-log::-webkit-scrollbar{width:3px;}
+.combat-log::-webkit-scrollbar-thumb{background:rgba(255,165,0,0.3);border-radius:2px;}
+.log-entry{font-size:13px;line-height:1.4;animation:slideIn 0.2s ease both;}
+.log-entry.system{color:rgba(255,215,0,0.8);font-style:italic;}
+.log-entry.dmg{color:#FF8888;}
+.log-entry.heal{color:#88FF88;}
+.log-entry.combo{color:#FFD700;font-weight:700;}
+.log-entry.death{color:rgba(255,68,68,0.9);font-weight:700;}
+
+/* ── PHASE BANNER ── */
+.phase-banner{position:sticky;top:0;z-index:20;background:rgba(6,9,18,0.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.08);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+
+/* ── TIMER ── */
+.timer-circle{width:64px;height:64px;position:relative;flex-shrink:0;}
+.timer-circle svg{transform:rotate(-90deg);}
+.timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:900;font-size:20px;}
+
+/* ── REVEAL OVERLAY ── */
+#reveal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;backdrop-filter:blur(10px);}
+#reveal-overlay.active{display:flex;}
+#reveal-cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:flex-start;max-width:720px;padding:0 16px;}
+.reveal-card{animation:revealCard 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;border-radius:16px;padding:16px 18px;text-align:center;min-width:120px;}
+
+/* ── DAMAGE NUMBERS ── */
+.dmg-number{position:fixed;font-family:'Cinzel',serif;font-weight:900;font-size:28px;pointer-events:none;z-index:200;animation:dmgFloat 1.2s ease forwards;}
+
+/* ── LEADERBOARD ── */
+.lb-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);animation:slideIn 0.4s ease both;}
+.lb-row.winner{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.4);}
+.lb-row.second{background:rgba(192,192,192,0.08);border-color:rgba(192,192,192,0.3);}
+.lb-row.third{background:rgba(205,127,50,0.08);border-color:rgba(205,127,50,0.3);}
+
+/* ── DIVIDER ── */
+.div{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,165,0,0.3),transparent);margin:10px 0;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(10,14,28,0.97);border:1px solid rgba(255,165,0,0.4);border-radius:14px;padding:12px 24px;font-weight:700;font-size:14px;color:var(--text);box-shadow:0 8px 30px rgba(0,0,0,0.6);z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+
+/* ── SPECTATE BADGE ── */
+.spectate-badge{background:rgba(100,150,255,0.15);border:1px solid rgba(100,150,255,0.4);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;color:rgba(150,180,255,0.9);display:flex;align-items:center;gap:6px;}
+
+/* Config */
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
+.cfg-row label{font-size:14px;font-weight:600;}
+.cfg-row select{width:auto;padding:8px 12px;font-size:13px;}
+
+@media(max-width:500px){
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
+  .el-card{min-height:90px;padding:10px 6px;}
+  .el-card .el-icon{font-size:26px;}
+}
+
+/* ── TEAM BATTLE STYLES ── */
+:root{
+  --teamA:#FF4500; --teamA-bg:rgba(255,69,0,0.12); --teamA-border:rgba(255,69,0,0.4);
+  --teamB:#00BFFF; --teamB-bg:rgba(0,191,255,0.12); --teamB-border:rgba(0,191,255,0.4);
+}
+/* Mode selector on home */
+.mode-tabs{display:flex;gap:8px;width:100%;}
+.mode-tab{flex:1;padding:12px 8px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--muted);}
+.mode-tab.active{border-color:rgba(255,165,0,0.6);background:rgba(255,165,0,0.1);color:#FFD700;}
+.mode-tab:hover{border-color:rgba(255,165,0,0.4);color:var(--text);}
+
+/* Team arena layout */
+.team-arena{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:start;}
+.team-side{display:flex;flex-direction:column;gap:8px;}
+.team-header{text-align:center;padding:6px 12px;border-radius:10px;font-family:'Cinzel',serif;font-size:11px;font-weight:900;letter-spacing:2px;}
+.team-header.team-a{background:var(--teamA-bg);border:1px solid var(--teamA-border);color:var(--teamA);}
+.team-header.team-b{background:var(--teamB-bg);border:1px solid var(--teamB-border);color:var(--teamB);}
+.vs-divider{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 4px;}
+.vs-text{font-family:'Cinzel',serif;font-weight:900;font-size:18px;background:linear-gradient(135deg,var(--teamA),var(--teamB));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.vs-line{width:2px;height:40px;background:linear-gradient(180deg,var(--teamA),var(--teamB));opacity:0.4;}
+
+/* Team player card */
+.arena-player.team-a{border-color:var(--teamA-border);}
+.arena-player.team-b{border-color:var(--teamB-border);}
+.arena-player.last-stand{animation:pulse 1s infinite;box-shadow:0 0 20px rgba(255,215,0,0.4);}
+.arena-player.team-a.last-stand{box-shadow:0 0 20px rgba(255,69,0,0.5);}
+.arena-player.team-b.last-stand{box-shadow:0 0 20px rgba(0,191,255,0.5);}
+.last-stand-badge{position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#FFD700,#FF6B00);border-radius:20px;padding:2px 7px;font-size:10px;font-weight:800;color:#000;font-family:'Cinzel',serif;letter-spacing:0.5px;}
+
+/* Role badge */
+.role-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.5px;}
+.role-vanguard{background:rgba(255,69,0,0.15);border:1px solid rgba(255,69,0,0.4);color:#FF8855;}
+.role-sentinel{background:rgba(0,191,255,0.12);border:1px solid rgba(0,191,255,0.35);color:#66DDFF;}
+
+/* Ultimate gauge */
+.ult-wrap{width:100%;height:6px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;margin-top:4px;}
+.ult-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#9B4DCA,#FFD700);transition:width 0.6s ease;}
+.ult-ready{animation:glow 1s ease-in-out infinite;background:linear-gradient(90deg,#FFD700,#FF6B00);}
+
+/* Synergy burst notification */
+@keyframes synergyPop{0%{opacity:0;transform:scale(0.5) translateY(20px)}60%{transform:scale(1.1) translateY(-5px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.synergy-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;background:rgba(0,0,0,0.9);border:2px solid #FFD700;border-radius:20px;padding:16px 32px;text-align:center;pointer-events:none;animation:synergyPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;}
+
+/* ── 4 ROLE CARDS ── */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.role-card{border-radius:14px;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;padding:12px 8px;transition:all 0.2s;position:relative;}
+.role-card:hover{transform:translateY(-2px);border-color:rgba(255,165,0,0.4);}
+.role-card.selected{border-color:#FFD700;background:rgba(255,215,0,0.1);box-shadow:0 0 16px rgba(255,215,0,0.2);}
+.role-card .r-icon{font-size:26px;line-height:1;margin-bottom:4px;}
+.role-card .r-name{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;}
+.role-card .r-hp{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.role-card .r-ult{font-size:9px;color:rgba(255,215,0,0.7);line-height:1.3;}
+/* Role-specific accent colors */
+.role-card.r-strawhat{border-color:rgba(255,69,0,0.3);}
+.role-card.r-strawhat.selected{border-color:#FF4500;background:rgba(255,69,0,0.1);box-shadow:0 0 16px rgba(255,69,0,0.3);}
+.role-card.r-flowerscholar{border-color:rgba(0,191,255,0.3);}
+.role-card.r-flowerscholar.selected{border-color:#00BFFF;background:rgba(0,191,255,0.1);box-shadow:0 0 16px rgba(0,191,255,0.2);}
+.role-card.r-blademaster{border-color:rgba(255,215,0,0.3);}
+.role-card.r-blademaster.selected{border-color:#FFD700;background:rgba(255,215,0,0.1);box-shadow:0 0 16px rgba(255,215,0,0.25);}
+.role-card.r-catburglar{border-color:rgba(0,255,136,0.3);}
+.role-card.r-catburglar.selected{border-color:#00FF88;background:rgba(0,255,136,0.08);box-shadow:0 0 16px rgba(0,255,136,0.2);}
+/* Role badge update */
+.role-strawhat{background:rgba(255,69,0,0.15);border:1px solid rgba(255,69,0,0.4);color:#FF8855;}
+.role-flowerscholar{background:rgba(0,191,255,0.12);border:1px solid rgba(0,191,255,0.35);color:#66DDFF;}
+.role-blademaster{background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#FFD700;}
+.role-catburglar{background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.35);color:#00FF88;}
+/* FFA role select section */
+#ffa-role-section{margin-top:10px;}
+.ffa-role-header{font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;}background:rgba(0,191,255,0.1);border:1.5px solid rgba(0,191,255,0.4);border-radius:14px;color:#66DDFF;font-family:'Cinzel',serif;font-size:13px;font-weight:700;padding:12px;width:100%;cursor:pointer;transition:all 0.2s;letter-spacing:1px;}
+.cover-btn:hover{background:rgba(0,191,255,0.2);transform:translateY(-2px);}
+.cover-btn.active{background:rgba(0,191,255,0.25);border-color:#00BFFF;box-shadow:0 0 16px rgba(0,191,255,0.3);}
+.cover-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;}
+
+/* Ultimate button */
+.ult-btn{background:linear-gradient(135deg,rgba(155,77,202,0.2),rgba(255,215,0,0.1));border:1.5px solid rgba(155,77,202,0.5);border-radius:14px;color:#DDC;font-family:'Cinzel',serif;font-size:12px;font-weight:700;padding:10px;width:100%;cursor:pointer;transition:all 0.2s;letter-spacing:1px;margin-top:6px;}
+.ult-btn.ready{background:linear-gradient(135deg,rgba(255,215,0,0.25),rgba(255,107,0,0.15));border-color:#FFD700;color:#FFD700;animation:glow 1.5s infinite;}
+.ult-btn:hover.ready{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,215,0,0.3);}
+.ult-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* Team lobby assign */
+.team-assign{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
+.team-slot{border-radius:16px;padding:14px;border:1.5px solid;text-align:center;}
+.team-slot.team-a{background:var(--teamA-bg);border-color:var(--teamA-border);}
+.team-slot.team-b{background:var(--teamB-bg);border-color:var(--teamB-border);}
+.team-slot h4{font-family:'Cinzel',serif;font-size:12px;font-weight:700;margin-bottom:8px;}
+.team-slot h4.a{color:var(--teamA);}
+.team-slot h4.b{color:var(--teamB);}
+.team-member{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.04);margin-bottom:4px;font-size:12px;font-weight:600;}
+.log-entry.synergy{color:#FFD700;font-weight:900;font-size:14px;}
+.log-entry.cover{color:#66DDFF;font-weight:700;}
+.log-entry.laststand{color:#FF8800;font-weight:900;}
+.log-entry.aura{color:#B088FF;font-weight:700;}
+.log-entry.cursed{color:#FF6EFF;font-weight:700;}
+
+/* ── CURSED FRUIT CARDS ── */
+:root{
+  --embersoul:#FF69B4; --glacial:#7FFFD4; --voidheart:#8A2BE2;
+  --tremor:#CD853F; --sanctum:#00FA9A;
+}
+.bg-embersoul{background:rgba(255,105,180,0.15);border-color:rgba(255,105,180,0.4);}
+.bg-glacialcurse{background:rgba(127,255,212,0.12);border-color:rgba(127,255,212,0.4);}
+.bg-voidheart{background:rgba(138,43,226,0.18);border-color:rgba(138,43,226,0.5);}
+.bg-tremortyrant{background:rgba(205,133,63,0.15);border-color:rgba(205,133,63,0.4);}
+.bg-sanctum{background:rgba(0,250,154,0.12);border-color:rgba(0,250,154,0.4);}
+.el-embersoul{color:var(--embersoul);}
+.el-glacialcurse{color:var(--glacial);}
+.el-voidheart{color:var(--voidheart);}
+.el-tremortyrant{color:var(--tremor);}
+.el-sanctum{color:var(--sanctum);}
+
+/* ── AURA SYSTEM ── */
+.aura-section{margin-top:6px;}
+.aura-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.aura-btn{flex:1;min-width:80px;border:none;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:11px;font-weight:700;padding:9px 6px;transition:all 0.2s;letter-spacing:0.5px;text-align:center;}
+.aura-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.aura-iron{background:rgba(150,150,200,0.15);border:1.5px solid rgba(150,150,200,0.4);color:#AAAAEE;}
+.aura-iron.ready{background:rgba(150,150,200,0.3);border-color:#AAAAEE;animation:glow 1.5s infinite;}
+.aura-farsight{background:rgba(100,200,255,0.12);border:1.5px solid rgba(100,200,255,0.35);color:#88CCFF;}
+.aura-farsight.ready{background:rgba(100,200,255,0.25);border-color:#88CCFF;animation:glow 1.5s infinite;}
+.aura-sovereign{background:rgba(255,200,50,0.12);border:1.5px solid rgba(255,200,50,0.35);color:#FFCC33;}
+.aura-sovereign.ready{background:rgba(255,200,50,0.2);border-color:#FFCC33;animation:glow 1.5s infinite;}
+.aura-charge-wrap{width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-top:4px;}
+.aura-charge-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,#9B4DCA,#AAAAEE);transition:width 0.6s ease;}
+
+/* Farsight reveal popup */
+.farsight-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:600;background:rgba(10,14,28,0.97);border:2px solid #88CCFF;border-radius:18px;padding:20px 28px;text-align:center;pointer-events:none;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;box-shadow:0 0 40px rgba(100,200,255,0.3);}
+
+/* Awakening names in ultimate button */
+.ult-btn .ult-name{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:2px;letter-spacing:0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── REVEAL OVERLAY ── -->
+<div id="reveal-overlay">
+  <h2 class="cinzel" style="font-size:clamp(18px,4vw,28px);background:linear-gradient(135deg,#FFD700,#FF6B00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⚔️ Cards Revealed!</h2>
+  <div id="reveal-cards"></div>
+  <p id="reveal-countdown" style="color:var(--muted);font-size:14px;font-weight:600;"></p>
+</div>
+
+<!-- ── BRIDGE SCREEN ── -->
+<div id="screen-bridge">
+  <div class="bridge-door top"></div>
+  <div class="bridge-door bottom"></div>
+  <div class="bridge-bg-icons">🔥💧⚡🌿🌪️</div>
+  <div class="bridge-content">
+    <h2 class="cinzel" style="font-size:16px;color:var(--muted);letter-spacing:4px;margin-bottom:8px;">PREPARING DUEL</h2>
+    <div id="bridge-round-txt" class="cinzel" style="font-size:64px;font-weight:900;background:linear-gradient(135deg,#FF6B00,#FFD700,#9B4DCA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;">ROUND 1</div>
+    <div class="bridge-line"></div>
+    <p class="cinzel" style="font-size:22px;color:var(--text);letter-spacing:4px;font-weight:900;">LET THE BATTLE BEGIN!</p>
+  </div>
+</div>
+
+<!-- ── LOADING ── -->
+<div id="screen-loading" class="screen active" style="gap:16px;text-align:center;">
+  <div style="font-size:64px;animation:float 2s ease-in-out infinite;">⚔️</div>
+  <h1 style="font-size:clamp(28px,6vw,52px);background:linear-gradient(135deg,#FF6B00,#FFD700,#9B4DCA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Elemental Duel</h1>
+  <p style="color:var(--muted);animation:pulse 1.5s infinite;">Summoning the arena...</p>
+</div>
+
+<!-- ── HOME ── -->
+<div id="screen-home" class="screen" style="gap:28px;">
+  <div class="anim-fade" style="text-align:center;">
+    <div style="font-size:72px;margin-bottom:8px;" class="anim-pop">⚔️</div>
+    <h1 style="font-size:clamp(28px,7vw,60px);background:linear-gradient(135deg,#FF6B00,#FFD700,#9B4DCA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;">Elemental<br>Duel</h1>
+    <p style="color:var(--muted);font-size:15px;margin-top:10px;">Master the elements. Defeat your enemies.</p>
+  </div>
+  <div class="card anim-fade" style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;">
+    <!-- Mode selector -->
+    <div>
+      <p style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">⚔ BATTLE MODE</p>
+      <div class="mode-tabs">
+        <div class="mode-tab active" id="tab-ffa" onclick="setMode('ffa')">⚔️ Free For All</div>
+        <div class="mode-tab" id="tab-team" onclick="setMode('team')">🛡 2v2 Team</div>
+      </div>
+    </div>
+    <div class="div"></div>
+    <input id="inp-name" type="text" placeholder="Enter your name..." maxlength="16"/>
+    <div class="div"></div>
+    <button class="btn btn-primary" onclick="goCreate()">✦ Create Arena</button>
+    <div style="text-align:center;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;">OR JOIN WITH CODE</div>
+    <div style="display:flex;gap:8px;">
+      <input id="inp-code" type="text" placeholder="ARENA CODE" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-family:'Cinzel',serif;font-size:18px;"/>
+      <button class="btn btn-secondary" style="width:auto;padding:12px 18px;white-space:nowrap;" onclick="goJoin()">Enter →</button>
+    </div>
+     <div class="div"></div>
+    <a href="rules.html" target="_blank" style="text-decoration:none;">
+      <button class="btn btn-ghost" style="width:100%;font-family:'Exo 2',sans-serif;font-size:13px;letter-spacing:0.5px;">📖 View Rules & Element Guide</button>
+    </a>
+  </div>
+</div>
+
+<!-- ── LOBBY ── -->
+<div id="screen-lobby" class="screen" style="gap:20px;padding-top:30px;padding-bottom:30px;justify-content:flex-start;">
+  <div style="text-align:center;">
+    <p style="color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Arena Code</p>
+    <div id="lobby-code" class="room-code">------</div>
+    <p style="color:var(--muted);font-size:13px;margin-top:6px;">Share this code to enter the arena</p>
+  </div>
+  <div class="card" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;">
+    <div id="host-cfg" style="display:none;flex-direction:column;gap:10px;">
+      <h3 class="cinzel" style="font-size:14px;color:var(--muted);">⚙ ARENA SETTINGS</h3>
+      <div class="cfg-row"><label>❤️ Starting HP</label><select id="cfg-hp"><option value="80">80</option><option value="100" selected>100</option><option value="150">150</option></select></div>
+      <div class="cfg-row"><label>⏱ Action Timer</label><select id="cfg-timer"><option value="15">15s</option><option value="20" selected>20s</option><option value="30">30s</option></select></div>
+      <div class="cfg-row"><label>🃏 Starting Cards</label><select id="cfg-cards"><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option></select></div>
+      <div class="div"></div>
+    </div>
+    <h3 class="cinzel" style="font-size:14px;display:flex;align-items:center;gap:8px;">
+      ⚔ WARRIORS
+      <span id="lobby-pcount" style="background:rgba(255,165,0,0.2);border:1px solid rgba(255,165,0,0.4);border-radius:20px;padding:2px 10px;font-size:12px;font-family:'Exo 2',sans-serif;">0</span>
+    </h3>
+    <div id="lobby-players" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;"></div>
+    <div id="lobby-action">
+      <button class="btn btn-primary" id="btn-start" style="display:none;" onclick="hostStart()">⚔️ Begin Battle!</button>
+      <p id="lobby-wait" style="text-align:center;color:var(--muted);font-size:14px;font-weight:600;">Waiting for host to start the battle...</p>
+    </div>
+    <!-- Team assignment (team mode only) -->
+    <div id="team-assign-section" style="display:none;">
+      <div class="div"></div>
+      <h3 class="cinzel" style="font-size:13px;color:var(--muted);margin-bottom:10px;">🛡 TEAM ASSIGNMENT</h3>
+      <div class="team-assign">
+        <div class="team-slot team-a">
+          <h4 class="a">🔥 TEAM RED</h4>
+          <div id="team-a-members"></div>
+        </div>
+        <div class="team-slot team-b">
+          <h4 class="b">💧 TEAM BLUE</h4>
+          <div id="team-b-members"></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <button class="btn btn-secondary" style="font-size:12px;padding:10px;" onclick="joinTeam('A')">Join 🔥 Red</button>
+        <button class="btn btn-secondary" style="font-size:12px;padding:10px;" onclick="joinTeam('B')">Join 💧 Blue</button>
+      </div>
+      <!-- Spectator section -->
+      <div class="div"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <h3 class="cinzel" style="font-size:12px;color:var(--muted);">👁 SPECTATORS</h3>
+        <button class="btn btn-ghost" style="width:auto;padding:4px 10px;" onclick="joinSpectate()">Join 👁</button>
+      </div>
+      <div id="spectator-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:20px;"></div>
+      
+      <!-- Role select (team mode) -->
+      <div id="role-select-section" style="display:none;margin-top:10px;">
+        <p class="ffa-role-header">CHOOSE YOUR ROLE</p>
+        <div class="role-grid">
+          <div class="role-card r-strawhat" id="rc-strawhat" onclick="selectRole('strawhat')">
+            <div class="r-icon">🎩</div>
+            <div class="r-name" style="color:#FF8855;">Straw-Hat</div>
+            <div class="r-hp">120 HP · High DMG</div>
+            <div class="r-ult">💥 Primordial Awakening<br>All effects ×2</div>
+          </div>
+          <div class="role-card r-flowerscholar" id="rc-flowerscholar" onclick="selectRole('flowerscholar')">
+            <div class="r-icon">🌸</div>
+            <div class="r-name" style="color:#66DDFF;">Flower-Scholar</div>
+            <div class="r-hp">100 HP · Cover + Support</div>
+            <div class="r-ult">🌸 Thornwall Bloom<br>Team immune + counter</div>
+          </div>
+          <div class="role-card r-blademaster" id="rc-blademaster" onclick="selectRole('blademaster')">
+            <div class="r-icon">⚔️</div>
+            <div class="r-name" style="color:#FFD700;">2-Blade Master</div>
+            <div class="r-hp">110 HP · Double Strike</div>
+            <div class="r-ult">⚔️ Trident Storm<br>Play 2 cards instantly</div>
+          </div>
+          <div class="role-card r-catburglar" id="rc-catburglar" onclick="selectRole('catburglar')">
+            <div class="r-icon">🐱</div>
+            <div class="r-name" style="color:#00FF88;">Cat-Burglar</div>
+            <div class="r-hp">100 HP · Dispel + AOE</div>
+            <div class="r-ult">⚡ Stormweaver's Wrath<br>Dispel all + 15 AOE dmg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FFA role select (shown outside team-assign-section, always visible in FFA) -->
+  <div class="card" id="ffa-role-card" style="width:100%;max-width:480px;display:none;">
+    <p class="ffa-role-header">🗡 CHOOSE YOUR ROLE</p>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Role affects your HP and Ultimate ability.</p>
+    <div class="role-grid">
+      <div class="role-card r-strawhat" id="ffa-rc-strawhat" onclick="selectRoleFFA('strawhat')">
+        <div class="r-icon">🎩</div>
+        <div class="r-name" style="color:#FF8855;">Straw-Hat</div>
+        <div class="r-hp">120 HP · High DMG</div>
+        <div class="r-ult">💥 Primordial Awakening<br>All effects ×2</div>
+      </div>
+      <div class="role-card r-flowerscholar" id="ffa-rc-flowerscholar" onclick="selectRoleFFA('flowerscholar')">
+        <div class="r-icon">🌸</div>
+        <div class="r-name" style="color:#66DDFF;">Flower-Scholar</div>
+        <div class="r-hp">100 HP · Cleanse Shield</div>
+        <div class="r-ult">🌸 Thornwall Bloom<br>Self-immune + counter</div>
+      </div>
+      <div class="role-card r-blademaster" id="ffa-rc-blademaster" onclick="selectRoleFFA('blademaster')">
+        <div class="r-icon">⚔️</div>
+        <div class="r-name" style="color:#FFD700;">2-Blade Master</div>
+        <div class="r-hp">110 HP · Double Strike</div>
+        <div class="r-ult">⚔️ Trident Storm<br>Play 2 cards instantly</div>
+      </div>
+      <div class="role-card r-catburglar" id="ffa-rc-catburglar" onclick="selectRoleFFA('catburglar')">
+        <div class="r-icon">🐱</div>
+        <div class="r-name" style="color:#00FF88;">Cat-Burglar</div>
+        <div class="r-hp">100 HP · Dispel + AOE</div>
+        <div class="r-ult">⚡ Stormweaver's Wrath<br>Dispel all + 15 AOE dmg</div>
+      </div>
+    </div>
+  </div>
+  <!-- Element guide -->
+  <div class="card" style="width:100%;max-width:480px;">
+    <h3 class="cinzel" style="font-size:13px;color:var(--muted);margin-bottom:12px;">📖 ELEMENT GUIDE</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+      <div>🔥 <b>Fire</b> — Burn 2 rounds</div><div>💧 <b>Water</b> — Heal self 15HP</div>
+      <div>⚡ <b>Thunder</b> — Stun 1 round</div><div>🌿 <b>Earth</b> — Shield 25 dmg</div>
+      <div>🌪️ <b>Wind</b> — Steal a card</div><div>🌑 <b>Shadow</b> — ×2 if debuffed</div>
+      <div>✨ <b>Holy</b> — Cleanse + heal</div>
+    </div>
+    <div class="div"></div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.8;">
+      🔥 Beats 🌪️ &nbsp;|&nbsp; 🌪️ Beats 🌿 &nbsp;|&nbsp; 🌿 Beats ⚡<br>
+      ⚡ Beats 💧 &nbsp;|&nbsp; 💧 Beats 🔥 &nbsp;|&nbsp; 🌑 Beats ✨ &nbsp;|&nbsp; ✨ Beats 🌑
+    </div>
+    <div class="div"></div>
+    <p style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:8px;">⭐ RARE · ☄️ METEOR · 🛡️ BARRIER · ⚗️ ALCHEMY</p>
+    <p style="font-family:'Cinzel',serif;font-size:10px;color:#FF6EFF;letter-spacing:1.5px;margin-bottom:6px;">🍑 CURSED FRUITS (4% chance)</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;">
+      <div style="color:#FF69B4;">🍑 Embersoul — Chain Burn</div>
+      <div style="color:#7FFFD4;">🍵 Glacial Curse — Freeze 2r</div>
+      <div style="color:#8A2BE2;">🫐 Voidheart — Drain buffs</div>
+      <div style="color:#CD853F;">🍠 Tremor Tyrant — AOE+Stun</div>
+      <div style="color:#00FA9A;">🍈 Sanctum — Swap HP</div>
+    </div>
+    <div class="div"></div>
+    <p style="font-family:'Cinzel',serif;font-size:10px;color:#B088FF;letter-spacing:1.5px;margin-bottom:6px;">🌀 AURA SYSTEM (charges over rounds)</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;">
+      <div style="color:#AAAAEE;">🛡 Iron Aura — +30% dmg</div>
+      <div style="color:#88CCFF;">👁 Farsight — Spy enemy card</div>
+      <div style="color:#FFCC33;">👑 Sovereign — Nullify (1×/game)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── GAME ── -->
+<div id="screen-game" class="screen" style="padding:0;justify-content:flex-start;align-items:stretch;">
+  <div class="phase-banner">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="pb-icon" style="font-size:24px;">⚔️</div>
+      <div>
+        <div id="pb-title" class="cinzel" style="font-size:16px;font-weight:700;">Round 1</div>
+        <div id="pb-sub" style="font-size:12px;color:var(--muted);">Choose your element</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="spectate-tag" class="spectate-badge" style="display:none;">👁 Spectating</div>
+      <div class="timer-circle" id="timer-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
+          <circle id="timer-arc" cx="32" cy="32" r="28" fill="none" stroke="#FFD700" stroke-width="5"
+            stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke 0.3s"/>
+        </svg>
+        <div class="timer-text" id="timer-num">--</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:14px;max-width:720px;margin:0 auto;width:100%;padding-bottom:20px;">
+    <!-- Arena: all players -->
+    <div>
+      <h3 class="cinzel" style="font-size:12px;color:var(--muted);margin-bottom:10px;letter-spacing:1px;">⚔ ARENA</h3>
+      <div id="arena-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
+      <!-- Team arena (shown in team mode) -->
+      <div id="team-arena" style="display:none;" class="team-arena"></div>
+    </div>
+
+    <!-- Target select (3+ players / team mode) -->
+    <div id="target-section" style="display:none;">
+      <h3 class="cinzel" style="font-size:12px;color:rgba(255,68,68,0.8);margin-bottom:8px;letter-spacing:1px;">🎯 SELECT TARGET</h3>
+      <div id="target-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+
+    <!-- Team actions: Cover + Ultimate (team mode only) -->
+    <div id="team-actions" style="display:none;">
+      <div style="display:flex;gap:8px;">
+        <button class="cover-btn" id="btn-cover" onclick="toggleCover()">🛡️ Cover Teammate</button>
+      </div>
+      <div style="margin-top:6px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:1px;">⚡ ULTIMATE</span>
+          <span id="ult-pct" style="font-size:11px;color:var(--muted);">0%</span>
+        </div>
+        <div class="ult-wrap"><div class="ult-bar" id="ult-bar" style="width:0%;"></div></div>
+        <button class="ult-btn" id="btn-ult" disabled onclick="activateUltimate()">🌟 Ultimate (charge: 0%)</button>
+      </div>
+      <!-- Aura Section (FFA + Team) -->
+      <div class="aura-section" id="aura-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;margin-top:10px;">
+          <span style="font-family:'Cinzel',serif;font-size:11px;color:#B088FF;letter-spacing:1px;">🌀 AURA</span>
+          <span id="aura-charge-pct" style="font-size:11px;color:var(--muted);">0%</span>
+        </div>
+        <div class="aura-charge-wrap"><div class="aura-charge-bar" id="aura-charge-bar" style="width:0%;"></div></div>
+        <div class="aura-row">
+          <button class="aura-btn aura-iron" id="btn-aura-iron" disabled onclick="activateAura('iron')">🛡 Iron Aura<br><span style="font-size:9px;font-weight:400;">+30% dmg</span></button>
+          <button class="aura-btn aura-farsight" id="btn-aura-farsight" disabled onclick="activateAura('farsight')">👁 Farsight<br><span style="font-size:9px;font-weight:400;">Spy a card</span></button>
+          <button class="aura-btn aura-sovereign" id="btn-aura-sovereign" disabled onclick="activateAura('sovereign')">👑 Sovereign<br><span style="font-size:9px;font-weight:400;">Nullify target</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- My hand -->
+    <div id="hand-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 class="cinzel" style="font-size:12px;color:var(--muted);letter-spacing:1px;">🃏 YOUR HAND</h3>
+        <span id="action-status" style="font-size:13px;font-weight:600;color:var(--muted);"></span>
+      </div>
+      <div class="cards-grid" id="hand-grid"></div>
+    </div>
+
+    <!-- Confirm button -->
+    <div id="confirm-wrap" style="display:none;">
+      <button class="btn btn-primary" id="btn-confirm" onclick="confirmAction()">⚔️ Unleash!</button>
+    </div>
+
+    <!-- Combat log -->
+    <div class="card" style="padding:0;">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+        <h3 class="cinzel" style="font-size:12px;color:var(--muted);letter-spacing:1px;">📜 COMBAT LOG</h3>
+      </div>
+      <div class="combat-log" id="combat-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── END SCREEN ── -->
+<div id="screen-end" class="screen" style="gap:20px;padding-top:30px;padding-bottom:30px;justify-content:flex-start;">
+  <div style="text-align:center;">
+    <div id="end-icon" style="font-size:72px;animation:float 2s infinite;"></div>
+    <h1 id="end-title" class="cinzel" style="font-size:clamp(22px,5vw,42px);margin-top:12px;"></h1>
+    <p id="end-sub" style="color:var(--muted);font-size:15px;margin-top:6px;"></p>
+  </div>
+  <div style="width:100%;max-width:500px;padding:0 16px;">
+    <h3 class="cinzel" style="font-size:14px;color:var(--muted);margin-bottom:12px;text-align:center;">🏆 FINAL STANDINGS</h3>
+    <div id="final-lb" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+  <div style="width:100%;max-width:500px;padding:0 16px;">
+    <h3 class="cinzel" style="font-size:14px;color:var(--muted);margin-bottom:12px;text-align:center;">📊 BATTLE STATS</h3>
+    <div id="battle-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+  </div>
+  <div style="width:100%;max-width:500px;padding:0 16px;display:flex;gap:10px;margin-top:10px;">
+    <button class="btn btn-primary" id="btn-play-again" onclick="backToLobby()" style="display:none;">🔄 Play Again</button>
+    <button class="btn btn-secondary" onclick="goHome()">🏠 Home</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+<div id="toast"></div>
+
+<script>
+// Firebase
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAV6Mjt2J2VrnGddo-QLQMH_7fKNj_gSvk",
+    authDomain: "warewolf-e2603.firebaseapp.com",
+    databaseURL: "https://warewolf-e2603-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "warewolf-e2603",
+    storageBucket: "warewolf-e2603.firebasestorage.app",
+    messagingSenderId: "139725503395",
+    appId: "1:139725503395:web:daf23f57273f369b2c3816",
+    measurementId: "G-1N0QQZHECD"
+  };
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+// ═══════════════ ELEMENT DATA ═══════════════
+const ELEMENTS = {
+  fire:    { icon:'🔥', name:'Fire',    color:'var(--fire)',    baseDmg:25, effect:'burn',   effectVal:2, desc:'Burns for 5HP/round×2' },
+  water:   { icon:'💧', name:'Water',   color:'var(--water)',   baseDmg:15, effect:'heal',   effectVal:15, desc:'Heal self 15HP' },
+  thunder: { icon:'⚡', name:'Thunder', color:'var(--thunder)', baseDmg:20, effect:'stun',   effectVal:1, desc:'Stuns target 1 round' },
+  earth:   { icon:'🌿', name:'Earth',   color:'var(--earth)',   baseDmg:15, effect:'shield', effectVal:25, desc:'Absorb 25 dmg this round' },
+  wind:    { icon:'🌪️', name:'Wind',    color:'var(--wind)',    baseDmg:18, effect:'steal',  effectVal:1, desc:'Steal a card from target' },
+  shadow:  { icon:'🌑', name:'Shadow',  color:'var(--shadow)',  baseDmg:20, effect:'double', effectVal:2, desc:'×2 damage if target has debuff' },
+  holy:    { icon:'✨', name:'Holy',    color:'var(--holy)',    baseDmg:15, effect:'cleanse', effectVal:20, desc:'Cleanse debuffs + heal 20HP' },
+};
+
+// Rare cards (existing)
+const RARE_ELEMENTS = {
+  meteor:  { icon:'☄️', name:'Meteor',  color:'#FF6B6B', baseDmg:40, effect:'aoe', effectVal:0, desc:'40 dmg to ALL enemies', rare:true },
+  barrier: { icon:'🛡️', name:'Barrier', color:'#C0C0C0', baseDmg:0,  effect:'immune', effectVal:2, desc:'Immune to damage 2 rounds', rare:true },
+  alchemy: { icon:'⚗️', name:'Alchemy', color:'#00FFB3', baseDmg:0,  effect:'reroll', effectVal:0, desc:'Reroll entire hand!', rare:true },
+};
+
+// ── CURSED FRUIT CARDS (Ultra Rare — 4% spawn chance) ──
+const CURSED_FRUITS = {
+  embersoul:   { icon:'🍑', name:'Embersoul Fruit',    color:'var(--embersoul)', baseDmg:20, effect:'chainburn', effectVal:0, desc:'Burn spreads to next target on kill!', rare:true, cursed:true },
+  glacialcurse:{ icon:'🍵', name:'Glacial Curse Fruit', color:'var(--glacial)',   baseDmg:0,  effect:'freeze',   effectVal:2, desc:'Freeze target for 2 rounds (skip action)', rare:true, cursed:true },
+  voidheart:   { icon:'🫐', name:'Voidheart Fruit',    color:'var(--voidheart)', baseDmg:15, effect:'drain',    effectVal:0, desc:'Steal all buffs → 10 HP drain per buff', rare:true, cursed:true },
+  tremortyrant:{ icon:'🍠', name:'Tremor Tyrant Fruit', color:'var(--tremor)',    baseDmg:35, effect:'aoe_stun', effectVal:0, desc:'35 AOE dmg + stun ALL enemies 1 round', rare:true, cursed:true },
+  sanctum:     { icon:'🍈', name:'Sanctum Fruit',      color:'var(--sanctum)',   baseDmg:0,  effect:'hpswap',   effectVal:0, desc:'Swap HP with target! (capped at maxHp)', rare:true, cursed:true },
+};
+
+// Advantage table: who beats who
+const ADVANTAGE = {
+  fire:    ['wind'],
+  wind:    ['earth'],
+  earth:   ['thunder'],
+  thunder: ['water'],
+  water:   ['fire'],
+  shadow:  ['holy'],
+  holy:    ['shadow'],
+};
+function getAdvantage(attacker, defender) {
+  if(!attacker||!defender) return 'neutral';
+  const beats = ADVANTAGE[attacker]||[];
+  return beats.includes(defender) ? 'advantage' : 'neutral';
+}
+
+const AVATARS = ['🧙','⚔️','🏹','🗡️','🔮','🌊','🌋','🌩️','🌿','👁️','🦅','🐉'];
+
+// ═══════════════ STATE ═══════════════
+let myId=null, myName='', roomCode='', roomRef=null;
+let isHost=false, gameState=null;
+let selectedCard=null, selectedTarget=null;
+let localTimerInterval=null, hostPhaseTimeout=null;
+let lastPhase=null, lastRound=null;
+let actionSubmitted=false;
+let isBridgeShowing=false, bridgeShownForRound=null;
+
+// ── SOUND SYSTEM ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function playSfx(type) {
+  try {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    switch(type) {
+      case 'click':
+        osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+        break;
+      case 'cast':
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+        break;
+      case 'meteor':
+        // Deep rumble/explosion
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.5);
+        osc.start(now); osc.stop(now + 0.5);
+        // Add a second high-pitched crackle
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'square'; osc2.connect(gain2); gain2.connect(audioCtx.destination);
+        osc2.frequency.setValueAtTime(1000, now);
+        osc2.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+        gain2.gain.setValueAtTime(0.1, now); gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc2.start(now); osc2.stop(now + 0.1);
+        break;
+      case 'fire':
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now);
+        osc.frequency.linearRampToValueAtTime(600, now + 0.3);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+        break;
+      case 'water':
+      case 'heal':
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
+        break;
+      case 'thunder':
+      case 'stun':
+        osc.type = 'square'; osc.frequency.setValueAtTime(50, now);
+        osc.frequency.linearRampToValueAtTime(1000, now + 0.05);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+        break;
+      case 'earth':
+      case 'shield':
+        osc.type = 'sine'; osc.frequency.setValueAtTime(100, now);
+        osc.frequency.linearRampToValueAtTime(150, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+        break;
+      case 'win':
+        [0, 0.1, 0.2].forEach((d, i) => {
+          const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+          o.connect(g); g.connect(audioCtx.destination);
+          o.frequency.setValueAtTime(400 + (i * 100), now + d);
+          g.gain.setValueAtTime(0.1, now + d); g.gain.exponentialRampToValueAtTime(0.01, now + d + 0.3);
+          o.start(now + d); o.stop(now + d + 0.3);
+        });
+        break;
+      case 'death':
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(50, now + 0.6);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.6);
+        osc.start(now); osc.stop(now + 0.6);
+        break;
+    }
+  } catch(e) { console.warn("Audio not supported or blocked"); }
+}
+
+// ── TEAM BATTLE STATE ──
+let gameMode='ffa'; // 'ffa' | 'team'
+let myTeam=null;    // 'A' | 'B'
+let myRole=null;    // 'strawhat' | 'flowerscholar' | 'blademaster' | 'catburglar'
+let coverActive=false;
+let ultActive=false;
+
+// ── ROLE DATA TABLE ──
+const ROLES = {
+  strawhat:     { icon:'🎩', label:'Straw-Hat',      hp:120, ultName:'💥 Primordial Awakening', ultSub:'All effects ×2' },
+  flowerscholar:{ icon:'🌸', label:'Flower-Scholar',  hp:100, ultName:'🌸 Thornwall Bloom',      ultSub:'Immune + counter' },
+  blademaster:  { icon:'⚔️', label:'2-Blade Master',  hp:110, ultName:'⚔️ Trident Storm',        ultSub:'Play 2 cards now' },
+  catburglar:   { icon:'🐱', label:'Cat-Burglar',     hp:100, ultName:'⚡ Stormweaver\'s Wrath',  ultSub:'Dispel all + 15 AOE' },
+};
+
+// ── AURA STATE ──
+let activeAura=null;         // 'iron' | 'farsight' | 'sovereign' | null
+let sovereignTarget=null;    // player ID to nullify
+let auraSubmitted=false;
+let sovereignUsedThisGame=false; // Sovereign: once per game
+
+// ═══════════════ MODE SELECTOR ═══════════════
+function setMode(mode){
+  playSfx('click');
+  gameMode=mode;
+  document.getElementById('tab-ffa').classList.toggle('active', mode==='ffa');
+  document.getElementById('tab-team').classList.toggle('active', mode==='team');
+}
+
+// ═══════════════ TEAM ASSIGNMENT ═══════════════
+function joinTeam(team){
+  if(!roomRef) return;
+  playSfx('click');
+  myTeam=team;
+  roomRef.child('players/'+myId).update({team: team, isSpectator: false});
+  document.getElementById('role-select-section').style.display='block';
+  toast(team==='A'?'🔥 Joined Team Red!':'💧 Joined Team Blue!');
+}
+
+function joinSpectate(){
+  if(!roomRef) return;
+  playSfx('click');
+  myTeam=null; myRole=null;
+  roomRef.child('players/'+myId).update({team: null, role: null, isSpectator: true, alive: false});
+  document.getElementById('role-select-section').style.display='none';
+  toast('👁 Joined Spectators!');
+}
+
+function selectRole(role){
+  if(!roomRef||!myTeam) return;
+  playSfx('click');
+  myRole=role;
+  const rd=ROLES[role]||ROLES.strawhat;
+  roomRef.child('players/'+myId).update({role, maxHp:rd.hp, hp:rd.hp, isSpectator: false});
+  // Update visual selection
+  ['strawhat','flowerscholar','blademaster','catburglar'].forEach(r=>{
+    const el=document.getElementById('rc-'+r);
+    if(el) el.classList.toggle('selected', r===role);
+  });
+  toast(`${rd.icon} ${rd.label} ready!`);
+}
+
+function selectRoleFFA(role){
+  if(!roomRef) return;
+  playSfx('click');
+  myRole=role;
+  const rd=ROLES[role]||ROLES.strawhat;
+  roomRef.child('players/'+myId).update({role, maxHp:rd.hp, hp:rd.hp});
+  // Update visual selection
+  ['strawhat','flowerscholar','blademaster','catburglar'].forEach(r=>{
+    const el=document.getElementById('ffa-rc-'+r);
+    if(el) el.classList.toggle('selected', r===role);
+  });
+  toast(`${rd.icon} ${rd.label} ready!`);
+}
+
+function renderTeamLobby(data){
+  const players=Object.values(data.players||{});
+  const isTeamMode=data.config?.mode==='team';
+  document.getElementById('team-assign-section').style.display=isTeamMode?'block':'none';
+  // FFA role card — show when not team mode
+  const ffaCard=document.getElementById('ffa-role-card');
+  if(ffaCard) ffaCard.style.display=isTeamMode?'none':'block';
+
+  const spectators=players.filter(p=>p.isSpectator);
+  const elSpec=document.getElementById('spectator-list');
+  if(elSpec) elSpec.innerHTML=spectators.map(p=>`<div class="player-chip" style="font-size:11px;padding:4px 10px;">${p.avatar} ${p.name}</div>`).join('');
+
+  // Restore FFA role selection highlight
+  if(!isTeamMode){
+    const me=data.players?.[myId];
+    if(me?.role){
+      ['strawhat','flowerscholar','blademaster','catburglar'].forEach(r=>{
+        const el=document.getElementById('ffa-rc-'+r);
+        if(el) el.classList.toggle('selected', r===me.role);
+      });
+    }
+    return;
+  }
+
+  const teamA=players.filter(p=>p.team==='A');
+  const teamB=players.filter(p=>p.team==='B');
+  const elA=document.getElementById('team-a-members');
+  const elB=document.getElementById('team-b-members');
+  const roleLabel=(r)=>ROLES[r]?`${ROLES[r].icon} ${ROLES[r].label}`:(r||'?');
+  elA.innerHTML=teamA.map(p=>`<div class="team-member">${p.avatar} ${p.name}${p.id===myId?' 👈':''}<span class="role-badge role-${p.role||'strawhat'}" style="margin-left:auto;font-size:9px;">${roleLabel(p.role)}</span></div>`).join('');
+  elB.innerHTML=teamB.map(p=>`<div class="team-member">${p.avatar} ${p.name}${p.id===myId?' 👈':''}<span class="role-badge role-${p.role||'strawhat'}" style="margin-left:auto;font-size:9px;">${roleLabel(p.role)}</span></div>`).join('');
+  // Show role section if already on a team
+  const me=data.players?.[myId];
+  if(me?.team && !me?.isSpectator){
+    document.getElementById('role-select-section').style.display='block';
+    // Restore selection highlight
+    if(me.role){
+      ['strawhat','flowerscholar','blademaster','catburglar'].forEach(r=>{
+        const el=document.getElementById('rc-'+r);
+        if(el) el.classList.toggle('selected', r===me.role);
+      });
+    }
+  } else {
+    document.getElementById('role-select-section').style.display='none';
+  }
+}
+
+// ═══════════════ SYNERGY TABLE ═══════════════
+const SYNERGIES = {
+  'fire+wind':   { name:'🌪️ Firestorm',   effect:'aoe_dmg',  val:45, msg:'Firestorm erupts! 45 damage to BOTH enemies!' },
+  'wind+fire':   { name:'🌪️ Firestorm',   effect:'aoe_dmg',  val:45, msg:'Firestorm erupts! 45 damage to BOTH enemies!' },
+  'water+holy':  { name:'💫 Sanctuary',   effect:'team_heal', val:25, msg:'Sanctuary activated! Both teammates healed 25 HP!' },
+  'holy+water':  { name:'💫 Sanctuary',   effect:'team_heal', val:25, msg:'Sanctuary activated! Both teammates healed 25 HP!' },
+  'thunder+shadow':{ name:'⚡ Void Storm', effect:'shadow_triple', val:3, msg:'Void Storm! Shadow deals TRIPLE damage!' },
+  'shadow+thunder':{ name:'⚡ Void Storm', effect:'shadow_triple', val:3, msg:'Void Storm! Shadow deals TRIPLE damage!' },
+  'earth+earth': { name:'🏔️ Fortress',   effect:'team_shield', val:40, msg:'Fortress Wall! Both teammates get 40 shield!' },
+  'fire+fire':   { name:'🔥 Inferno',     effect:'burn_boost', val:10, msg:'Inferno combo! Burn damage doubled (10/round)!' },
+  'water+water': { name:'🌊 Tidal Wave',  effect:'aoe_heal',  val:20, msg:'Tidal Wave! Both teammates healed 20 HP!' },
+};
+
+function getSynergy(card1, card2){
+  const key=`${card1}+${card2}`;
+  return SYNERGIES[key]||null;
+}
+
+// ═══════════════ COVER & ULTIMATE ═══════════════
+function toggleCover(){
+  if(actionSubmitted) return;
+  playSfx('click');
+  coverActive=!coverActive;
+  const btn=document.getElementById('btn-cover');
+  btn.classList.toggle('active', coverActive);
+  btn.textContent=coverActive?'🛡️ Cover Active — Protecting teammate!':'🛡️ Cover Teammate';
+  if(coverActive){
+    selectedCard=null;
+    renderHand(gameState);
+    document.getElementById('confirm-wrap').style.display='none';
+    // Submit cover action
+    actionSubmitted=true;
+    roomRef.child('actions/'+myId).set({card:'cover',target:'teammate',cardIdx:-1});
+    document.getElementById('action-status').textContent='🛡️ Covering teammate!';
+    toast('🛡️ You are covering your teammate this round!');
+  } else {
+    actionSubmitted=false;
+    document.getElementById('action-status').textContent='Choose a card to play';
+    roomRef.child('actions/'+myId).remove();
+  }
+}
+
+function activateUltimate(){
+  const me=gameState?.players?.[myId];
+  if(!me||!me.alive||actionSubmitted) return;
+  const ult=me.ultimateCharge||0;
+  if(ult<100){ toast('⚡ Ultimate not ready yet!'); return; }
+  playSfx('win');
+  ultActive=true;
+  const role=me.role||'strawhat';
+
+  if(role==='flowerscholar'){
+    // Thornwall Bloom: team immune + 20HP + counter
+    actionSubmitted=true;
+    roomRef.child('actions/'+myId).set({card:'aegis',target:'team',cardIdx:-1});
+    document.getElementById('action-status').textContent='🌸 Thornwall Bloom activated!';
+    document.getElementById('confirm-wrap').style.display='none';
+    toast('🌸 THORNWALL BLOOM! Team immune + 20 HP + counter-attack!');
+
+  } else if(role==='catburglar'){
+    // Stormweaver's Wrath: AOE dispel + 15 thunder dmg — submit immediately, no card pick needed
+    actionSubmitted=true;
+    roomRef.child('actions/'+myId).set({card:'stormburglar',target:'aoe',cardIdx:-1});
+    document.getElementById('action-status').textContent='⚡ Stormweaver\'s Wrath unleashed!';
+    document.getElementById('confirm-wrap').style.display='none';
+    toast('⚡ STORMWEAVER\'S WRATH! All enemy buffs stripped + 15 AOE dmg!');
+
+  } else if(role==='blademaster'){
+    // Trident Storm: choose 2 cards — UI changes to dual-card selection mode
+    toast('⚔️ TRIDENT STORM! Choose your first card!');
+    document.getElementById('action-status').textContent='⚔️ Trident Storm — choose card 1 of 2!';
+    // tridentStormPhase tracked in state
+    window._tridentPhase=1;
+    window._tridentCards=[];
+
+  } else {
+    // Straw-Hat: Primordial Awakening — play card with ×2
+    toast('💥 PRIMORDIAL AWAKENING! Your card strikes with doubled power!');
+    document.getElementById('action-status').textContent='💥 Awakening active — choose card!';
+  }
+}
+
+// ═══════════════ AURA SYSTEM ═══════════════
+function renderAuraUI(me){
+  const section=document.getElementById('aura-section');
+  if(!me?.alive){ section.style.display='none'; return; }
+  section.style.display='block';
+
+  const charge=me.auraCharge||0;
+  const pct=Math.min(100,charge);
+  document.getElementById('aura-charge-bar').style.width=pct+'%';
+  document.getElementById('aura-charge-pct').textContent=Math.round(pct)+'%';
+
+  const ironBtn=document.getElementById('btn-aura-iron');
+  const farsightBtn=document.getElementById('btn-aura-farsight');
+  const sovereignBtn=document.getElementById('btn-aura-sovereign');
+
+  const ready=pct>=100 && !actionSubmitted && !auraSubmitted;
+  const sovereignDone=me.sovereignUsed||sovereignUsedThisGame;
+
+  ironBtn.disabled=!ready;
+  farsightBtn.disabled=!ready;
+  sovereignBtn.disabled=!ready||sovereignDone;
+
+  ironBtn.className='aura-btn aura-iron'+(ready?' ready':'');
+  farsightBtn.className='aura-btn aura-farsight'+(ready?' ready':'');
+  sovereignBtn.className='aura-btn aura-sovereign'+((ready&&!sovereignDone)?' ready':'');
+
+  if(sovereignDone) sovereignBtn.title='Sovereign Aura already used this game';
+}
+
+function activateAura(type){
+  const me=gameState?.players?.[myId];
+  if(!me||!me.alive||actionSubmitted||auraSubmitted) return;
+  const charge=me.auraCharge||0;
+  if(charge<100){ toast('🌀 Aura not fully charged!'); return; }
+  
+  playSfx('win');
+
+  if(type==='iron'){
+    // Iron Aura: +30% damage this round. Flagged on action.
+    activeAura='iron';
+    auraSubmitted=true;
+    toast('🛡 IRON AURA! Your next attack deals +30% damage!');
+    document.getElementById('action-status').textContent='🛡 Iron Aura coating active — choose card!';
+    // Reset aura charge
+    roomRef.child('players/'+myId+'/auraCharge').set(0);
+    renderAuraUI(me);
+
+  } else if(type==='farsight'){
+    // Farsight Aura: spy one card of a target, skip attack
+    const allPlayers=Object.values(gameState.players||{});
+    const isTeam=gameState.config?.mode==='team';
+    const enemies=isTeam
+      ? allPlayers.filter(p=>p.id!==myId&&p.alive&&p.team!==me.team)
+      : allPlayers.filter(p=>p.id!==myId&&p.alive);
+    if(enemies.length===0){ toast('No targets!'); return; }
+    
+    // Pick target: if only 1 enemy auto-pick, else use selectedTarget
+    let spyTarget = enemies.length===1 ? enemies[0] : (selectedTarget ? gameState.players[selectedTarget] : null);
+    if(!spyTarget){ toast('👁 Select a target first, then activate Farsight!'); return; }
+
+    const spiedCard=spyTarget.hand?.[0];
+    const spiedEl=getEl(spiedCard);
+    if(spiedEl){
+      // Show popup
+      showFarsightPopup(spyTarget, spiedEl);
+    }
+    // Submit farsight as action (skip attack)
+    auraSubmitted=true;
+    actionSubmitted=true;
+    roomRef.child('players/'+myId+'/auraCharge').set(0);
+    roomRef.child('actions/'+myId).set({card:'farsight',target:spyTarget.id,cardIdx:-1});
+    document.getElementById('action-status').textContent='👁 Farsight used — skipped attack';
+    toast(`👁 FARSIGHT! You saw ${spyTarget.name}'s hand!`);
+
+  } else if(type==='sovereign'){
+    // Sovereign Aura: nullify one target's card this round
+    const allPlayers=Object.values(gameState.players||{});
+    const isTeam=gameState.config?.mode==='team';
+    const enemies=isTeam
+      ? allPlayers.filter(p=>p.id!==myId&&p.alive&&p.team!==me.team)
+      : allPlayers.filter(p=>p.id!==myId&&p.alive);
+    
+    let nullTarget = enemies.length===1 ? enemies[0] : (selectedTarget ? gameState.players[selectedTarget] : null);
+    if(!nullTarget){ toast('👑 Select a target first, then activate Sovereign!'); return; }
+
+    sovereignUsedThisGame=true;
+    auraSubmitted=true;
+    roomRef.child('players/'+myId+'/auraCharge').set(0);
+    roomRef.child('players/'+myId+'/sovereignUsed').set(true);
+    // Submit sovereign flag — will be read by host in resolveRound
+    roomRef.child('actions/'+myId+'/sovereignOn').set(nullTarget.id);
+    toast(`👑 SOVEREIGN AURA! ${nullTarget.name}'s card this round will be nullified!`);
+    document.getElementById('action-status').textContent=`👑 Sovereign cast on ${nullTarget.name}`;
+  }
+}
+
+function showFarsightPopup(target, el){
+  const existing=document.querySelector('.farsight-popup');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.className='farsight-popup';
+  div.innerHTML=`
+    <div style="font-size:11px;color:#88CCFF;font-family:'Cinzel',serif;letter-spacing:2px;margin-bottom:8px;">👁 FARSIGHT VISION</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">${target.avatar} ${target.name}'s hand contains...</div>
+    <div style="font-size:42px;">${el.icon}</div>
+    <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:${el.color};margin-top:6px;">${el.name}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">${el.desc}</div>
+  `;
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(), 4000);
+}
+
+function renderUltimateUI(me){
+  const section=document.getElementById('team-actions');
+  const isTeam=gameState?.config?.mode==='team';
+  if(!me?.alive){ section.style.display='none'; return; }
+  section.style.display='block';
+
+  const role=me.role||'strawhat';
+  const rd=ROLES[role]||ROLES.strawhat;
+
+  // Cover button: only Flower-Scholar in team mode
+  const coverBtn=document.getElementById('btn-cover');
+  coverBtn.style.display=(isTeam && role==='flowerscholar')?'block':'none';
+  coverBtn.disabled=actionSubmitted;
+
+  // Ultimate gauge (always show if team mode or if has role)
+  const ultWrap=document.getElementById('team-actions').querySelector('div:nth-child(2)');
+  const showUlt = isTeam || !!me.role;
+  if(ultWrap) ultWrap.style.display=showUlt?'block':'none';
+
+  if(showUlt){
+    const ult=me.ultimateCharge||0;
+    const pct=Math.min(100,ult);
+    const bar=document.getElementById('ult-bar');
+    const btn=document.getElementById('btn-ult');
+    const pctEl=document.getElementById('ult-pct');
+    bar.style.width=pct+'%';
+    pctEl.textContent=Math.round(pct)+'%';
+    bar.className='ult-bar'+(pct>=100?' ult-ready':'');
+    btn.innerHTML=pct>=100
+      ? `${rd.ultName} — READY!<span class="ult-name">${rd.ultSub}</span>`
+      : `🌟 Ultimate (${Math.round(pct)}%)<span class="ult-name">${rd.ultSub}</span>`;
+    btn.className='ult-btn'+(pct>=100?' ready':'');
+    btn.disabled=pct<100||actionSubmitted;
+  }
+
+  // Aura UI always
+  renderAuraUI(me);
+}
+
+// ═══════════════ UTILS ═══════════════
+function uid(){ return Math.random().toString(36).substr(2,9); }
+function genCode(){ return Math.random().toString(36).substr(2,6).toUpperCase(); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen-'+id).classList.add('active'); }
+function toast(msg,dur=3000){ const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',dur); }
+function randEl(){ const keys=Object.keys(ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; }
+function randCard(){
+  const roll=Math.random();
+  if(roll<0.04){ const keys=Object.keys(CURSED_FRUITS); return keys[Math.floor(Math.random()*keys.length)]; } // 4% cursed fruit
+  if(roll<0.14){ const keys=Object.keys(RARE_ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; } // 10% rare
+  return randEl();
+}
+function dealCards(n){ return Array.from({length:n},()=>randCard()); }
+function getEl(key){ return ELEMENTS[key]||RARE_ELEMENTS[key]||CURSED_FRUITS[key]; }
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+function addLog(msg, type='normal'){
+  const log=document.getElementById('combat-log'); if(!log) return;
+  const div=document.createElement('div');
+  div.className='log-entry '+(type==='system'?'system':type==='dmg'?'dmg':type==='heal'?'heal':type==='combo'?'combo':type==='death'?'death':'');
+  div.textContent=msg;
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+}
+function spawnDmgNumber(text, color, x, y){
+  const el=document.createElement('div');
+  el.className='dmg-number';
+  el.style.cssText=`left:${x}px;top:${y}px;color:${color};text-shadow:0 0 10px ${color};`;
+  el.textContent=text;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1300);
+}
+
+// ═══════════════ INIT ═══════════════
+window.onload = () => {
+  myId = localStorage.getItem('ed_uid')||uid();
+  localStorage.setItem('ed_uid',myId);
+  myName = localStorage.getItem('ed_name')||'';
+  if(myName) document.getElementById('inp-name').value=myName;
+  if(FIREBASE_CONFIG.apiKey==='GANTI_API_KEY_KAMU'){ showScreen('home'); return; }
+  showScreen('home');
+};
+
+function goHome(){
+  if(roomRef){ 
+    roomRef.child('players/'+myId+'/online').set(false);
+    roomRef.off(); 
+  }
+  roomRef=null; gameState=null; isHost=false;
+  selectedCard=null; selectedTarget=null; actionSubmitted=false; lastPhase=null; lastRound=null;
+  myTeam=null; myRole=null; coverActive=false; ultActive=false;
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  document.getElementById('reveal-overlay').classList.remove('active');
+  showScreen('home');
+}
+
+// ═══════════════ CREATE / JOIN ═══════════════
+async function goCreate(){
+  const name=document.getElementById('inp-name').value.trim();
+  if(!name){toast('⚠️ Enter your name!');return;}
+  playSfx('click');
+  myName=name; localStorage.setItem('ed_name',name);
+  roomCode=genCode(); isHost=true; setupRoom();
+}
+async function goJoin(){
+  const name=document.getElementById('inp-name').value.trim();
+  const code=document.getElementById('inp-code').value.trim().toUpperCase();
+  if(!name){toast('⚠️ Enter your name!');return;}
+  if(code.length<4){toast('⚠️ Enter arena code!');return;}
+  playSfx('click');
+  myName=name; localStorage.setItem('ed_name',name);
+  roomCode=code; isHost=false; setupRoom();
+}
+
+function setupRoom(){
+  roomRef=db.ref('rooms/'+roomCode);
+  const avatar=AVATARS[Math.floor(Math.random()*AVATARS.length)];
+  roomRef.once('value').then(snap=>{
+    const data=snap.val();
+    if(!isHost&&!data){toast('❌ Arena not found!');return;}
+    if(data&&data.phase&&data.phase!=='lobby'){toast('❌ Battle already started!');return;}
+    // inherit mode from existing room if joining
+    if(!isHost&&data?.config?.mode) gameMode=data.config.mode;
+    const me={id:myId,name:myName,avatar,isHost,online:true,joinedAt:Date.now(),
+      hp:100,maxHp:100,alive:true,hand:[],statusEffects:{},kills:0,dmgDealt:0,dmgReceived:0,eliminated:0,
+      team:null,role:null,ultimateCharge:0,auraCharge:0,sovereignUsed:false};
+    if(isHost){
+      roomRef.set({code:roomCode,phase:'lobby',round:0,
+        config:{hp:100,timer:20,cards:5,mode:gameMode},
+        players:{[myId]:me},actions:{},log:[],timerEnd:null});
+    } else {
+      roomRef.child('players/'+myId).set(me);
+    }
+    
+    // Presence: Mark offline when disconnected
+    roomRef.child('players/'+myId+'/online').onDisconnect().set(false);
+    
+    showScreen('lobby');
+    document.getElementById('lobby-code').textContent=roomCode;
+    if(isHost) document.getElementById('host-cfg').style.display='flex';
+    listenRoom();
+  });
+}
+
+function listenRoom(){
+  roomRef.on('value',snap=>{
+    const data=snap.val(); if(!data) return;
+    gameState=data;
+    const phase=data.phase;
+    
+    // ── HOST MIGRATION ──
+    const players=data.players||{};
+    const aliveHost=Object.values(players).find(p=>p.isHost && p.online);
+    if(!aliveHost){
+      // Promote the next online player with earliest joinedAt
+      const nextHost=Object.values(players)
+        .filter(p=>p.online)
+        .sort((a,b)=>a.joinedAt-b.joinedAt)[0];
+      if(nextHost && nextHost.id===myId){
+        isHost=true;
+        roomRef.child('players/'+myId+'/isHost').set(true);
+        toast('👑 You are now the host!');
+      }
+    } else {
+      isHost = (aliveHost.id === myId);
+    }
+    
+    // Update host UI
+    if(phase==='lobby'){
+       document.getElementById('host-cfg').style.display=isHost?'flex':'none';
+    }
+    // Show Play Again for everyone
+    document.getElementById('btn-play-again').style.display=(phase==='end')?'block':'none';
+
+    if(phase==='lobby') {
+      renderLobby(data);
+      bridgeShownForRound = null;
+    }
+    else if(phase==='choose'||phase==='resolve') {
+      // Show bridge if it's Round 1 and hasn't been shown yet
+      if (phase === 'choose' && data.round === 1 && bridgeShownForRound !== 1 && !isBridgeShowing) {
+        showBridge(data, 1);
+      } else if (!isBridgeShowing) {
+        renderGame(data);
+        if(isHost && phase==='choose') checkAllActed(data);
+      }
+    }
+    else if(phase==='end') renderEnd(data);
+  });
+}
+
+function showBridge(data, roundNum) {
+  isBridgeShowing = true;
+  bridgeShownForRound = roundNum;
+  playSfx('win');
+  const bridge = document.getElementById('screen-bridge');
+  const roundTxt = document.getElementById('bridge-round-txt');
+  roundTxt.textContent = `ROUND ${roundNum}`;
+  
+  bridge.classList.remove('bridge-open');
+  bridge.classList.add('active');
+  
+  // Keep bridge closed for a moment to show content, then open "doors"
+  setTimeout(() => {
+    bridge.classList.add('bridge-open');
+    setTimeout(() => {
+      bridge.classList.remove('active');
+      isBridgeShowing = false;
+      renderGame(data); // Now actually show the game
+      if(isHost && data.phase==='choose') checkAllActed(data);
+    }, 850); // Matches CSS transition time
+  }, 2200); // Content visible for 2.2s
+}
+
+// ═══════════════ LOBBY ═══════════════
+function renderLobby(data){
+  showScreen('lobby');
+  const players=Object.values(data.players||{});
+  const isTeamMode=data.config?.mode==='team';
+  document.getElementById('lobby-pcount').textContent=players.length;
+  const list=document.getElementById('lobby-players');
+  list.innerHTML='';
+  players.sort((a,b)=>a.joinedAt-b.joinedAt).forEach(p=>{
+    const d=document.createElement('div');
+    d.className='player-chip'+(p.isHost?' host':'');
+    const teamTag=p.team?` <span style="font-size:10px;opacity:0.7;">[${p.team==='A'?'🔥Red':'💧Blue'}]</span>`:'';
+    d.innerHTML=`${p.avatar} ${p.name}${p.id===myId?' (You)':''}${p.isHost?' 👑':''}${teamTag}`;
+    list.appendChild(d);
+  });
+  renderTeamLobby(data);
+  const startBtn=document.getElementById('btn-start');
+  const waitMsg=document.getElementById('lobby-wait');
+  if(isHost){
+    let canStart=false;
+    if(isTeamMode){
+      const teamA=players.filter(p=>p.team==='A'&&p.role&&!p.isSpectator);
+      const teamB=players.filter(p=>p.team==='B'&&p.role&&!p.isSpectator);
+      canStart=teamA.length>=1&&teamB.length>=1&&teamA.length+teamB.length>=2;
+      waitMsg.textContent=canStart?'Teams ready!':'Need at least 1 player per team with roles assigned';
+    } else {
+      canStart=players.filter(p=>!p.isSpectator).length>=2;
+      waitMsg.textContent=canStart?'':'Need at least 2 warriors';
+    }
+    startBtn.style.display=canStart?'block':'none';
+    waitMsg.style.display=canStart?'none':'block';
+  } else {
+    startBtn.style.display='none'; waitMsg.style.display='block';
+    waitMsg.textContent='Waiting for host to begin the battle...';
+  }
+}
+
+async function backToLobby(){
+  playSfx('click');
+  if(isHost){
+    const players = JSON.parse(JSON.stringify(gameState.players || {}));
+    Object.values(players).forEach(p => {
+      if(!p.isSpectator) {
+        p.alive = true;
+        p.hp = 100; // placeholder until hostStart
+        p.hand = [];
+        p.statusEffects = {};
+      }
+    });
+    await roomRef.update({
+      phase: 'lobby',
+      round: 0,
+      actions: {},
+      log: [],
+      timerEnd: null,
+      eliminatedOrder: [],
+      winner: null,
+      winnerTeam: null,
+      players: players
+    });
+  } else {
+    // Non-host just goes back to lobby screen locally while waiting for host
+    showScreen('lobby');
+  }
+}
+
+async function hostStart(){
+  const hp=parseInt(document.getElementById('cfg-hp').value);
+  const timer=parseInt(document.getElementById('cfg-timer').value);
+  const cards=parseInt(document.getElementById('cfg-cards').value);
+  const mode=gameState?.config?.mode||gameMode;
+  const players=JSON.parse(JSON.stringify(gameState.players));
+  Object.values(players).forEach(p=>{
+    if(p.isSpectator){
+      p.hand=[]; p.hp=0; p.maxHp=0; p.alive=false;
+    } else {
+      const rd=ROLES[p.role];
+      // Team mode uses role HP; FFA uses role HP if role chosen, else cfg HP
+      const roleHp = rd ? rd.hp : hp;
+      const finalHp = mode==='team' ? roleHp : (p.role ? roleHp : hp);
+      p.hand=dealCards(cards);
+      p.hp=finalHp; p.maxHp=finalHp;
+      p.alive=true; p.statusEffects={}; p.kills=0; p.dmgDealt=0; p.dmgReceived=0; p.eliminated=0;
+      p.ultimateCharge=0; p.auraCharge=0; p.sovereignUsed=false;
+      if(mode!=='team'){ p.team=null; } // keep role in FFA
+    }
+  });
+  const timerEnd=Date.now()+timer*1000;
+  await roomRef.update({phase:'choose',round:1,config:{hp,timer,cards,mode},players,actions:{},log:[],timerEnd});
+}
+
+// ═══════════════ GAME RENDER ═══════════════
+function renderGame(data){
+  showScreen('game');
+  const phase=data.phase;
+  const round=data.round||1;
+  const players=data.players||{};
+  const me=players[myId];
+  if(!me) return;
+  const amAlive=me.alive;
+  const amSpectating=!amAlive;
+  const isTeam=data.config?.mode==='team';
+  const phaseKey=`${phase}_${round}_${data.timerEnd||0}`;
+  const phaseChanged=phaseKey!==lastPhase;
+  if(phaseChanged){
+    lastPhase=phaseKey;
+    selectedCard=null; selectedTarget=null; actionSubmitted=false;
+    coverActive=false; ultActive=false;
+    activeAura=null; auraSubmitted=false; sovereignTarget=null;
+    document.getElementById('confirm-wrap').style.display='none';
+    const coverBtn=document.getElementById('btn-cover');
+    if(coverBtn){ coverBtn.classList.remove('active'); coverBtn.textContent='🛡️ Cover Teammate'; }
+    if(phase==='choose') startLocalTimer(data);
+  }
+
+  document.getElementById('pb-icon').textContent=phase==='choose'?'⚔️':'💥';
+  document.getElementById('pb-title').textContent=`Round ${round}`;
+  document.getElementById('pb-sub').textContent=phase==='choose'?(isTeam?'Choose element + target · Flower-Scholar can Cover':'Choose your element & target'):'Resolving combat...';
+  document.getElementById('spectate-tag').style.display=amSpectating?'flex':'none';
+
+  // Switch between FFA and team arena layout
+  document.getElementById('arena-grid').style.display=isTeam?'none':'grid';
+  document.getElementById('team-arena').style.display=isTeam?'grid':'none';
+  // Show action panel if team mode OR if player has a role (FFA)
+  const showActionPanel = amAlive && (isTeam || !!me.role);
+  document.getElementById('team-actions').style.display=showActionPanel?'block':'none';
+
+  if(isTeam) renderTeamArena(data);
+  else renderArena(data);
+
+  renderTargetSection(data);
+  renderHand(data);
+  renderConfirmButton();
+  renderUltimateUI(me); // Always call — handles FFA aura + team ultimate
+  if(phase==='resolve'&&phaseChanged) renderRevealOverlay(data);
+  renderCombatLog(data);
+}
+
+function renderArena(data){
+  const grid=document.getElementById('arena-grid');
+  const players=Object.values(data.players||{}).sort((a,b)=>a.joinedAt-b.joinedAt);
+  grid.innerHTML='';
+  players.forEach(p=>{
+    const isMe=p.id===myId;
+    const isTarget=selectedTarget===p.id;
+    const hpPct=Math.max(0,(p.hp/p.maxHp)*100);
+    const hpClass=hpPct>60?'high':hpPct>30?'mid':'low';
+    const statuses=p.statusEffects||{};
+    const statusHtml=Object.entries(statuses).filter(([k,v])=>v>0).map(([k,v])=>`<span class="status-badge status-${k}">${k==='burn'?'🔥':k==='stun'?'⚡':k==='freeze'?'🧊':k==='shield'?'🌿':k==='immune'?'✨':k==='thornwall'?'🌸':'?'} ${k} ${v}</span>`).join('');
+    const div=document.createElement('div');
+    div.className='arena-player'+(isMe?' self-card':'')+(isTarget?' selected-target':'');
+    const roleHtml=p.role&&ROLES[p.role]?`<span class="role-badge role-${p.role}" style="font-size:9px;margin-top:2px;display:inline-flex;">${ROLES[p.role].icon} ${ROLES[p.role].label}</span>`:'';
+    const ultPctFFA=Math.min(100,p.ultimateCharge||0);
+    const ultBarHtml=p.role?`<div class="ult-wrap" style="margin-top:3px;"><div class="ult-bar${ultPctFFA>=100?' ult-ready':''}" style="width:${ultPctFFA}%;"></div></div>`:'';
+    div.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:22px;">${p.avatar}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}${isMe?' 👈':''}</div>
+          <div style="font-size:11px;color:var(--muted);">${p.hp}/${p.maxHp} HP</div>
+          ${roleHtml}
+        </div>
+      </div>
+      <div class="hp-wrap"><div class="hp-bar ${hpClass}" style="width:${hpPct}%;"></div></div>
+      ${ultBarHtml}
+      ${statusHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${statusHtml}</div>`:''}
+      ${!p.alive?`<div class="${isMe?'spectate-banner':'dead-banner'}">${isMe?'👁 SPECTATING':'💀 FALLEN'}</div>`:''}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function renderTeamArena(data){
+  const arena=document.getElementById('team-arena');
+  arena.innerHTML='';
+  const players=data.players||{};
+  const allPlayers=Object.values(players).sort((a,b)=>a.joinedAt-b.joinedAt);
+  const teamA=allPlayers.filter(p=>p.team==='A');
+  const teamB=allPlayers.filter(p=>p.team==='B');
+  const me=players[myId];
+  const myTeamId=me?.team;
+
+  function makePlayerCard(p){
+    const isMe=p.id===myId;
+    const isTarget=selectedTarget===p.id;
+    const hpPct=Math.max(0,(p.hp/p.maxHp)*100);
+    const hpClass=hpPct>60?'high':hpPct>30?'mid':'low';
+    const statuses=p.statusEffects||{};
+    const statusHtml=Object.entries(statuses).filter(([k,v])=>v>0).map(([k,v])=>`<span class="status-badge status-${k}" style="font-size:9px;">${k==='burn'?'🔥':k==='stun'?'⚡':k==='freeze'?'🧊':k==='immune'?'✨':k==='thornwall'?'🌸':'🌿'} ${v}</span>`).join('');
+    const isLastStand=(p.alive&&!Object.values(players).find(q=>q.team===p.team&&q.alive&&q.id!==p.id));
+    const ultPct=Math.min(100,p.ultimateCharge||0);
+    const div=document.createElement('div');
+    div.className=`arena-player team-${p.team?.toLowerCase()||'a'}${isMe?' self-card':''}${isTarget?' selected-target':''}${isLastStand&&p.alive?' last-stand':''}`;
+    div.innerHTML=`
+      ${isLastStand&&p.alive?'<div class="last-stand-badge">⚡ LAST STAND</div>':''}
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span style="font-size:18px;">${p.avatar}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}${isMe?' 👈':''}</div>
+          <span class="role-badge role-${p.role||'strawhat'}" style="font-size:9px;">${ROLES[p.role]?`${ROLES[p.role].icon} ${ROLES[p.role].label}`:'⚔️ ?'}</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${p.hp}/${p.maxHp} HP</div>
+      <div class="hp-wrap"><div class="hp-bar ${hpClass}" style="width:${hpPct}%;"></div></div>
+      <div class="ult-wrap" style="margin-top:4px;"><div class="ult-bar${ultPct>=100?' ult-ready':''}" style="width:${ultPct}%;"></div></div>
+      ${statusHtml?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;">${statusHtml}</div>`:''}
+      ${!p.alive?`<div class="${isMe?'spectate-banner':'dead-banner'}">${isMe?'👁':'💀'}</div>`:''}
+    `;
+    return div;
+  }
+
+  // Team A side
+  const sideA=document.createElement('div'); sideA.className='team-side';
+  const hdrA=document.createElement('div'); hdrA.className='team-header team-a'; hdrA.textContent='🔥 Team Red';
+  sideA.appendChild(hdrA);
+  teamA.forEach(p=>sideA.appendChild(makePlayerCard(p)));
+  arena.appendChild(sideA);
+
+  // VS divider
+  const vs=document.createElement('div'); vs.className='vs-divider';
+  vs.innerHTML='<div class="vs-line"></div><div class="vs-text">VS</div><div class="vs-line"></div>';
+  arena.appendChild(vs);
+
+  // Team B side
+  const sideB=document.createElement('div'); sideB.className='team-side';
+  const hdrB=document.createElement('div'); hdrB.className='team-header team-b'; hdrB.textContent='💧 Team Blue';
+  sideB.appendChild(hdrB);
+  teamB.forEach(p=>sideB.appendChild(makePlayerCard(p)));
+  arena.appendChild(sideB);
+}
+
+function renderTargetSection(data){
+  const players=Object.values(data.players||{});
+  const me=data.players[myId];
+  const section=document.getElementById('target-section');
+  const targetGrid=document.getElementById('target-grid');
+  const isTeam=data.config?.mode==='team';
+  const aliveEnemies=isTeam
+    ? players.filter(p=>p.id!==myId&&p.alive&&p.team!==me?.team)
+    : players.filter(p=>p.id!==myId&&p.alive);
+  if(!me?.alive||aliveEnemies.length<=1){
+    section.style.display='none';
+    if(aliveEnemies.length===1&&!selectedTarget) selectedTarget=aliveEnemies[0].id;
+    return;
+  }
+  section.style.display='block';
+  targetGrid.innerHTML='';
+  aliveEnemies.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.className='btn '+(selectedTarget===p.id?'btn-primary':'btn-secondary');
+    btn.style.cssText='width:auto;padding:8px 16px;font-size:13px;display:flex;align-items:center;gap:6px;';
+    const roleTag=p.role?` <span style="font-size:10px;opacity:0.6">${ROLES[p.role]?.icon||'⚔️'}</span>`:'';
+    btn.innerHTML=`${p.avatar} ${p.name}${roleTag}`;
+    btn.onclick=()=>{ selectedTarget=p.id; renderTargetSection(data); renderConfirmButton(); };
+    targetGrid.appendChild(btn);
+  });
+}
+
+function renderConfirmButton(){
+  const wrap=document.getElementById('confirm-wrap');
+  const btn=document.getElementById('btn-confirm');
+  if(!gameState) return;
+  const me=gameState.players?.[myId];
+  const isTeam=gameState.config?.mode==='team';
+  if(!me?.alive||actionSubmitted){ wrap.style.display='none'; return; }
+  const allPlayers=Object.values(gameState.players||{});
+  const aliveEnemies=isTeam
+    ? allPlayers.filter(p=>p.id!==myId&&p.alive&&p.team!==me.team)
+    : allPlayers.filter(p=>p.id!==myId&&p.alive);
+  const needTarget=aliveEnemies.length>1;
+  const selfCards=['water','holy','earth','barrier','alchemy'];
+  const cursedAoeCards=['tremortyrant','meteor'];
+  const cardKey=me.hand?.[selectedCard];
+  const isSelfCard=selfCards.includes(cardKey)||cursedAoeCards.includes(cardKey)||getEl(cardKey)?.effect==='aoe';
+  const ready=selectedCard!==null&&(!needTarget||selectedTarget!==null||isSelfCard);
+  wrap.style.display=ready?'block':'none';
+  const el=getEl(cardKey);
+  const burstTag=(ultActive&&me.role==='strawhat')?' 💥 AWAKENING':'';
+  const auraTag=(activeAura==='iron')?' 🛡+30%':'';
+  if(el) btn.textContent=`⚔️ Unleash ${el.icon} ${el.name}!${burstTag}${auraTag}`;
+}
+
+async function confirmAction(){
+  if(actionSubmitted||selectedCard===null) return;
+  const me=gameState.players[myId]; if(!me?.alive) return;
+  const isTeam=gameState.config?.mode==='team';
+  const allPlayers=Object.values(gameState.players||{});
+  const aliveEnemies=isTeam
+    ? allPlayers.filter(p=>p.id!==myId&&p.alive&&p.team!==me.team)
+    : allPlayers.filter(p=>p.id!==myId&&p.alive);
+  let target=selectedTarget;
+  if(aliveEnemies.length===1) target=aliveEnemies[0].id;
+
+  // ── TRIDENT STORM: submit 2 cards ──
+  if(ultActive && me.role==='blademaster' && window._tridentPhase===2 && window._tridentCards?.length===2){
+    const [c1,c2]=window._tridentCards;
+    playSfx('cast');
+    actionSubmitted=true;
+    await roomRef.child('actions/'+myId).set({
+      card: c1.key, cardIdx: c1.idx,
+      tridentCard2: c2.key, tridentCardIdx2: c2.idx,
+      target: target||'self', isTrident:true
+    });
+    await roomRef.child('players/'+myId+'/ultimateCharge').set(0);
+    window._tridentPhase=0; window._tridentCards=[];
+    renderHand(gameState);
+    document.getElementById('confirm-wrap').style.display='none';
+    document.getElementById('action-status').textContent='✅ Trident Storm locked in!';
+    toast('⚔️ TRIDENT STORM fired! Two blades strike!');
+    return;
+  }
+
+  const cardKey=me.hand[selectedCard];
+  const selfCards=['water','holy','earth','barrier','alchemy'];
+  const cursedAoeCards=['tremortyrant','meteor'];
+  if(!target&&!selfCards.includes(cardKey)&&!cursedAoeCards.includes(cardKey)&&getEl(cardKey)?.effect!=='aoe'){
+    toast('⚠️ Select a target first!'); return;
+  }
+  playSfx('cast');
+  actionSubmitted=true;
+  const isBurst=!!(ultActive&&me.role==='strawhat');
+  const hasIronAura=!!(activeAura==='iron');
+  await roomRef.child('actions/'+myId).set({card:cardKey,target:target||'self',cardIdx:selectedCard,isBurst,ironAura:hasIronAura});
+  if(isBurst) await roomRef.child('players/'+myId+'/ultimateCharge').set(0);
+  renderHand(gameState);
+  document.getElementById('confirm-wrap').style.display='none';
+  document.getElementById('action-status').textContent='✅ Waiting for others...';
+  toast('⚔️ Action locked in!');
+}
+
+function renderHand(data){
+  const me=data.players[myId]; if(!me) return;
+  const grid=document.getElementById('hand-grid');
+  const phase=data.phase;
+  const amAlive=me.alive;
+  const handSection=document.getElementById('hand-section');
+  if(!amAlive){
+    handSection.style.display='none';
+    document.getElementById('action-status').textContent='';
+    return;
+  }
+  handSection.style.display='block';
+  const myAction=data.actions?.[myId];
+  const actionDone=!!myAction||actionSubmitted;
+  document.getElementById('action-status').textContent=actionDone?'✅ Action submitted!':'Choose a card to play';
+  grid.innerHTML='';
+  (me.hand||[]).forEach((key,i)=>{
+    const el=getEl(key); if(!el) return;
+    const isSelected=selectedCard===i;
+    const disabled=actionDone||phase!=='choose';
+    const div=document.createElement('div');
+    div.className=`el-card bg-${key} ${isSelected?'selected':''} ${disabled?'disabled':''} ${el.rare?'rare':''}`;
+    div.style.borderColor=el.color;
+    div.innerHTML=`<div class="el-icon">${el.icon}</div><div class="el-name" style="color:${el.color}">${el.name}</div><div class="el-dmg">${el.baseDmg>0?el.baseDmg+'⚔':''}${el.rare?'⭐':''}</div>`;
+    div.title=el.desc;
+    if(!disabled) div.onclick=()=>selectCard(i,data);
+    grid.appendChild(div);
+  });
+}
+
+function selectCard(idx,data){
+  playSfx('click');
+  const me=data.players?.[myId];
+  // Trident Storm dual-card pick mode
+  if(ultActive && me?.role==='blademaster' && window._tridentPhase){
+    const cardKey=me.hand?.[idx];
+    if(!cardKey) return;
+    if(window._tridentPhase===1){
+      window._tridentCards=[{idx, key:cardKey}];
+      window._tridentPhase=2;
+      selectedCard=idx;
+      renderHand(data);
+      document.getElementById('action-status').textContent='⚔️ Trident Storm — choose card 2 of 2!';
+      // Show confirm for card 2 pick
+      renderConfirmButton();
+    } else if(window._tridentPhase===2){
+      if(idx===window._tridentCards[0].idx){ toast('Pick a different card!'); return; }
+      window._tridentCards.push({idx, key:cardKey});
+      selectedCard=idx;
+      renderHand(data);
+      document.getElementById('action-status').textContent=`⚔️ Cards chosen — confirm!`;
+      renderConfirmButton();
+    }
+    return;
+  }
+  selectedCard=idx;
+  renderHand(data);
+  renderConfirmButton();
+}
+
+function checkAllActed(d){
+  if(!d||d.phase!=='choose') return;
+  const alive=Object.values(d.players||{}).filter(p=>p.alive);
+  const actions=Object.keys(d.actions||{});
+  const allActed=alive.length>0 && alive.every(p=>actions.includes(p.id));
+  if(allActed){ clearTimeout(hostPhaseTimeout); resolveRound(d); }
+}
+
+// ═══════════════ TIMER ═══════════════
+function startLocalTimer(data){
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  const timerEnd=data.timerEnd; if(!timerEnd) return;
+  const maxT=data.config?.timer||20;
+
+  function tick(){
+    const rem=Math.max(0,Math.round((timerEnd-Date.now())/1000));
+    document.getElementById('timer-num').textContent=rem;
+    const circ=175.9;
+    document.getElementById('timer-arc').style.strokeDashoffset=circ*(1-rem/maxT);
+    document.getElementById('timer-arc').style.stroke=rem<=5?'var(--danger)':rem<=10?'var(--fire)':'var(--thunder)';
+    if(rem<=0){clearInterval(localTimerInterval);localTimerInterval=null;}
+  }
+  tick();
+  localTimerInterval=setInterval(tick,1000);
+
+  if(isHost){
+    const delay=Math.max(500,timerEnd-Date.now());
+    hostPhaseTimeout=setTimeout(()=>{
+      hostPhaseTimeout=null;
+      roomRef.once('value').then(snap=>{
+        const d=snap.val();
+        if(d&&d.phase==='choose') resolveRound(d);
+      });
+    }, delay+600);
+  }
+}
+
+// ═══════════════ RESOLVE ROUND ═══════════════
+let isResolving = false;
+async function resolveRound(data){
+  if(!isHost || isResolving) return;
+  try {
+    isResolving = true;
+    const players = JSON.parse(JSON.stringify(data.players || {}));
+    const actions = data.actions || {};
+    const cfg = data.config || {hp:100, timer:20, cards:5, mode:'ffa'};
+    const isTeam = cfg.mode === 'team';
+    const logs = [];
+    const roundNum = data.round || 1;
+    let eliminatedOrder = [...(data.eliminatedOrder || [])];
+
+    logs.push({msg:`⚔️ — Round ${roundNum} Results —`, type:'system'});
+
+    // STUN / FREEZE SNAPSHOT
+    const stunnedAtStart = new Set();
+    Object.values(players).forEach(p => {
+      if ((p.statusEffects?.stun||0) > 0) stunnedAtStart.add(p.id);
+      if ((p.statusEffects?.freeze||0) > 0) stunnedAtStart.add(p.id); // freeze also blocks action
+    });
+
+    // STEP 1: Shields, Barrier, Alchemy, Aegis
+    Object.entries(actions).forEach(([pid, act]) => {
+      const p = players[pid];
+      if (!p || !p.alive || stunnedAtStart.has(pid)) return;
+      if (!p.statusEffects) p.statusEffects = {};
+      if (act.card === 'earth')   p.statusEffects.shield = (p.statusEffects.shield||0) + 25;
+      if (act.card === 'barrier') p.statusEffects.immune = (p.statusEffects.immune||0) + 2;
+      if (act.card === 'alchemy') { p.hand = dealCards(cfg.cards||5); logs.push({msg:`⚗️ ${p.name} rerolled hand!`,type:'system'}); }
+      if (act.card === 'aegis' && isTeam) {
+        const teammates = Object.values(players).filter(q => q.team === p.team && q.alive);
+        teammates.forEach(tm => {
+          tm.statusEffects = tm.statusEffects||{};
+          tm.statusEffects.immune = (tm.statusEffects.immune||0) + 1;
+          tm.statusEffects.thornwall = 1; // counter-attack flag
+          tm.hp = clamp((tm.hp||0)+20, 0, tm.maxHp||100);
+        });
+        logs.push({msg:`🌸 ${p.name}'s THORNWALL BLOOM — team immune + 20 HP + counter-attack ready!`,type:'heal'});
+      }
+    });
+
+    // STEP 2: Synergy detection
+    const synergyEffects = {};
+    if (isTeam) {
+      const teams = {};
+      Object.values(players).filter(p=>p.alive).forEach(p => { if(!teams[p.team]) teams[p.team]=[]; teams[p.team].push(p.id); });
+      Object.entries(teams).forEach(([team, pids]) => {
+        if (pids.length < 2) return;
+        const [p1id, p2id] = pids;
+        const act1 = actions[p1id]; const act2 = actions[p2id];
+        if (!act1||!act2) return;
+        if (['cover','aegis'].includes(act1.card)||['cover','aegis'].includes(act2.card)) return;
+        const syn = getSynergy(act1.card, act2.card);
+        if (syn) { logs.push({msg:`💥 SYNERGY — ${syn.name}! ${syn.msg}`,type:'synergy'}); synergyEffects[p1id]=syn; synergyEffects[p2id]=syn; }
+      });
+    }
+
+    // STEP 3: Synergy pre-effects
+    Object.entries(synergyEffects).forEach(([pid, syn]) => {
+      const p = players[pid]; if(!p||!p.alive) return;
+      if (!p.statusEffects) p.statusEffects = {};
+      if (syn.effect === 'team_shield') p.statusEffects.shield = (p.statusEffects.shield||0) + syn.val;
+      if (syn.effect === 'team_heal' || syn.effect === 'aoe_heal') p.hp = clamp((p.hp||0)+syn.val, 0, p.maxHp||100);
+    });
+
+    // STEP 4: Cover map
+    const coverMap = {};
+    if (isTeam) {
+      Object.entries(actions).forEach(([pid, act]) => {
+        if (act.card !== 'cover') return;
+        const sentinel = players[pid];
+        if (!sentinel||!sentinel.alive) return;
+        const teammate = Object.values(players).find(q => q.alive && q.team===sentinel.team && q.id!==pid);
+        if (teammate) { coverMap[teammate.id] = pid; logs.push({msg:`🛡️ ${sentinel.name} covers ${teammate.name}! (-30% dmg)`,type:'cover'}); }
+      });
+    }
+
+    // STEP 5: Holy cleanse first
+    Object.entries(actions).forEach(([pid, act]) => {
+      if (act.card !== 'holy') return;
+      const attacker = players[pid]; if(!attacker||!attacker.alive) return;
+      
+      // Card cycle (Ensure all cards including Holy are removed)
+      attacker.hand = attacker.hand||[];
+      const cIdx = attacker.hand.indexOf('holy'); 
+      if(cIdx>=0) attacker.hand.splice(cIdx,1);
+      attacker.hand.push(randCard());
+
+      attacker.statusEffects = {};
+      attacker.hp = clamp((attacker.hp||0)+20, 0, attacker.maxHp||100);
+      logs.push({msg:`✨ ${attacker.name} cleansed & healed 20 HP!`,type:'heal'});
+      stunnedAtStart.delete(pid);
+    });
+
+    // STEP 5.5: Sovereign Aura — collect nullified targets
+    const sovereignNullified = new Set(); // set of player IDs whose card is nullified this round
+    Object.entries(actions).forEach(([pid, act]) => {
+      if (act.sovereignOn) {
+        const caster = players[pid];
+        if (caster && caster.alive && !stunnedAtStart.has(pid)) {
+          sovereignNullified.add(act.sovereignOn);
+          logs.push({msg:`👑 ${caster.name}'s SOVEREIGN AURA nullifies ${players[act.sovereignOn]?.name}'s action!`, type:'aura'});
+        }
+      }
+    });
+
+    // STEP 6: Offensive actions
+    const aliveIds = Object.values(players).filter(p=>p.alive).map(p=>p.id);
+    // Track chain burn sources for post-loop processing
+    const chainBurnPending = []; // {attacker, targetId, burnVal}
+
+    Object.entries(actions).forEach(([pid, act]) => {
+      const utilityCards = ['earth','barrier','alchemy'];
+      const attacker = players[pid]; if(!attacker||!attacker.alive) return;
+
+      // Skip farsight (no-attack action)
+      if (act.card === 'farsight') return;
+
+      // ── STORMWEAVER'S WRATH (Cat-Burglar ultimate) ──
+      if (act.card === 'stormburglar') {
+        const enemies = isTeam
+          ? aliveIds.filter(id=>players[id].team!==attacker.team)
+          : aliveIds.filter(id=>id!==pid);
+        enemies.forEach(eid=>{
+          const t=players[eid]; if(!t||!t.alive) return;
+          // Strip all buffs
+          ['shield','immune','thornwall'].forEach(b=>{ if(t.statusEffects?.[b]) t.statusEffects[b]=0; });
+          // 15 thunder dmg
+          const sh=t.statusEffects?.shield||0;
+          const fd=Math.max(0,15-sh);
+          t.hp=clamp((t.hp||0)-fd,0,t.maxHp||100);
+          attacker.dmgDealt=(attacker.dmgDealt||0)+fd;
+          t.dmgReceived=(t.dmgReceived||0)+fd;
+          // Apply stun from thunder
+          t.statusEffects=t.statusEffects||{};
+          t.statusEffects.stun=1;
+        });
+        logs.push({msg:`⚡ ${attacker.name}'s STORMWEAVER'S WRATH — all buffs stripped + 15 dmg + stun!`,type:'cursed'});
+        return;
+      }
+
+      // ── TRIDENT STORM (2-Blade Master ultimate) ──
+      if (act.isTrident) {
+        const processCard=(cardKey,cIdx)=>{
+          const el2=getEl(cardKey); if(!el2) return;
+          // Cycle hand
+          attacker.hand=attacker.hand||[];
+          const hi=attacker.hand.indexOf(cardKey);
+          if(hi>=0) attacker.hand.splice(hi,1);
+          attacker.hand.push(randCard());
+          if(stunnedAtStart.has(pid)) return;
+          if(sovereignNullified.has(pid)) return;
+          if(cardKey==='water'){ attacker.hp=clamp((attacker.hp||0)+15,0,attacker.maxHp||100); logs.push({msg:`💧 ${attacker.name} healed 15 HP!`,type:'heal'}); return; }
+          let dmg2=el2.baseDmg||20;
+          if(act.ironAura) dmg2=Math.round(dmg2*1.3);
+          // AOE check
+          if(['meteor','tremortyrant'].includes(cardKey)){
+            const targets2=isTeam?aliveIds.filter(id=>players[id].team!==attacker.team):aliveIds.filter(id=>id!==pid);
+            targets2.forEach(eid=>{
+              const t=players[eid]; if(!t||(t.statusEffects?.immune||0)>0) return;
+              const sh=t.statusEffects?.shield||0; const fd=Math.max(0,dmg2-sh);
+              if(sh>0) t.statusEffects.shield=Math.max(0,sh-dmg2);
+              t.hp=clamp((t.hp||0)-fd,0,t.maxHp||100);
+              attacker.dmgDealt=(attacker.dmgDealt||0)+fd; t.dmgReceived=(t.dmgReceived||0)+fd;
+              logs.push({msg:`${el2.icon} Trident ${el2.name} → ${t.name}: ${fd} dmg!`,type:'dmg'});
+            });
+          } else {
+            const def=players[act.target]; if(!def||!def.alive) return;
+            if(isTeam&&def.team===attacker.team) return;
+            const ftId=(coverMap[act.target])||act.target;
+            const ft=players[ftId]; if(!ft||!ft.alive) return;
+            if((ft.statusEffects?.immune||0)>0) return;
+            const sh=ft.statusEffects?.shield||0; const fd=Math.max(0,dmg2-sh);
+            if(sh>0) ft.statusEffects.shield=Math.max(0,sh-dmg2);
+            ft.hp=clamp((ft.hp||0)-fd,0,ft.maxHp||100);
+            attacker.dmgDealt=(attacker.dmgDealt||0)+fd; ft.dmgReceived=(ft.dmgReceived||0)+fd;
+            logs.push({msg:`${el2.icon} Trident ${el2.name} → ${def.name}: ${fd} dmg!`,type:'dmg'});
+            // Apply element effects
+            if(cardKey==='fire'){ ft.statusEffects=ft.statusEffects||{}; ft.statusEffects.burn=2; }
+            if(cardKey==='thunder'){ ft.statusEffects=ft.statusEffects||{}; ft.statusEffects.stun=2; }
+          }
+        };
+        logs.push({msg:`⚔️ ${attacker.name}'s TRIDENT STORM — double strike!`,type:'combo'});
+        processCard(act.card, act.cardIdx);
+        processCard(act.tridentCard2, act.tridentCardIdx2);
+        // Give 2 replacement cards
+        attacker.hand.push(randCard()); attacker.hand.push(randCard());
+        logs.push({msg:`⚔️ ${attacker.name} draws 2 cards to replenish!`,type:'system'});
+        return;
+      }
+
+      if (utilityCards.includes(act.card)) {
+        attacker.hand = attacker.hand||[];
+        const cIdx = attacker.hand.indexOf(act.card);
+        if(cIdx>=0){ attacker.hand.splice(cIdx,1); attacker.hand.push(randCard()); }
+        return;
+      }
+
+      if (['holy','cover','aegis'].includes(act.card)) return;
+
+      const el = getEl(act.card); if(!el) return;
+
+      // Standard card cycle
+      attacker.hand = attacker.hand||[];
+      const cIdx = attacker.hand.indexOf(act.card);
+      if(cIdx>=0) attacker.hand.splice(cIdx,1);
+      attacker.hand.push(randCard());
+
+      if (stunnedAtStart.has(pid)) { logs.push({msg:`🚫 ${attacker.name} is stunned/frozen!`,type:'system'}); return; }
+
+      // Sovereign nullifies this action entirely
+      if (sovereignNullified.has(pid)) { logs.push({msg:`👑 ${attacker.name}'s card was nullified by Sovereign Aura!`,type:'aura'}); return; }
+
+      if (act.card === 'water') {
+        attacker.hp = clamp((attacker.hp||0)+15, 0, attacker.maxHp||100);
+        logs.push({msg:`💧 ${attacker.name} healed 15 HP!`,type:'heal'}); return;
+      }
+
+      // Base damage — Primordial Awakening (isBurst) doubles all
+      let dmg = el.baseDmg||20;
+      if (act.isBurst) dmg *= 2;  // Straw-Hat Primordial Awakening
+      // Iron Aura: +30% damage
+      if (act.ironAura) { dmg = Math.round(dmg * 1.3); logs.push({msg:`🛡 ${attacker.name}'s IRON AURA flares! +30% damage!`,type:'aura'}); }
+
+      // ── AOE cards: Meteor & Tremor Tyrant ──
+      const isAoe = act.card === 'meteor' || act.card === 'tremortyrant';
+      if (isAoe) {
+        const targets = isTeam ? aliveIds.filter(eid=>players[eid].team!==attacker.team) : aliveIds.filter(eid=>eid!==pid);
+        let finalAoeDmg = dmg;
+        if (act.card === 'meteor') {
+          const synergy = synergyEffects[pid];
+          if (synergy?.effect === 'aoe_dmg') finalAoeDmg += synergy.val;
+        }
+        targets.forEach(eid => {
+          const t = players[eid]; if(!t||(t.statusEffects?.immune||0)>0) return;
+          // Thornwall counter: if target has thornwall, attacker takes 20 dmg instead (no attack gets through)
+          if ((t.statusEffects?.thornwall||0)>0) {
+            attacker.hp = clamp((attacker.hp||0)-20, 0, attacker.maxHp||100);
+            logs.push({msg:`🌸 THORNWALL counter! ${t.name} reflects 20 dmg back to ${attacker.name}!`,type:'cursed'});
+            return;
+          }
+          const redir = coverMap[eid]||eid; const tgt = players[redir]; if(!tgt) return;
+          const sh = tgt.statusEffects?.shield||0;
+          const fd = Math.max(0, finalAoeDmg - sh);
+          if(sh>0) tgt.statusEffects.shield = Math.max(0, sh - finalAoeDmg);
+          tgt.hp = clamp((tgt.hp||0)-fd, 0, tgt.maxHp||100);
+          attacker.dmgDealt = (attacker.dmgDealt||0)+fd;
+          tgt.dmgReceived = (tgt.dmgReceived||0)+fd;
+          logs.push({msg:`${el.icon} ${el.name} → ${t.name}: ${fd} dmg${redir!==eid?` (covered by ${players[redir]?.name})`:''}!`,type:'dmg'});
+          // Tremor Tyrant: stun all hit targets
+          if (act.card === 'tremortyrant') { tgt.statusEffects=tgt.statusEffects||{}; tgt.statusEffects.stun=2; }
+        });
+        if (act.card === 'tremortyrant') logs.push({msg:`🍠 TREMOR TYRANT — all enemies stunned!`,type:'cursed'});
+        if (act.isBurst) logs.push({msg:`💥 PRIMORDIAL AWAKENING — ${el.name} struck with double force!`,type:'combo'});
+        return;
+      }
+
+      // ── Single-target cards ──
+      const defender = players[act.target]; if(!defender||!defender.alive) return;
+      if (isTeam && defender.team===attacker.team) return;
+      const finalTargetId = (coverMap[act.target])||act.target;
+      const finalTarget = players[finalTargetId]; if(!finalTarget||!finalTarget.alive) return;
+
+      // Thornwall counter on single target
+      if ((finalTarget.statusEffects?.thornwall||0)>0) {
+        attacker.hp = clamp((attacker.hp||0)-20, 0, attacker.maxHp||100);
+        logs.push({msg:`🌸 THORNWALL counter! ${finalTarget.name} reflects 20 dmg to ${attacker.name}!`,type:'cursed'});
+        return;
+      }
+
+      if ((finalTarget.statusEffects?.immune||0)>0) { logs.push({msg:`🛡️ ${finalTarget.name} is immune!`,type:'system'}); return; }
+
+      const adv = getAdvantage(act.card, (finalTarget.hand||[])[0]||'');
+      if (adv==='advantage') dmg=Math.round(dmg*1.5);
+
+      if (act.card==='shadow') {
+        const hasDebuff=Object.entries(finalTarget.statusEffects||{}).some(([k,v])=>v>0&&['burn','stun','freeze'].includes(k));
+        const multi=synergyEffects[pid]?.effect==='shadow_triple'?3:hasDebuff?2:1;
+        if(multi>1){dmg*=multi;logs.push({msg:`🌑 Shadow ×${multi}!`,type:'combo'});}
+      }
+
+      if (act.isBurst) logs.push({msg:`💥 PRIMORDIAL AWAKENING — ${attacker.name} hits with doubled fury!`,type:'combo'});
+
+      const isCovered = coverMap[act.target]===finalTargetId;
+      if (isCovered) dmg=Math.round(dmg*0.7);
+      const shield=finalTarget.statusEffects?.shield||0;
+      const finalDmg=Math.max(0,dmg-shield);
+      if(shield>0) finalTarget.statusEffects.shield=Math.max(0,shield-dmg);
+      finalTarget.hp=clamp((finalTarget.hp||0)-finalDmg,0,finalTarget.maxHp||100);
+      attacker.dmgDealt=(attacker.dmgDealt||0)+finalDmg;
+      finalTarget.dmgReceived=(finalTarget.dmgReceived||0)+finalDmg;
+      const advStr=adv==='advantage'?' ⚡ADV!':'';
+      const coverStr=isCovered?' 🛡️(-30%)':'';
+      const redirStr=finalTargetId!==act.target?` [→${finalTarget.name}]`:'';
+      logs.push({msg:`${el.icon} ${attacker.name} → ${defender.name}: ${finalDmg} dmg${advStr}${coverStr}${redirStr}`,type:'dmg'});
+
+      const holyBlock=actions[act.target]?.card==='holy';
+
+      // Standard element effects
+      if(act.card==='thunder'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed stun!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.stun=2;}}
+      if(act.card==='fire'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed burn!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.burn=2;}}
+      if(act.card==='wind'&&(finalTarget.hand||[]).length>0){const s=finalTarget.hand.splice(Math.floor(Math.random()*finalTarget.hand.length),1)[0];attacker.hand.push(s);logs.push({msg:`🌪️ ${attacker.name} stole ${getEl(s)?.icon||'?'} from ${finalTarget.name}!`,type:'combo'});}
+
+      // ── CURSED FRUIT EFFECTS ──
+      if (act.card === 'glacialcurse') {
+        if (!holyBlock) {
+          finalTarget.statusEffects = finalTarget.statusEffects||{};
+          finalTarget.statusEffects.freeze = 2;
+          logs.push({msg:`🍵 GLACIAL CURSE — ${finalTarget.name} is frozen for 2 rounds!`,type:'cursed'});
+        } else { logs.push({msg:`✨ ${finalTarget.name} cleansed the freeze!`,type:'system'}); }
+      }
+
+      if (act.card === 'voidheart') {
+        const buffs = ['shield','immune','thornwall'];
+        let stolenCount = 0;
+        buffs.forEach(b => {
+          if ((finalTarget.statusEffects?.[b]||0)>0) {
+            attacker.statusEffects = attacker.statusEffects||{};
+            attacker.statusEffects[b] = (attacker.statusEffects[b]||0) + (finalTarget.statusEffects[b]||0);
+            finalTarget.statusEffects[b] = 0;
+            stolenCount++;
+          }
+        });
+        const drainAmt = stolenCount * 10;
+        if (drainAmt > 0) {
+          finalTarget.hp = clamp((finalTarget.hp||0)-drainAmt, 0, finalTarget.maxHp||100);
+          attacker.hp = clamp((attacker.hp||0)+drainAmt, 0, attacker.maxHp||100);
+          logs.push({msg:`🫐 VOIDHEART — drained ${stolenCount} buff(s)! ${drainAmt} HP stolen from ${finalTarget.name}!`,type:'cursed'});
+        } else {
+          logs.push({msg:`🫐 VOIDHEART — ${finalTarget.name} had no buffs to drain.`,type:'cursed'});
+        }
+      }
+
+      if (act.card === 'sanctum') {
+        const myHp = attacker.hp;
+        const theirHp = finalTarget.hp;
+        attacker.hp = clamp(theirHp, 0, attacker.maxHp||100);
+        finalTarget.hp = clamp(myHp, 0, finalTarget.maxHp||100);
+        logs.push({msg:`🍈 SANCTUM — ${attacker.name} swaps HP with ${finalTarget.name}! (${myHp} ↔ ${theirHp})`,type:'cursed'});
+      }
+
+      if (act.card === 'embersoul') {
+        // Chain burn: if target already has burn, mark for chain burn spread
+        if ((finalTarget.statusEffects?.burn||0) > 0) {
+          chainBurnPending.push({ attacker: pid, burningTarget: finalTargetId });
+        }
+        if (!holyBlock) {
+          finalTarget.statusEffects = finalTarget.statusEffects||{};
+          finalTarget.statusEffects.burn = (finalTarget.statusEffects.burn||0) + 2;
+          logs.push({msg:`🍑 EMBERSOUL — ${finalTarget.name} ignited! Burn stacks!`,type:'cursed'});
+        }
+      }
+    });
+
+    // STEP 6.5: Chain burn spread (Embersoul) — runs after all attacks resolved
+    chainBurnPending.forEach(({attacker: aid, burningTarget: tid}) => {
+      const attk = players[aid];
+      const allTargets = isTeam
+        ? aliveIds.filter(id=>players[id].team!==attk?.team && id!==tid && players[id]?.alive)
+        : aliveIds.filter(id=>id!==aid && id!==tid && players[id]?.alive);
+      if (allTargets.length > 0) {
+        const spreadTo = allTargets[0];
+        players[spreadTo].statusEffects = players[spreadTo].statusEffects||{};
+        players[spreadTo].statusEffects.burn = (players[spreadTo].statusEffects.burn||0) + 2;
+        logs.push({msg:`🍑 EMBERSOUL CHAIN — burn spreads to ${players[spreadTo].name}!`,type:'cursed'});
+      }
+    });
+
+    // STEP 7: Ticks
+    Object.values(players).forEach(p => {
+      if(!p.alive) return; if(!p.statusEffects) p.statusEffects={};
+      if(p.statusEffects.burn>0){p.hp=clamp(p.hp-5,0,p.maxHp);p.statusEffects.burn--;logs.push({msg:`🔥 ${p.name} burns for 5 dmg!`,type:'dmg'});}
+      // Tick down stun, freeze, immune, thornwall
+      ['stun','freeze','immune','thornwall'].forEach(k=>{if((p.statusEffects[k]||0)>0)p.statusEffects[k]--;});
+      if(p.hp>0&&p.hp/p.maxHp<0.3&&(p.hand||[]).length<7) p.hand.push(randCard());
+    });
+
+    // STEP 8: Ultimate charge + Aura charge (both modes)
+    Object.entries(actions).forEach(([pid, act]) => {
+      const p = players[pid]; if(!p||!p.alive) return;
+
+      // Ultimate charge (team only, or FFA with role)
+      if (isTeam || p.role) {
+        if (act.isBurst || act.card === 'aegis' || act.card==='stormburglar' || act.isTrident) {
+          p.ultimateCharge = 0;
+        } else {
+          const gain = (15 + Math.min(20, Math.floor((p.dmgDealt||0)/5))) * 0.5;
+          p.ultimateCharge = Math.min(100, (p.ultimateCharge||0) + gain);
+        }
+      }
+
+      // Aura charge (all modes) — gain 20-35 per round, reset on use
+      if (act.ironAura || act.card === 'farsight' || act.sovereignOn) {
+        p.auraCharge = 0; // used this round
+      } else {
+        const auraGain = 20 + Math.min(15, Math.floor((p.dmgDealt||0)/6));
+        p.auraCharge = Math.min(100, (p.auraCharge||0) + auraGain);
+      }
+    });
+
+    // STEP 9: Last Stand
+    if (isTeam) {
+      Object.values(players).forEach(p => {
+        if(!p.alive) return;
+        const teamAlive=Object.values(players).filter(q=>q.alive&&q.team===p.team&&q.id!==p.id);
+        if(teamAlive.length===0&&!data.players[p.id]?.lastStand){
+          p.lastStand=true; p.hand=p.hand||[];
+          p.hand.push(randCard()); p.hand.push(randCard());
+          logs.push({msg:`⚡ LAST STAND! ${p.name} draws 2 bonus cards!`,type:'laststand'});
+        } else { p.lastStand=teamAlive.length===0; }
+      });
+    }
+
+    // STEP 10: Death check
+    Object.values(players).forEach(p => {
+      if(p.alive&&(p.hp||0)<=0){
+        p.alive=false;p.hp=0;p.eliminated=roundNum;eliminatedOrder.push(p.id);
+        logs.push({msg:`💀 ${p.name} has fallen!`,type:'death'});
+        Object.entries(actions).forEach(([aid,a])=>{if(a.target===p.id&&players[aid])players[aid].kills=(players[aid].kills||0)+1;});
+      }
+    });
+
+    // STEP 11: Win condition
+    const alive=Object.values(players).filter(p=>p.alive && !p.isSpectator);
+    let nextPhase='choose', winnerId=null, winnerTeam=null;
+    if(isTeam){
+      const teamsAlive=[...new Set(alive.map(p=>p.team))];
+      if(teamsAlive.length<=1){
+        nextPhase='end'; winnerTeam=teamsAlive[0]||null;
+        if(winnerTeam){ winnerId=alive.find(p=>p.team===winnerTeam)?.id||null; logs.push({msg:`🏆 Team ${winnerTeam==='A'?'🔥 Red':'💧 Blue'} wins!`,type:'combo'}); }
+      }
+    } else {
+      if(alive.length<=1){ nextPhase='end'; winnerId=alive[0]?.id||null; if(winnerId)logs.push({msg:`🏆 ${players[winnerId]?.name} is the last warrior standing!`,type:'combo'}); }
+    }
+
+    await roomRef.update({phase:'resolve', log:[...(data.log||[]),...logs].slice(-100)});
+    setTimeout(async()=>{
+      try{
+        const fu={players,actions:{},round:roundNum+1,phase:nextPhase,eliminatedOrder,timerEnd:nextPhase==='choose'?Date.now()+(cfg.timer*1000)+1000:null};
+        if(winnerId) fu.winner=winnerId;
+        if(winnerTeam) fu.winnerTeam=winnerTeam;
+        await roomRef.update(fu);
+      } finally { isResolving=false; }
+    },4000);
+
+  } catch(err) {
+    console.error('Resolve Error:',err);
+    isResolving=false;
+    roomRef.update({phase:'choose',timerEnd:Date.now()+20000});
+  }
+}
+
+
+// ═══════════════ REVEAL OVERLAY ═══════════════
+function renderRevealOverlay(data){
+  const overlay=document.getElementById('reveal-overlay');
+  const container=document.getElementById('reveal-cards');
+  container.innerHTML='';
+  const actions=data.actions||{};
+  const players=data.players||{};
+  const isTeam=data.config?.mode==='team';
+  let delay=0;
+
+  function makeCard(pid, act){
+    const p=players[pid]; if(!p) return null;
+    const el=getEl(act.card); if(!el) return null;
+    const targetP=players[act.target];
+    const specialLabel=act.card==='cover'?'🛡️ COVER':act.card==='aegis'?'✨ AEGIS':null;
+    const div=document.createElement('div');
+    div.className=`reveal-card bg-${act.card}`;
+    div.style.cssText=`border:2px solid ${el.color};animation-delay:${delay}ms;flex-shrink:0;`;
+    div.innerHTML=`
+      <div style="font-size:36px;">${el.icon}</div>
+      <div class="cinzel" style="font-size:12px;font-weight:700;color:${el.color};margin-top:5px;">${specialLabel||el.name}</div>
+      <div style="font-size:20px;margin-top:4px;">${p.avatar}</div>
+      <div style="font-size:12px;font-weight:700;">${p.name}</div>
+      ${targetP&&targetP.id!==pid&&!['cover','aegis'].includes(act.card)?`<div style="font-size:10px;color:var(--muted);margin-top:3px;">→ ${targetP.avatar} ${targetP.name}</div>`:''}
+      ${act.isBurst?`<div style="font-size:10px;color:#FFD700;margin-top:3px;font-weight:700;">💥 BURST</div>`:''}
+    `;
+    delay+=150;
+    return div;
+  }
+
+  if(isTeam){
+    // Group by team with colored headers
+    const teamDefs=[
+      {id:'A', label:'🔥 Team Red',   color:'var(--teamA)',  border:'var(--teamA-border)', bg:'var(--teamA-bg)'},
+      {id:'B', label:'💧 Team Blue',  color:'var(--teamB)',  border:'var(--teamB-border)', bg:'var(--teamB-bg)'},
+    ];
+    teamDefs.forEach(td=>{
+      const teamPlayers=Object.entries(actions).filter(([pid])=>players[pid]?.team===td.id);
+      if(!teamPlayers.length) return;
+      // Team column wrapper
+      const col=document.createElement('div');
+      col.style.cssText=`display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 16px;border-radius:18px;border:1.5px solid ${td.border};background:${td.bg};min-width:140px;`;
+      // Team header
+      const hdr=document.createElement('div');
+      hdr.style.cssText=`font-family:'Cinzel',serif;font-size:12px;font-weight:900;letter-spacing:2px;color:${td.color};margin-bottom:2px;`;
+      hdr.textContent=td.label;
+      col.appendChild(hdr);
+      // Cards row inside column
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
+      teamPlayers.forEach(([pid,act])=>{
+        const card=makeCard(pid,act);
+        if(card) row.appendChild(card);
+      });
+      col.appendChild(row);
+      container.appendChild(col);
+    });
+    // VS badge between teams
+    if(Object.keys(actions).length>0){
+      const vs=document.createElement('div');
+      vs.style.cssText='display:flex;align-items:center;align-self:center;font-family:"Cinzel",serif;font-weight:900;font-size:22px;background:linear-gradient(135deg,var(--teamA),var(--teamB));-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:0 8px;';
+      vs.textContent='VS';
+      // Insert VS between the two team columns
+      if(container.children.length>=2){
+        container.insertBefore(vs, container.children[1]);
+      }
+    }
+  } else {
+    // FFA — flat list like before
+    Object.entries(actions).forEach(([pid,act])=>{
+      const card=makeCard(pid,act);
+      if(card) container.appendChild(card);
+    });
+  }
+
+  overlay.classList.add('active');
+  let cd=4;
+  const cdEl=document.getElementById('reveal-countdown');
+  const cdInt=setInterval(()=>{
+    cd--; cdEl.textContent=`Resolving in ${cd}...`;
+    if(cd<=0){ clearInterval(cdInt); overlay.classList.remove('active'); }
+  },1000);
+  cdEl.textContent=`Resolving in ${cd}...`;
+}
+
+// ═══════════════ COMBAT LOG RENDER ═══════════════
+function renderCombatLog(data){
+  const logEl=document.getElementById('combat-log'); if(!logEl) return;
+  const logs=data.log||[];
+  const isNew = logs.length > (logEl.children.length);
+  
+  logEl.innerHTML='';
+  logs.forEach((l, i)=>{
+    const div=document.createElement('div');
+    div.className='log-entry '+(l.type||'');
+    div.textContent=l.msg;
+    logEl.appendChild(div);
+
+    // Play sound for the most recent log if it's new
+    if (isNew && i === logs.length - 1) {
+       if (l.type === 'dmg') playSfx('cast');
+       if (l.type === 'heal') playSfx('heal');
+       if (l.type === 'death') playSfx('death');
+       if (l.type === 'synergy' || l.type === 'combo') playSfx('win');
+       if (l.type === 'cursed' || l.type === 'aura') playSfx('win');
+       if (l.msg.includes('Meteor') || l.msg.includes('TREMOR')) playSfx('meteor');
+       if (l.msg.includes('Fire') || l.msg.includes('Embersoul') || l.msg.includes('burns')) playSfx('fire');
+       if (l.msg.includes('Thunder') || l.msg.includes('stun') || l.msg.includes('SOVEREIGN')) playSfx('thunder');
+       if (l.msg.includes('Earth') || l.msg.includes('shield') || l.msg.includes('THORNWALL')) playSfx('earth');
+       if (l.msg.includes('frozen') || l.msg.includes('GLACIAL')) playSfx('water');
+    }
+  });
+  logEl.scrollTop=logEl.scrollHeight;
+}
+
+
+
+// ═══════════════ END SCREEN ═══════════════
+function renderEnd(data){
+  showScreen('end');
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  document.getElementById('reveal-overlay').classList.remove('active');
+
+  const players=Object.values(data.players||{});
+  const isTeam=data.config?.mode==='team';
+  const winnerId=data.winner;
+  const winnerTeam=data.winnerTeam||null;
+  const isMyTeamWin=isTeam ? (data.players?.[myId]?.team===winnerTeam) : (winnerId===myId);
+
+  // Title
+  const endTitle=document.getElementById('end-title');
+  const endSub=document.getElementById('end-sub');
+  document.getElementById('end-icon').textContent=isMyTeamWin?'🏆':'⚔️';
+  if(isTeam && winnerTeam){
+    const teamName=winnerTeam==='A'?'🔥 Team Red':'💧 Team Blue';
+    endTitle.textContent=`${teamName} Wins!`;
+    endTitle.style.background=winnerTeam==='A'?'linear-gradient(135deg,#FF4500,#FF8800)':'linear-gradient(135deg,#00BFFF,#0088FF)';
+    endSub.textContent=isMyTeamWin?'Victory! Your team conquered the arena! 🎉':'Your team has been defeated.';
+  } else {
+    const winner=data.players?.[winnerId];
+    endTitle.textContent=winner?`${winner.avatar} ${winner.name} Wins!`:'Draw!';
+    endTitle.style.background=isMyTeamWin?'linear-gradient(135deg,#FFD700,#FF6B00)':'linear-gradient(135deg,#fff,rgba(255,255,255,0.6))';
+    endSub.textContent=isMyTeamWin?'You conquered the arena! 🎉':'The battle has ended.';
+  }
+  endTitle.style.webkitBackgroundClip='text';
+  endTitle.style.webkitTextFillColor='transparent';
+
+  // Team standings (2 separate groups) or FFA standings
+  const lbEl=document.getElementById('final-lb');
+  lbEl.innerHTML='';
+
+  if(isTeam){
+    ['A','B'].forEach(team=>{
+      const teamPlayers=players.filter(p=>p.team===team);
+      if(teamPlayers.length===0) return;
+      const isWinTeam=team===winnerTeam;
+      const hdr=document.createElement('div');
+      hdr.style.cssText=`font-family:'Cinzel',serif;font-weight:700;font-size:12px;letter-spacing:2px;padding:6px 12px;border-radius:8px;margin-bottom:6px;margin-top:10px;${isWinTeam?`background:${team==='A'?'rgba(255,69,0,0.15)':'rgba(0,191,255,0.15)'};color:${team==='A'?'#FF8855':'#66DDFF'}`:' color:rgba(255,255,255,0.3);'}`;
+      hdr.textContent=`${isWinTeam?'🏆 ':'💀 '}${team==='A'?'🔥 TEAM RED':'💧 TEAM BLUE'}${isWinTeam?' — VICTORY':'  — DEFEATED'}`;
+      lbEl.appendChild(hdr);
+      teamPlayers.sort((a,b)=>(b.hp||0)-(a.hp||0)).forEach((p,i)=>{
+        const div=document.createElement('div');
+        div.className='lb-row'+(isWinTeam?' winner':'');
+        div.style.cssText=`display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid ${isWinTeam?(team==='A'?'rgba(255,69,0,0.25)':'rgba(0,191,255,0.25)'):'rgba(255,255,255,0.06)'};margin-bottom:6px;`;
+        div.innerHTML=`
+          <div style="font-size:20px;">${p.avatar}</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:14px;">${p.name}${p.id===myId?' 👈':''}</div>
+            <span class="role-badge role-${p.role||'strawhat'}" style="font-size:10px;">${ROLES[p.role]?`${ROLES[p.role].icon} ${ROLES[p.role].label}`:'⚔️ ?'}</span>
+          </div>
+          <div style="text-align:right;font-size:12px;color:var(--muted);">
+            <div>${p.hp}/${p.maxHp} HP</div>
+            <div>${p.dmgDealt||0} dmg · ${p.kills||0} kills</div>
+          </div>`;
+        lbEl.appendChild(div);
+      });
+    });
+  } else {
+    const eliminated=data.eliminatedOrder||[];
+    const sorted=[...players].sort((a,b)=>{
+      if(a.id===winnerId) return -1; if(b.id===winnerId) return 1;
+      const ai=eliminated.indexOf(a.id); const bi=eliminated.indexOf(b.id);
+      if(ai!==-1&&bi!==-1) return bi-ai; return (b.hp||0)-(a.hp||0);
+    });
+    const medals=['🥇','🥈','🥉'];
+    sorted.forEach((p,i)=>{
+      const div=document.createElement('div');
+      div.className='lb-row '+(i===0?'winner':i===1?'second':i===2?'third':'');
+      div.style.animationDelay=`${i*100}ms`;
+      div.innerHTML=`
+        <div class="cinzel" style="font-size:22px;width:36px;text-align:center;">${medals[i]||`#${i+1}`}</div>
+        <div style="font-size:24px;">${p.avatar}</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:15px;">${p.name}${p.id===myId?' 👈':''}</div>
+        ${p.role&&ROLES[p.role]?`<span class="role-badge role-${p.role}" style="font-size:9px;">${ROLES[p.role].icon} ${ROLES[p.role].label}</span>`:''}
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">${p.hp} HP · ${p.kills||0} kills</div></div>
+        <div style="text-align:right;font-size:12px;color:var(--muted);">${p.dmgDealt||0} dmg</div>`;
+      lbEl.appendChild(div);
+    });
+  }
+
+  // Battle stats
+  const statsEl=document.getElementById('battle-stats');
+  statsEl.innerHTML='';
+  const allP=[...players];
+  const statCards=[
+    {icon:'💥',label:'Most Damage',val:allP.sort((a,b)=>(b.dmgDealt||0)-(a.dmgDealt||0))[0],sub:p=>`${p.dmgDealt||0} dmg dealt`},
+    {icon:'🛡️',label:'Most Tanky', val:allP.sort((a,b)=>(b.dmgReceived||0)-(a.dmgReceived||0))[0],sub:p=>`${p.dmgReceived||0} dmg taken`},
+    {icon:'⚔️',label:'Most Kills',  val:allP.sort((a,b)=>(b.kills||0)-(a.kills||0))[0],sub:p=>`${p.kills||0} kills`},
+    {icon:'❤️',label:'Most HP Left',val:allP.filter(p=>p.alive).sort((a,b)=>(b.hp||0)-(a.hp||0))[0]||allP[0],sub:p=>`${p.hp}/${p.maxHp} HP`},
+  ];
+  statCards.forEach((s,i)=>{
+    if(!s.val) return;
+    const div=document.createElement('div');
+    div.style.cssText='background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;text-align:center;animation:popIn 0.4s ease both;';
+    div.style.animationDelay=`${i*120}ms`;
+    div.innerHTML=`<div style="font-size:26px;">${s.icon}</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">${s.label}</div>
+      <div style="font-size:16px;margin-top:4px;">${s.val.avatar} <span class="cinzel" style="font-weight:700;">${s.val.name}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">${s.sub(s.val)}</div>`;
+    statsEl.appendChild(div);
+  });
+}
+
+
+</script>
+</body>
+</html>
