@@ -372,6 +372,14 @@ select option{background:#0d1020;}
         <button class="btn btn-secondary" style="font-size:12px;padding:10px;" onclick="joinTeam('A')">Join 🔥 Red</button>
         <button class="btn btn-secondary" style="font-size:12px;padding:10px;" onclick="joinTeam('B')">Join 💧 Blue</button>
       </div>
+      <!-- Spectator section -->
+      <div class="div"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <h3 class="cinzel" style="font-size:12px;color:var(--muted);">👁 SPECTATORS</h3>
+        <button class="btn btn-ghost" style="width:auto;padding:4px 10px;" onclick="joinSpectate()">Join 👁</button>
+      </div>
+      <div id="spectator-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:20px;"></div>
+      
       <!-- Role select -->
       <div id="role-select-section" style="display:none;margin-top:10px;">
         <p style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:1px;">CHOOSE YOUR ROLE</p>
@@ -491,8 +499,9 @@ select option{background:#0d1020;}
     <h3 class="cinzel" style="font-size:14px;color:var(--muted);margin-bottom:12px;text-align:center;">📊 BATTLE STATS</h3>
     <div id="battle-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
   </div>
-  <div style="width:100%;max-width:500px;padding:0 16px;">
-    <button class="btn btn-primary" onclick="goHome()">🏠 Return to Home</button>
+  <div style="width:100%;max-width:500px;padding:0 16px;display:flex;gap:10px;margin-top:10px;">
+    <button class="btn btn-primary" id="btn-play-again" onclick="backToLobby()" style="display:none;">🔄 Play Again</button>
+    <button class="btn btn-secondary" onclick="goHome()">🏠 Home</button>
   </div>
 </div>
 
@@ -670,9 +679,18 @@ function joinTeam(team){
   if(!roomRef) return;
   playSfx('click');
   myTeam=team;
-  roomRef.child('players/'+myId+'/team').set(team);
+  roomRef.child('players/'+myId).update({team: team, isSpectator: false});
   document.getElementById('role-select-section').style.display='block';
   toast(team==='A'?'🔥 Joined Team Red!':'💧 Joined Team Blue!');
+}
+
+function joinSpectate(){
+  if(!roomRef) return;
+  playSfx('click');
+  myTeam=null; myRole=null;
+  roomRef.child('players/'+myId).update({team: null, role: null, isSpectator: true, alive: false});
+  document.getElementById('role-select-section').style.display='none';
+  toast('👁 Joined Spectators!');
 }
 
 function selectRole(role){
@@ -680,7 +698,7 @@ function selectRole(role){
   playSfx('click');
   myRole=role;
   const hp = role==='vanguard' ? 120 : 100;
-  roomRef.child('players/'+myId).update({role, maxHp:hp, hp});
+  roomRef.child('players/'+myId).update({role, maxHp:hp, hp, isSpectator: false});
   document.getElementById('btn-role-vanguard').classList.toggle('btn-primary', role==='vanguard');
   document.getElementById('btn-role-sentinel').classList.toggle('btn-primary', role==='sentinel');
   toast(role==='vanguard'?'⚔️ Vanguard ready!':'🛡️ Sentinel ready!');
@@ -690,6 +708,11 @@ function renderTeamLobby(data){
   const players=Object.values(data.players||{});
   const isTeamMode=data.config?.mode==='team';
   document.getElementById('team-assign-section').style.display=isTeamMode?'block':'none';
+  
+  const spectators=players.filter(p=>p.isSpectator);
+  const elSpec=document.getElementById('spectator-list');
+  if(elSpec) elSpec.innerHTML=spectators.map(p=>`<div class="player-chip" style="font-size:11px;padding:4px 10px;">${p.avatar} ${p.name}</div>`).join('');
+
   if(!isTeamMode) return;
   const teamA=players.filter(p=>p.team==='A');
   const teamB=players.filter(p=>p.team==='B');
@@ -698,7 +721,9 @@ function renderTeamLobby(data){
   elA.innerHTML=teamA.map(p=>`<div class="team-member">${p.avatar} ${p.name}${p.id===myId?' 👈':''}<span class="role-badge role-${p.role||'?'}" style="margin-left:auto">${p.role||'?'}</span></div>`).join('');
   elB.innerHTML=teamB.map(p=>`<div class="team-member">${p.avatar} ${p.name}${p.id===myId?' 👈':''}<span class="role-badge role-${p.role||'?'}" style="margin-left:auto">${p.role||'?'}</span></div>`).join('');
   // Show role section if already on a team
-  if(myTeam) document.getElementById('role-select-section').style.display='block';
+  const me=data.players?.[myId];
+  if(me?.team && !me?.isSpectator) document.getElementById('role-select-section').style.display='block';
+  else document.getElementById('role-select-section').style.display='none';
 }
 
 // ═══════════════ SYNERGY TABLE ═══════════════
@@ -833,7 +858,10 @@ window.onload = () => {
 };
 
 function goHome(){
-  if(roomRef){ roomRef.off(); }
+  if(roomRef){ 
+    roomRef.child('players/'+myId+'/online').set(false);
+    roomRef.off(); 
+  }
   roomRef=null; gameState=null; isHost=false;
   selectedCard=null; selectedTarget=null; actionSubmitted=false; lastPhase=null; lastRound=null;
   myTeam=null; myRole=null; coverActive=false; ultActive=false;
@@ -880,6 +908,10 @@ function setupRoom(){
     } else {
       roomRef.child('players/'+myId).set(me);
     }
+    
+    // Presence: Mark offline when disconnected
+    roomRef.child('players/'+myId+'/online').onDisconnect().set(false);
+    
     showScreen('lobby');
     document.getElementById('lobby-code').textContent=roomCode;
     if(isHost) document.getElementById('host-cfg').style.display='flex';
@@ -892,6 +924,31 @@ function listenRoom(){
     const data=snap.val(); if(!data) return;
     gameState=data;
     const phase=data.phase;
+    
+    // ── HOST MIGRATION ──
+    const players=data.players||{};
+    const aliveHost=Object.values(players).find(p=>p.isHost && p.online);
+    if(!aliveHost){
+      // Promote the next online player with earliest joinedAt
+      const nextHost=Object.values(players)
+        .filter(p=>p.online)
+        .sort((a,b)=>a.joinedAt-b.joinedAt)[0];
+      if(nextHost && nextHost.id===myId){
+        isHost=true;
+        roomRef.child('players/'+myId+'/isHost').set(true);
+        toast('👑 You are now the host!');
+      }
+    } else {
+      isHost = (aliveHost.id === myId);
+    }
+    
+    // Update host UI
+    if(phase==='lobby'){
+       document.getElementById('host-cfg').style.display=isHost?'flex':'none';
+    }
+    // Show Play Again for everyone
+    document.getElementById('btn-play-again').style.display=(phase==='end')?'block':'none';
+
     if(phase==='lobby') {
       renderLobby(data);
       bridgeShownForRound = null;
@@ -953,12 +1010,12 @@ function renderLobby(data){
   if(isHost){
     let canStart=false;
     if(isTeamMode){
-      const teamA=players.filter(p=>p.team==='A'&&p.role);
-      const teamB=players.filter(p=>p.team==='B'&&p.role);
+      const teamA=players.filter(p=>p.team==='A'&&p.role&&!p.isSpectator);
+      const teamB=players.filter(p=>p.team==='B'&&p.role&&!p.isSpectator);
       canStart=teamA.length>=1&&teamB.length>=1&&teamA.length+teamB.length>=2;
       waitMsg.textContent=canStart?'Teams ready!':'Need at least 1 player per team with roles assigned';
     } else {
-      canStart=players.length>=2;
+      canStart=players.filter(p=>!p.isSpectator).length>=2;
       waitMsg.textContent=canStart?'':'Need at least 2 warriors';
     }
     startBtn.style.display=canStart?'block':'none';
@@ -969,6 +1026,35 @@ function renderLobby(data){
   }
 }
 
+async function backToLobby(){
+  playSfx('click');
+  if(isHost){
+    const players = JSON.parse(JSON.stringify(gameState.players || {}));
+    Object.values(players).forEach(p => {
+      if(!p.isSpectator) {
+        p.alive = true;
+        p.hp = 100; // placeholder until hostStart
+        p.hand = [];
+        p.statusEffects = {};
+      }
+    });
+    await roomRef.update({
+      phase: 'lobby',
+      round: 0,
+      actions: {},
+      log: [],
+      timerEnd: null,
+      eliminatedOrder: [],
+      winner: null,
+      winnerTeam: null,
+      players: players
+    });
+  } else {
+    // Non-host just goes back to lobby screen locally while waiting for host
+    showScreen('lobby');
+  }
+}
+
 async function hostStart(){
   const hp=parseInt(document.getElementById('cfg-hp').value);
   const timer=parseInt(document.getElementById('cfg-timer').value);
@@ -976,13 +1062,17 @@ async function hostStart(){
   const mode=gameState?.config?.mode||gameMode;
   const players=JSON.parse(JSON.stringify(gameState.players));
   Object.values(players).forEach(p=>{
-    const roleHp=(p.role==='vanguard')?120:(p.role==='sentinel')?100:hp;
-    p.hand=dealCards(cards);
-    p.hp=mode==='team'?roleHp:hp;
-    p.maxHp=mode==='team'?roleHp:hp;
-    p.alive=true; p.statusEffects={}; p.kills=0; p.dmgDealt=0; p.dmgReceived=0; p.eliminated=0;
-    p.ultimateCharge=0;
-    if(mode!=='team'){ p.team=null; p.role=null; }
+    if(p.isSpectator){
+      p.hand=[]; p.hp=0; p.maxHp=0; p.alive=false;
+    } else {
+      const roleHp=(p.role==='vanguard')?120:(p.role==='sentinel')?100:hp;
+      p.hand=dealCards(cards);
+      p.hp=mode==='team'?roleHp:hp;
+      p.maxHp=mode==='team'?roleHp:hp;
+      p.alive=true; p.statusEffects={}; p.kills=0; p.dmgDealt=0; p.dmgReceived=0; p.eliminated=0;
+      p.ultimateCharge=0;
+      if(mode!=='team'){ p.team=null; p.role=null; }
+    }
   });
   const timerEnd=Date.now()+timer*1000;
   await roomRef.update({phase:'choose',round:1,config:{hp,timer,cards,mode},players,actions:{},log:[],timerEnd});
@@ -1507,7 +1597,7 @@ async function resolveRound(data){
     });
 
     // STEP 11: Win condition
-    const alive=Object.values(players).filter(p=>p.alive);
+    const alive=Object.values(players).filter(p=>p.alive && !p.isSpectator);
     let nextPhase='choose', winnerId=null, winnerTeam=null;
     if(isTeam){
       const teamsAlive=[...new Set(alive.map(p=>p.team))];
