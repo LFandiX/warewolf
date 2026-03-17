@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>⚔️ Dungeon Crawl</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@600;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+:root{
+  --bg:#08060f;--bg2:#0f0d1a;--surface:rgba(255,255,255,0.04);
+  --border:rgba(160,100,255,0.2);--border2:rgba(255,255,255,0.08);
+  --text:#e8e0ff;--muted:rgba(232,224,255,0.45);
+  --purple:#7c3aed;--purple2:#a855f7;--purple3:#d8b4fe;
+  --gold:#c9922a;--gold2:#f0c060;
+  --red:#ef4444;--green:#22c55e;--blue:#3b82f6;
+  --warrior:#ef4444;--ranger:#22c55e;--mage:#a855f7;--druid:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 20%,rgba(124,58,237,0.1) 0%,transparent 50%),
+             radial-gradient(ellipse at 80% 80%,rgba(168,85,247,0.06) 0%,transparent 50%),
+             radial-gradient(ellipse at 50% 100%,rgba(239,68,68,0.05) 0%,transparent 40%);
+  pointer-events:none;z-index:0;}
+/* Stone texture overlay */
+body::after{content:'';position:fixed;inset:0;opacity:0.03;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(255,255,255,0.05) 40px,rgba(255,255,255,0.05) 41px),
+                   repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,255,255,0.03) 60px,rgba(255,255,255,0.03) 61px);}
+#app{position:relative;z-index:1;min-height:100vh;}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:16px;}
+.screen.active{display:flex;}
+
+/* BUTTONS */
+.btn{border:none;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:14px;font-weight:700;padding:13px 24px;width:100%;transition:all 0.2s;letter-spacing:0.5px;}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:scale(0.97);}
+.btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;}
+.btn-purple{background:linear-gradient(135deg,#5b21b6,#7c3aed,#a855f7);color:#fff;box-shadow:0 6px 24px rgba(124,58,237,0.4);}
+.btn-purple:hover{box-shadow:0 10px 32px rgba(124,58,237,0.6);}
+.btn-red{background:linear-gradient(135deg,#7f1d1d,#ef4444);color:#fff;}
+.btn-green{background:linear-gradient(135deg,#14532d,#22c55e);color:#fff;}
+.btn-gold{background:linear-gradient(135deg,#78350f,#c9922a,#f0c060);color:#1a0f00;font-weight:900;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--purple2);background:rgba(124,58,237,0.1);}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted);padding:8px 16px;font-size:12px;font-family:'Exo 2',sans-serif;}
+.btn-sm{padding:7px 14px;font-size:12px;width:auto;border-radius:8px;}
+
+/* CARD */
+.card{background:rgba(15,13,26,0.9);border:1px solid var(--border);border-radius:18px;padding:20px;backdrop-filter:blur(16px);box-shadow:0 8px 40px rgba(0,0,0,0.7);}
+
+/* INPUTS */
+input,select{background:rgba(124,58,237,0.07);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:16px;padding:11px 14px;width:100%;outline:none;transition:all 0.2s;}
+input:focus,select:focus{border-color:var(--purple2);box-shadow:0 0 16px rgba(124,58,237,0.25);}
+select option{background:#0f0d1a;}
+
+/* ANIMS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.5) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes shimmer{0%{background-position:0% center}100%{background-position:200% center}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px currentColor}50%{box-shadow:0 0 24px currentColor,0 0 48px currentColor}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.5)}}
+@keyframes monsterShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes revealRoom{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
+@keyframes torchFlicker{0%,100%{opacity:0.8;filter:drop-shadow(0 0 8px #ff8c00)}50%{opacity:1;filter:drop-shadow(0 0 20px #ff8c00)}}
+@keyframes countDown{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes bossEntrance{0%{opacity:0;transform:scale(0.3) rotate(-20deg)}60%{transform:scale(1.1) rotate(5deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes healPulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}100%{box-shadow:0 0 0 20px rgba(34,197,94,0)}}
+
+/* HP BAR */
+.hp-wrap{width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:6px;overflow:hidden;}
+.hp-bar{height:100%;border-radius:6px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+.hp-bar.high{background:linear-gradient(90deg,#22c55e,#16a34a);}
+.hp-bar.mid{background:linear-gradient(90deg,#f59e0b,#d97706);}
+.hp-bar.low{background:linear-gradient(90deg,#ef4444,#dc2626);animation:pulse 1s infinite;}
+
+/* MONSTER CARD */
+.monster-card{border-radius:20px;padding:20px;position:relative;overflow:hidden;border:2px solid;animation:revealRoom 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;}
+.monster-card.shaking{animation:monsterShake 0.4s ease;}
+.monster-icon{font-size:clamp(56px,12vw,88px);line-height:1;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.8));transition:transform 0.3s;}
+.monster-card:hover .monster-icon{transform:scale(1.05);}
+.monster-telegraph{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;margin-top:10px;}
+.telegraph-attack{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;}
+.telegraph-defend{background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;}
+.telegraph-special{background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.4);color:#c084fc;}
+
+/* ELEMENT CARD */
+.el-card{border-radius:14px;border:2px solid;padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;user-select:none;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.el-card:hover:not(.disabled){transform:translateY(-8px) scale(1.05);z-index:3;}
+.el-card.selected{transform:translateY(-14px) scale(1.07);z-index:4;box-shadow:0 14px 36px rgba(168,85,247,0.5);border-color:#a855f7!important;}
+.el-card.disabled{opacity:0.3;cursor:not-allowed;transform:none;}
+.el-card .el-icon{font-size:28px;line-height:1;}
+.el-card .el-name{font-family:'Cinzel',serif;font-size:10px;font-weight:700;}
+.el-card .el-dmg{font-size:10px;color:var(--muted);}
+.el-card.rare{animation:glow 2s ease-in-out infinite;}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px;}
+
+/* CLASS CARDS */
+.class-card{border-radius:18px;border:2px solid;padding:18px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
+.class-card:hover{transform:translateY(-4px);}
+.class-card.selected-class{transform:translateY(-6px);}
+.class-warrior{background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.04));border-color:rgba(239,68,68,0.4);}
+.class-warrior.selected-class{border-color:#ef4444;box-shadow:0 0 24px rgba(239,68,68,0.4);}
+.class-ranger{background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.04));border-color:rgba(34,197,94,0.4);}
+.class-ranger.selected-class{border-color:#22c55e;box-shadow:0 0 24px rgba(34,197,94,0.4);}
+.class-mage{background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(168,85,247,0.04));border-color:rgba(168,85,247,0.4);}
+.class-mage.selected-class{border-color:#a855f7;box-shadow:0 0 24px rgba(168,85,247,0.4);}
+.class-druid{background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.04));border-color:rgba(59,130,246,0.4);}
+.class-druid.selected-class{border-color:#3b82f6;box-shadow:0 0 24px rgba(59,130,246,0.4);}
+
+/* STATUS BADGES */
+.status-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.status-burn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;}
+.status-poison{background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:#86efac;}
+.status-stun{background:rgba(250,204,21,0.2);border:1px solid rgba(250,204,21,0.4);color:#fde047;}
+.status-shield{background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;}
+.status-immune{background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);color:#d8b4fe;}
+.status-regen{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#86efac;}
+
+/* ROOM MAP */
+.floor-map{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.room-node{width:40px;height:40px;border-radius:10px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.2s;position:relative;}
+.room-node.completed{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.1);}
+.room-node.current{border-color:var(--purple2);background:rgba(124,58,237,0.2);animation:glow 1.5s ease-in-out infinite;color:var(--purple2);}
+.room-node.locked{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);opacity:0.4;}
+.room-node.boss{border-color:rgba(239,68,68,0.6);background:rgba(239,68,68,0.1);}
+.floor-connector{width:16px;height:2px;background:rgba(255,255,255,0.1);border-radius:1px;}
+.floor-connector.done{background:rgba(34,197,94,0.4);}
+
+/* PHASE BANNER */
+.phase-banner{position:sticky;top:0;z-index:50;background:rgba(8,6,15,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+
+/* TIMER */
+.timer-box{background:rgba(124,58,237,0.1);border:1px solid var(--border);border-radius:12px;padding:7px 14px;min-width:52px;text-align:center;}
+.timer-num{font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:var(--purple3);}
+.timer-num.urgent{color:#ef4444;animation:countDown 0.4s ease-in-out infinite;}
+
+/* COMBAT LOG */
+.combat-log{height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:6px;}
+.combat-log::-webkit-scrollbar{width:3px;}
+.combat-log::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.4);border-radius:2px;}
+.log-line{font-size:12px;line-height:1.4;animation:slideIn 0.2s ease both;padding:1px 4px;border-radius:3px;}
+.log-line.dmg{color:#fca5a5;}
+.log-line.heal{color:#86efac;}
+.log-line.system{color:var(--muted);font-style:italic;}
+.log-line.combo{color:var(--gold2);font-weight:700;}
+.log-line.death{color:#ef4444;font-weight:700;}
+.log-line.loot{color:var(--gold2);}
+.log-line.boss{color:#f87171;font-weight:700;font-size:13px;}
+
+/* ITEM CARD */
+.item-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;animation:popIn 0.3s ease both;transition:border-color 0.2s;}
+.item-card:hover{border-color:var(--purple2);}
+.item-icon{font-size:24px;flex-shrink:0;}
+.item-info h4{font-size:13px;font-weight:700;}
+.item-info p{font-size:11px;color:var(--muted);}
+.item-rarity{display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;margin-top:3px;}
+.rarity-common{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);}
+.rarity-rare{background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd;}
+.rarity-epic{background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.4);color:#d8b4fe;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(8,6,15,0.97);border:1px solid var(--border);border-radius:12px;padding:10px 22px;font-weight:600;font-size:14px;color:var(--text);box-shadow:0 6px 28px rgba(0,0,0,0.8);z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+
+/* ROOM OVERLAY */
+#room-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(12px);}
+#room-overlay.active{display:flex;}
+
+/* ROOM CODE */
+.room-code{font-family:'Cinzel',serif;font-weight:900;font-size:48px;letter-spacing:6px;background:linear-gradient(135deg,var(--purple),var(--purple3));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 24px rgba(124,58,237,0.5));animation:shimmer 3s linear infinite;}
+
+/* PLAYER CHIP */
+.player-chip{display:inline-flex;align-items:center;gap:8px;border-radius:40px;padding:7px 16px;font-weight:700;font-size:14px;animation:popIn 0.3s ease both;border:1.5px solid;}
+
+.div{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,0.3),transparent);margin:8px 0;}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-radius:10px;background:rgba(124,58,237,0.04);border:1px solid rgba(124,58,237,0.1);}
+.cfg-row label{font-size:14px;font-weight:600;}
+.cfg-row select{width:auto;padding:7px 11px;font-size:13px;}
+
+/* DMG NUMBER */
+.dmg-num{position:fixed;font-family:'Cinzel',serif;font-weight:900;font-size:26px;pointer-events:none;z-index:300;animation:dmgFloat 1.2s ease forwards;}
+
+@media(max-width:640px){
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));}
+  .el-card{min-height:86px;}
+  .el-card .el-icon{font-size:24px;}
+  .class-grid{grid-template-columns:1fr 1fr!important;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ROOM REVEAL OVERLAY -->
+<div id="room-overlay">
+  <div id="room-overlay-icon" style="font-size:80px;animation:float 1.5s ease-in-out infinite;"></div>
+  <h2 id="room-overlay-title" style="font-family:'Cinzel',serif;font-size:clamp(20px,5vw,36px);background:linear-gradient(135deg,var(--purple),var(--purple3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;padding:0 16px;"></h2>
+  <p id="room-overlay-desc" style="color:var(--muted);font-size:14px;text-align:center;max-width:400px;padding:0 16px;line-height:1.6;"></p>
+  <div id="room-overlay-items" style="display:flex;flex-direction:column;gap:8px;max-width:400px;width:100%;padding:0 16px;"></div>
+  <button class="btn btn-purple" id="room-overlay-btn" style="max-width:300px;margin-top:8px;">Continue →</button>
+</div>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen active" style="gap:16px;text-align:center;">
+  <div style="font-size:72px;animation:float 2s ease-in-out infinite;">⚔️</div>
+  <h1 style="font-family:'Cinzel',serif;font-size:clamp(28px,7vw,56px);background:linear-gradient(135deg,var(--purple),var(--purple3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Dungeon Crawl</h1>
+  <p style="color:var(--muted);animation:pulse 1.5s infinite;font-style:italic;">Lighting the torches...</p>
+</div>
+
+<!-- HOME -->
+<div id="screen-home" class="screen" style="gap:24px;">
+  <div style="text-align:center;animation:fadeUp 0.6s ease both;">
+    <div style="font-size:80px;margin-bottom:8px;animation:float 3s ease-in-out infinite;">⚔️</div>
+    <h1 style="font-family:'Cinzel',serif;font-size:clamp(32px,8vw,68px);background:linear-gradient(135deg,var(--purple),var(--purple3),var(--purple));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;animation:shimmer 4s linear infinite;">Dungeon<br>Crawl</h1>
+    <p style="color:var(--muted);font-size:14px;margin-top:10px;font-style:italic;">Descend into darkness. Fight together. Survive.</p>
+  </div>
+  <div class="card" style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;animation:fadeUp 0.7s 0.1s ease both;">
+    <input id="inp-name" type="text" placeholder="Hero name..." maxlength="16"/>
+    <div class="div"></div>
+    <button class="btn btn-purple" onclick="goCreateSolo()">🗡️ Solo Adventure</button>
+    <div class="div"></div>
+    <button class="btn btn-gold" onclick="goCreateMulti()">⚔️ Create Co-op Party</button>
+    <div style="text-align:center;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;">OR JOIN PARTY</div>
+    <div style="display:flex;gap:8px;">
+      <input id="inp-code" type="text" placeholder="PARTY CODE" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-family:'Cinzel',serif;font-size:18px;"/>
+      <button class="btn btn-outline" style="width:auto;padding:11px 14px;white-space:nowrap;" onclick="goJoin()">Join →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLASS SELECT -->
+<div id="screen-class" class="screen" style="gap:20px;padding-top:24px;padding-bottom:24px;justify-content:flex-start;">
+  <div style="text-align:center;">
+    <h1 style="font-family:'Cinzel',serif;font-size:clamp(22px,5vw,38px);background:linear-gradient(135deg,var(--purple),var(--purple3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Choose Your Class</h1>
+    <p style="color:var(--muted);font-size:14px;margin-top:6px;">Each class has unique starting cards and abilities</p>
+  </div>
+  <div class="class-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:520px;" id="class-grid"></div>
+  <button class="btn btn-purple" id="btn-confirm-class" style="max-width:320px;display:none;" onclick="confirmClass()">Enter the Dungeon →</button>
+</div>
+
+<!-- LOBBY (co-op) -->
+<div id="screen-lobby" class="screen" style="gap:20px;padding-top:28px;padding-bottom:28px;justify-content:flex-start;">
+  <div style="text-align:center;">
+    <p style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;">Party Code</p>
+    <div id="lobby-code" class="room-code">------</div>
+    <p style="color:var(--muted);font-size:13px;margin-top:6px;">Share to rally your party</p>
+  </div>
+  <div class="card" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:12px;">
+    <div id="host-cfg" style="display:none;flex-direction:column;gap:8px;">
+      <h3 style="font-family:'Cinzel',serif;font-size:14px;color:var(--muted);">⚙ DUNGEON SETTINGS</h3>
+      <div class="cfg-row"><label>⏱ Card Timer</label><select id="cfg-timer"><option value="15">15s</option><option value="20" selected>20s</option><option value="30">30s</option></select></div>
+      <div class="cfg-row"><label>💀 Difficulty</label><select id="cfg-diff"><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></div>
+      <div class="div"></div>
+    </div>
+    <h3 style="font-family:'Cinzel',serif;font-size:14px;display:flex;align-items:center;gap:8px;">
+      ⚔ PARTY
+      <span id="lobby-pcount" style="background:rgba(124,58,237,0.15);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:12px;font-family:'Exo 2',sans-serif;">0</span>
+    </h3>
+    <div id="lobby-players" style="display:flex;flex-wrap:wrap;gap:8px;min-height:36px;"></div>
+    <div>
+      <button class="btn btn-purple" id="btn-start" style="display:none;" onclick="hostStartCoop()">🗡️ Descend into Dungeon!</button>
+      <p id="lobby-wait" style="text-align:center;color:var(--muted);font-size:14px;font-style:italic;">Waiting for party leader...</p>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen" style="padding:0;justify-content:flex-start;align-items:stretch;">
+  <div class="phase-banner">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="pb-torch" style="font-size:20px;animation:torchFlicker 1.5s ease-in-out infinite;">🕯️</span>
+      <div>
+        <div id="pb-title" style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--purple3);">Floor 1</div>
+        <div id="pb-sub" style="font-size:11px;color:var(--muted);">Choose your card</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="floor-progress" style="font-size:11px;color:var(--muted);"></div>
+      <div class="timer-box" id="timer-wrap"><div class="timer-num" id="timer-num">--</div></div>
+    </div>
+  </div>
+
+  <div style="flex:1;padding:12px;display:flex;flex-direction:column;gap:12px;max-width:720px;margin:0 auto;width:100%;padding-bottom:20px;">
+
+    <!-- Floor map -->
+    <div id="floor-map-section" style="background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:14px;padding:12px;text-align:center;">
+      <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">DUNGEON MAP</div>
+      <div class="floor-map" id="floor-map"></div>
+    </div>
+
+    <!-- Monster(s) area -->
+    <div id="monsters-section" style="display:none;"></div>
+
+    <!-- Event area (non-combat) -->
+    <div id="event-section" style="display:none;"></div>
+
+    <!-- Party HP -->
+    <div id="party-section" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+
+    <!-- Hand -->
+    <div id="hand-section" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:0.5px;">🃏 YOUR HAND</span>
+        <span id="action-status" style="font-size:12px;font-weight:600;color:var(--muted);"></span>
+      </div>
+      <div class="cards-grid" id="hand-grid"></div>
+    </div>
+
+    <!-- Confirm -->
+    <div id="confirm-wrap" style="display:none;">
+      <button class="btn btn-purple" id="btn-confirm" onclick="confirmCard()">⚡ Use Card!</button>
+    </div>
+
+    <!-- Items -->
+    <div id="items-section" style="display:none;">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:0.5px;margin-bottom:8px;">🎒 INVENTORY</div>
+      <div id="items-grid" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <!-- Combat log -->
+    <div class="card" style="padding:0;">
+      <div style="padding:8px 12px;border-bottom:1px solid var(--border2);">
+        <span style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:0.5px;">📜 BATTLE LOG</span>
+      </div>
+      <div class="combat-log" id="combat-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- END -->
+<div id="screen-end" class="screen" style="gap:20px;padding-top:28px;padding-bottom:28px;justify-content:flex-start;">
+  <div style="text-align:center;">
+    <div id="end-icon" style="font-size:80px;animation:float 2s infinite;"></div>
+    <h1 id="end-title" style="font-family:'Cinzel',serif;font-size:clamp(24px,6vw,48px);margin-top:12px;"></h1>
+    <p id="end-sub" style="color:var(--muted);font-size:15px;margin-top:6px;font-style:italic;"></p>
+  </div>
+  <div id="end-stats" style="width:100%;max-width:500px;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+  <div style="width:100%;max-width:500px;padding:0 16px;">
+    <button class="btn btn-purple" onclick="goHome()">🏠 Return to Surface</button>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════
+// FIREBASE CONFIG
+// ════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:"GANTI_API_KEY_KAMU",authDomain:"GANTI.firebaseapp.com",
+  databaseURL:"https://GANTI-default-rtdb.firebaseio.com",
+  projectId:"GANTI",storageBucket:"GANTI.appspot.com",
+  messagingSenderId:"GANTI",appId:"GANTI"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const db=firebase.database();
+
+// ════════════════════════════════════
+// GAME DATA
+// ════════════════════════════════════
+const CLASSES={
+  warrior:{name:'Warrior',icon:'⚔️',color:'#ef4444',hp:120,maxHp:120,
+    desc:'High HP tank. Burns enemies, shields allies.',
+    startCards:['fire','fire','earth','earth','shadow'],
+    passiveDesc:'Fire deals +2 dmg'},
+  ranger:{name:'Ranger',icon:'🏹',color:'#22c55e',hp:90,maxHp:90,
+    desc:'Fast DPS. Wind steals, Thunder stuns at range.',
+    startCards:['wind','wind','thunder','arrow','arrow'],
+    passiveDesc:'Wind deals +2 dmg'},
+  mage:{name:'Mage',icon:'🔮',color:'#a855f7',hp:80,maxHp:80,
+    desc:'Burst damage. Meteor, Shadow, Holy mastery.',
+    startCards:['shadow','shadow','holy','meteor_scroll','thunder'],
+    passiveDesc:'Shadow deals +3 dmg if target debuffed'},
+  druid:{name:'Druid',icon:'🌿',color:'#3b82f6',hp:100,maxHp:100,
+    desc:'Party healer. Water heals team, Earth shields all.',
+    startCards:['water','water','water','earth','holy'],
+    passiveDesc:'Water heals +5 extra'},
+};
+
+const ELEMENTS={
+  fire:   {icon:'🔥',name:'Fire',    color:'#ef4444',baseDmg:25,desc:'Burns for 5/round×2'},
+  water:  {icon:'💧',name:'Water',   color:'#3b82f6',baseDmg:0, desc:'Heal self 20HP (Druid: +25HP party)'},
+  thunder:{icon:'⚡',name:'Thunder', color:'#fbbf24',baseDmg:20,desc:'Stun 1 round'},
+  earth:  {icon:'🌿',name:'Earth',   color:'#22c55e',baseDmg:10,desc:'Shield 30 dmg'},
+  wind:   {icon:'🌪️',name:'Wind',    color:'#a0e9ff',baseDmg:18,desc:'Hit all monsters'},
+  shadow: {icon:'🌑',name:'Shadow',  color:'#a855f7',baseDmg:22,desc:'×2 if monster debuffed'},
+  holy:   {icon:'✨',name:'Holy',    color:'#fde68a',baseDmg:15,desc:'Cleanse + heal party 15HP'},
+  arrow:  {icon:'🏹',name:'Arrow',   color:'#86efac',baseDmg:20,desc:'Bypass aerial defense'},
+  meteor_scroll:{icon:'☄️',name:'Meteor',color:'#ff6b6b',baseDmg:50,desc:'AOE all monsters',rare:true},
+  barrier_potion:{icon:'🫧',name:'Barrier',color:'#93c5fd',baseDmg:0,desc:'Immune 1 round',rare:true},
+};
+
+const ITEMS={
+  iron_sword:    {icon:'⚔️',name:'Iron Sword',   rarity:'common',desc:'All attacks +3 dmg'},
+  hunters_bow:   {icon:'🏹',name:'Hunter\'s Bow', rarity:'common',desc:'Arrow cards +5 dmg'},
+  arcane_staff:  {icon:'🔮',name:'Arcane Staff',  rarity:'rare',  desc:'Shadow/Holy +5 dmg'},
+  iron_shield:   {icon:'🛡️',name:'Iron Shield',   rarity:'common',desc:'+15 max HP'},
+  shadow_cloak:  {icon:'🧥',name:'Shadow Cloak',  rarity:'rare',  desc:'20% dodge chance'},
+  health_potion: {icon:'💊',name:'Health Potion', rarity:'common',desc:'Use: Restore 40 HP',usable:true,useEffect:'heal40'},
+  power_potion:  {icon:'⚡',name:'Power Potion',  rarity:'rare',  desc:'Use: Next card dmg ×2',usable:true,useEffect:'power'},
+  elemental_tome:{icon:'📜',name:'Elemental Tome',rarity:'epic',  desc:'Learn a new element card'},
+};
+
+const MONSTERS={
+  rat:   {name:'Rat',    icon:'🐀',hp:20, maxHp:20, atk:5,  abilities:['swarm'],    color:'#9ca3af'},
+  bat:   {name:'Bat',    icon:'🦇',hp:25, maxHp:25, atk:8,  abilities:['dodge'],    color:'#6b7280'},
+  skeleton:{name:'Skeleton',icon:'💀',hp:40,maxHp:40,atk:10,abilities:['bone_shield'],color:'#d1d5db'},
+  drake: {name:'Drake',  icon:'🐉',hp:60, maxHp:60, atk:15, abilities:['fire_breath'],color:'#ef4444'},
+  dark_mage:{name:'Dark Mage',icon:'🧙',hp:50,maxHp:50,atk:18,abilities:['stun'],   color:'#a855f7'},
+  ghost: {name:'Ghost',  icon:'👻',hp:45, maxHp:45, atk:12, abilities:['phase'],    color:'#e5e7eb'},
+  beetle:{name:'Beetle', icon:'🪲',hp:55, maxHp:55, atk:8,  abilities:['armor'],    color:'#65a30d'},
+  zombie:{name:'Zombie', icon:'🧟',hp:65, maxHp:65, atk:10, abilities:['regen'],    color:'#6b7280'},
+  harpy: {name:'Harpy',  icon:'🦅',hp:45, maxHp:45, atk:22, abilities:['aerial'],   color:'#60a5fa'},
+  warlock:{name:'Warlock',icon:'🔮',hp:70,maxHp:70, atk:25, abilities:['curse'],    color:'#9333ea'},
+};
+
+const BOSSES={
+  inferno_dragon:{name:'Inferno Dragon',icon:'🔥',hp:200,maxHp:200,atk:30,
+    abilities:['fire_breath','rage'],color:'#dc2626',
+    desc:'Enrages below 50% HP — AOE every round!'},
+  lich_king:{name:'Lich King',icon:'💀',hp:180,maxHp:180,atk:25,
+    abilities:['summon','immune_shadow'],color:'#7c3aed',
+    desc:'Summons skeletons every 2 rounds'},
+  sea_serpent:{name:'Sea Serpent',icon:'🌊',hp:220,maxHp:220,atk:20,
+    abilities:['heal','water_immune'],color:'#2563eb',
+    desc:'Alternates between healing and attacking'},
+};
+
+// Dungeon layout: 3 floors × 3 rooms + boss
+const ROOM_EVENTS=['combat','combat','treasure','shop','mystery','rest'];
+const FLOOR_MONSTERS={
+  1:['rat','bat','skeleton'],
+  2:['drake','dark_mage','ghost','beetle'],
+  3:['zombie','harpy','warlock'],
+};
+
+// Synergy combos (same as Elemental Duel)
+const SYNERGIES={
+  'fire+wind':'🌪️ Firestorm! +30 bonus dmg!',
+  'wind+fire':'🌪️ Firestorm! +30 bonus dmg!',
+  'thunder+shadow':'⚡ Void Storm! Shadow ×3 dmg!',
+  'shadow+thunder':'⚡ Void Storm! Shadow ×3 dmg!',
+  'water+holy':'💫 Sanctuary! Party healed 20HP!',
+  'holy+water':'💫 Sanctuary! Party healed 20HP!',
+};
+
+// ════════════════════════════════════
+// STATE
+// ════════════════════════════════════
+let myId=null,myName='',roomCode='',roomRef=null;
+let isHost=false,gameState=null,isSolo=false;
+let localTimerInterval=null,hostPhaseTimeout=null;
+let lastPhaseKey=null,cardSubmitted=false;
+let selectedClass=null,selectedCardIdx=null;
+
+// ════════════════════════════════════
+// UTILS
+// ════════════════════════════════════
+const uid=()=>Math.random().toString(36).substr(2,9);
+const genCode=()=>Math.random().toString(36).substr(2,6).toUpperCase();
+const rand=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+const showScreen=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+id).classList.add('active');};
+function toast(msg,dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';clearTimeout(t._to);t._to=setTimeout(()=>t.style.opacity='0',dur);}
+function addLog(msg,type='system'){const l=document.getElementById('combat-log');if(!l)return;const d=document.createElement('div');d.className='log-line '+type;d.textContent=msg;l.appendChild(d);l.scrollTop=l.scrollHeight;}
+function randFrom(arr){return arr[rand(0,arr.length-1)];}
+function dealCards(pool,n=5){const r=[];for(let i=0;i<n;i++)r.push(randFrom(pool));return r;}
+
+// ════════════════════════════════════
+// DUNGEON GENERATION
+// ════════════════════════════════════
+function generateDungeon(){
+  const floors=[];
+  for(let f=1;f<=3;f++){
+    const rooms=[];
+    const pool=[...FLOOR_MONSTERS[f]];
+    // Room 1: always combat
+    rooms.push({type:'combat',monsters:generateMonsters(pool,f),completed:false});
+    // Room 2: random
+    const mid=randFrom(['treasure','shop','mystery','rest','combat']);
+    rooms.push({type:mid,monsters:mid==='combat'?generateMonsters(pool,f):[],completed:false});
+    // Room 3: combat
+    rooms.push({type:'combat',monsters:generateMonsters(pool,f,true),completed:false});
+    floors.push({rooms,completed:false});
+  }
+  // Boss floor
+  const bossKey=randFrom(Object.keys(BOSSES));
+  const boss={...BOSSES[bossKey],id:bossKey,statusEffects:{},round:0};
+  floors.push({rooms:[{type:'boss',monster:boss,completed:false}],completed:false});
+  return{floors,currentFloor:0,currentRoom:0};
+}
+
+function generateMonsters(pool,floor,isElite=false){
+  const count=rand(1,floor===1?2:3);
+  const monsters=[];
+  for(let i=0;i<count;i++){
+    const key=randFrom(pool);
+    const base={...MONSTERS[key]};
+    const mult=isElite?1.5:1+(floor-1)*0.3;
+    monsters.push({
+      ...base,
+      id:key+'_'+i,
+      hp:Math.round(base.hp*mult),
+      maxHp:Math.round(base.hp*mult),
+      atk:Math.round(base.atk*mult),
+      statusEffects:{},
+      telegraphAction:null,
+    });
+  }
+  return monsters;
+}
+
+function generateLoot(floor){
+  const lootPool=Object.keys(ITEMS);
+  const count=rand(1,2);
+  const loot=[];
+  for(let i=0;i<count;i++) loot.push(randFrom(lootPool));
+  // Add gold
+  const gold=rand(10,30)*floor;
+  return{items:loot,gold};
+}
+
+function telegraphMonsters(monsters){
+  return monsters.map(m=>{
+    const actions=['attack','attack','attack','special'];
+    if(m.abilities?.includes('bone_shield')) actions.push('defend');
+    if(m.abilities?.includes('phase')) actions.push('phase');
+    const action=randFrom(actions);
+    return{...m,telegraphAction:action};
+  });
+}
+
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
+window.onload=()=>{
+  myId=localStorage.getItem('dc_uid')||uid();
+  localStorage.setItem('dc_uid',myId);
+  myName=localStorage.getItem('dc_name')||'';
+  if(myName) document.getElementById('inp-name').value=myName;
+  showScreen('home');
+};
+
+function goHome(){
+  if(roomRef) roomRef.off();
+  roomRef=null;gameState=null;isHost=false;isSolo=false;
+  selectedClass=null;selectedCardIdx=null;cardSubmitted=false;lastPhaseKey=null;
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  document.getElementById('room-overlay').classList.remove('active');
+  showScreen('home');
+}
+
+// ════════════════════════════════════
+// CREATE / JOIN
+// ════════════════════════════════════
+function goCreateSolo(){
+  const name=document.getElementById('inp-name').value.trim();
+  if(!name){toast('⚠️ Enter your hero name!');return;}
+  myName=name;localStorage.setItem('dc_name',name);
+  isSolo=true;isHost=true;roomCode=genCode();
+  showClassSelect();
+}
+
+function goCreateMulti(){
+  const name=document.getElementById('inp-name').value.trim();
+  if(!name){toast('⚠️ Enter your hero name!');return;}
+  myName=name;localStorage.setItem('dc_name',name);
+  isSolo=false;isHost=true;roomCode=genCode();
+  showClassSelect();
+}
+
+function goJoin(){
+  const name=document.getElementById('inp-name').value.trim();
+  const code=document.getElementById('inp-code').value.trim().toUpperCase();
+  if(!name){toast('⚠️ Enter your hero name!');return;}
+  if(code.length<4){toast('⚠️ Enter party code!');return;}
+  myName=name;localStorage.setItem('dc_name',name);
+  roomCode=code;isHost=false;isSolo=false;
+  showClassSelect();
+}
+
+function showClassSelect(){
+  renderClassGrid();
+  showScreen('class');
+}
+
+function renderClassGrid(){
+  const grid=document.getElementById('class-grid');
+  grid.innerHTML='';
+  Object.entries(CLASSES).forEach(([key,cls])=>{
+    const div=document.createElement('div');
+    div.className=`class-card class-${key}`+(selectedClass===key?` selected-class`:'');
+    div.innerHTML=`
+      <div style="font-size:36px;margin-bottom:8px;">${cls.icon}</div>
+      <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:${cls.color};margin-bottom:4px;">${cls.name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5;">${cls.desc}</div>
+      <div style="font-size:11px;color:${cls.color};font-weight:700;">❤️ ${cls.hp} HP</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">🃏 ${cls.startCards.map(c=>ELEMENTS[c]?.icon||'?').join(' ')}</div>
+      <div style="margin-top:6px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.05);font-size:10px;color:${cls.color};">✨ ${cls.passiveDesc}</div>`;
+    div.onclick=()=>{selectedClass=key;renderClassGrid();document.getElementById('btn-confirm-class').style.display='block';};
+    grid.appendChild(div);
+  });
+}
+
+async function confirmClass(){
+  if(!selectedClass){toast('⚠️ Pick a class!');return;}
+  if(isHost&&isSolo) await setupSolo();
+  else if(isHost&&!isSolo) await setupMultiHost();
+  else await setupMultiJoin();
+}
+
+async function setupSolo(){
+  const cls=CLASSES[selectedClass];
+  const dungeon=generateDungeon();
+  const me={id:myId,name:myName,class:selectedClass,avatar:cls.icon,
+    hp:cls.hp,maxHp:cls.hp,hand:[...cls.startCards],
+    items:[],gold:0,statusEffects:{},alive:true,
+    dmgDealt:0,monstersKilled:0};
+  const firstRoom=dungeon.floors[0].rooms[0];
+  if(firstRoom.monsters) firstRoom.monsters=telegraphMonsters(firstRoom.monsters);
+  await db.ref('rooms/'+roomCode).set({
+    code:roomCode,phase:'combat',isSolo:true,
+    config:{timer:20,diff:'normal'},
+    players:{[myId]:me},actions:{},
+    dungeon,log:[],timerEnd:Date.now()+20000
+  });
+  roomRef=db.ref('rooms/'+roomCode);
+  listenRoom();
+  showScreen('game');
+  toast(`⚔️ ${cls.name} ${myName} enters the dungeon!`);
+}
+
+async function setupMultiHost(){
+  const cls=CLASSES[selectedClass];
+  const me={id:myId,name:myName,class:selectedClass,avatar:cls.icon,isHost:true,
+    hp:cls.hp,maxHp:cls.hp,hand:[...cls.startCards],
+    items:[],gold:0,statusEffects:{},alive:true,joinedAt:Date.now(),
+    dmgDealt:0,monstersKilled:0};
+  roomRef=db.ref('rooms/'+roomCode);
+  await roomRef.set({code:roomCode,phase:'lobby',isSolo:false,
+    config:{timer:20,diff:'normal'},
+    players:{[myId]:me},actions:{},dungeon:null,log:[],timerEnd:null});
+  showScreen('lobby');
+  document.getElementById('lobby-code').textContent=roomCode;
+  document.getElementById('host-cfg').style.display='flex';
+  listenRoom();
+}
+
+async function setupMultiJoin(){
+  roomRef=db.ref('rooms/'+roomCode);
+  const snap=await roomRef.once('value');
+  const data=snap.val();
+  if(!data){toast('❌ Party not found!');return;}
+  if(data.phase!=='lobby'){toast('❌ Adventure already started!');return;}
+  const cls=CLASSES[selectedClass];
+  const me={id:myId,name:myName,class:selectedClass,avatar:cls.icon,isHost:false,
+    hp:cls.hp,maxHp:cls.hp,hand:[...cls.startCards],
+    items:[],gold:0,statusEffects:{},alive:true,joinedAt:Date.now(),
+    dmgDealt:0,monstersKilled:0};
+  await roomRef.child('players/'+myId).set(me);
+  showScreen('lobby');
+  document.getElementById('lobby-code').textContent=roomCode;
+  listenRoom();
+}
+
+function listenRoom(){
+  roomRef.on('value',snap=>{
+    const data=snap.val();if(!data)return;
+    gameState=data;
+    const phase=data.phase;
+    if(phase==='lobby') renderLobby(data);
+    else if(['combat','event','loot','shop','boss'].includes(phase)) renderGame(data);
+    else if(phase==='victory'||phase==='defeat') renderEnd(data);
+  });
+}
+
+// ════════════════════════════════════
+// LOBBY
+// ════════════════════════════════════
+function renderLobby(data){
+  showScreen('lobby');
+  const players=Object.values(data.players||{});
+  document.getElementById('lobby-pcount').textContent=players.length;
+  const list=document.getElementById('lobby-players');
+  list.innerHTML='';
+  players.sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0)).forEach(p=>{
+    const cls=CLASSES[p.class]||CLASSES.warrior;
+    const d=document.createElement('div');
+    d.className='player-chip';
+    d.style.cssText=`border-color:${cls.color}50;background:${cls.color}15;`;
+    d.innerHTML=`${cls.icon} ${p.name}${p.id===myId?' (You)':''}${p.isHost?' 👑':''} <span style="font-size:11px;color:${cls.color};">${cls.name}</span>`;
+    list.appendChild(d);
+  });
+  const start=document.getElementById('btn-start');
+  const wait=document.getElementById('lobby-wait');
+  if(isHost){
+    const ok=players.length>=2;
+    start.style.display=ok?'block':'none';
+    wait.style.display=ok?'none':'block';
+    wait.textContent=`Need at least 2 heroes (${players.length}/2)`;
+  } else {
+    start.style.display='none';wait.style.display='block';
+    wait.textContent='Waiting for party leader...';
+  }
+}
+
+async function hostStartCoop(){
+  const timer=parseInt(document.getElementById('cfg-timer').value);
+  const diff=document.getElementById('cfg-diff').value;
+  const players=JSON.parse(JSON.stringify(gameState.players));
+  const dungeon=generateDungeon();
+  const firstRoom=dungeon.floors[0].rooms[0];
+  if(firstRoom.monsters) firstRoom.monsters=telegraphMonsters(firstRoom.monsters);
+  const timerEnd=Date.now()+timer*1000;
+  await roomRef.update({phase:'combat',config:{timer,diff},dungeon,actions:{},log:[],timerEnd,players});
+}
+
+// ════════════════════════════════════
+// GAME RENDER
+// ════════════════════════════════════
+function renderGame(data){
+  showScreen('game');
+  const phase=data.phase;
+  const dungeon=data.dungeon;
+  const me=data.players?.[myId];
+  if(!me||!dungeon) return;
+
+  const phaseKey=`${phase}_${dungeon.currentFloor}_${dungeon.currentRoom}_${data.timerEnd||0}`;
+  const phaseChanged=phaseKey!==lastPhaseKey;
+  if(phaseChanged){
+    lastPhaseKey=phaseKey;
+    cardSubmitted=false;selectedCardIdx=null;
+    document.getElementById('confirm-wrap').style.display='none';
+    document.getElementById('action-status').textContent='';
+    if(phase==='combat'||phase==='boss') startLocalTimer(data);
+  }
+
+  const floor=dungeon.floors[dungeon.currentFloor];
+  const room=floor?.rooms?.[dungeon.currentRoom];
+
+  document.getElementById('pb-title').textContent=`Floor ${dungeon.currentFloor+1} — Room ${dungeon.currentRoom+1}`;
+  document.getElementById('pb-sub').textContent=phase==='combat'?'Choose your card!':phase==='boss'?'⚠️ BOSS FIGHT!':phase==='loot'?'Collecting loot...':phase==='shop'?'Shop':phase==='event'?'Event':'';
+  document.getElementById('floor-progress').textContent=`Floor ${dungeon.currentFloor+1}/4`;
+
+  renderFloorMap(dungeon);
+  renderParty(data);
+  if(phase==='combat'||phase==='boss') renderCombat(data,room);
+  else renderNonCombat(data,room,phase);
+  renderHand(data);
+  renderItems(data);
+  renderCombatLog(data);
+}
+
+// ════════════════════════════════════
+// FLOOR MAP
+// ════════════════════════════════════
+function renderFloorMap(dungeon){
+  const mapEl=document.getElementById('floor-map');
+  mapEl.innerHTML='';
+  const roomIcons={combat:'⚔️',treasure:'💰',shop:'🏪',mystery:'❓',rest:'🛌',boss:'💀'};
+  dungeon.floors.forEach((floor,fi)=>{
+    if(fi>0){const c=document.createElement('div');c.className='floor-connector'+(fi<=dungeon.currentFloor?' done':'');mapEl.appendChild(c);}
+    floor.rooms.forEach((room,ri)=>{
+      const isCurrent=fi===dungeon.currentFloor&&ri===dungeon.currentRoom;
+      const isDone=fi<dungeon.currentFloor||(fi===dungeon.currentFloor&&ri<dungeon.currentRoom)||room.completed;
+      const isLocked=fi>dungeon.currentFloor||(fi===dungeon.currentFloor&&ri>dungeon.currentRoom);
+      const node=document.createElement('div');
+      node.className='room-node'+(isCurrent?' current':isDone?' completed':isLocked?' locked':'')+(room.type==='boss'?' boss':'');
+      node.textContent=roomIcons[room.type]||'?';
+      node.title=room.type.charAt(0).toUpperCase()+room.type.slice(1);
+      mapEl.appendChild(node);
+      if(ri<floor.rooms.length-1){const c=document.createElement('div');c.className='floor-connector'+(isDone?' done':'');mapEl.appendChild(c);}
+    });
+  });
+}
+
+// ════════════════════════════════════
+// PARTY HP
+// ════════════════════════════════════
+function renderParty(data){
+  const el=document.getElementById('party-section');
+  const players=Object.values(data.players||{});
+  el.innerHTML='';
+  players.forEach(p=>{
+    const cls=CLASSES[p.class]||CLASSES.warrior;
+    const hpPct=Math.max(0,(p.hp/p.maxHp)*100);
+    const hpClass=hpPct>60?'high':hpPct>30?'mid':'low';
+    const statuses=p.statusEffects||{};
+    const statusHtml=Object.entries(statuses).filter(([,v])=>v>0).map(([k,v])=>`<span class="status-badge status-${k}">${k==='burn'?'🔥':k==='stun'?'⚡':k==='shield'?'🛡️':k==='regen'?'💚':k==='immune'?'✨':'?'} ${v}</span>`).join('');
+    const div=document.createElement('div');
+    div.style.cssText=`flex:1;min-width:140px;background:rgba(255,255,255,0.03);border:1px solid ${cls.color}30;border-radius:12px;padding:10px;`;
+    div.innerHTML=`
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span style="font-size:18px;">${cls.icon}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${cls.color};">${p.name}${p.id===myId?' 👈':''}</div>
+          <div style="font-size:10px;color:var(--muted);">${p.hp}/${p.maxHp} HP</div>
+        </div>
+      </div>
+      <div class="hp-wrap"><div class="hp-bar ${hpClass}" style="width:${hpPct}%;"></div></div>
+      ${statusHtml?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;">${statusHtml}</div>`:''}
+      ${!p.alive?`<div style="text-align:center;color:#ef4444;font-size:11px;font-weight:700;margin-top:4px;">💀 Fallen</div>`:''}`;
+    el.appendChild(div);
+  });
+}
+
+// ════════════════════════════════════
+// COMBAT RENDER
+// ════════════════════════════════════
+function renderCombat(data,room){
+  const sec=document.getElementById('monsters-section');
+  const evSec=document.getElementById('event-section');
+  evSec.style.display='none';
+  sec.style.display='block';
+  const monsters=room?.monsters||[];
+  const boss=room?.monster;
+  const source=boss?[boss]:monsters;
+  sec.innerHTML='';
+  source.forEach((m,i)=>{
+    const hpPct=Math.max(0,(m.hp/m.maxHp)*100);
+    const hpClass=hpPct>60?'high':hpPct>30?'mid':'low';
+    const statuses=m.statusEffects||{};
+    const statusHtml=Object.entries(statuses).filter(([,v])=>v>0).map(([k,v])=>`<span class="status-badge status-${k}">${k==='burn'?'🔥':k==='stun'?'⚡':k==='shield'?'🛡️':k==='regen'?'💚':k==='immune'?'✨':k==='phase'?'👻':'?'} ${v}</span>`).join('');
+    const telegraphHtml=m.telegraphAction?`<div class="monster-telegraph ${m.telegraphAction==='attack'?'telegraph-attack':m.telegraphAction==='defend'?'telegraph-defend':'telegraph-special'}">${m.telegraphAction==='attack'?`⚔️ Preparing to attack (${m.atk} dmg)`:m.telegraphAction==='defend'?`🛡️ Bracing for impact`:m.telegraphAction==='phase'?`👻 Going ethereal...`:`⚡ Casting special ability`}</div>`:'';
+    const bgColors={rat:'rgba(156,163,175,0.1)',bat:'rgba(107,114,128,0.1)',skeleton:'rgba(209,213,219,0.1)',
+      drake:'rgba(239,68,68,0.12)',dark_mage:'rgba(168,85,247,0.12)',ghost:'rgba(229,231,235,0.1)',
+      beetle:'rgba(101,163,13,0.1)',zombie:'rgba(107,114,128,0.1)',harpy:'rgba(96,165,250,0.1)',
+      warlock:'rgba(147,51,234,0.12)',inferno_dragon:'rgba(220,38,38,0.15)',
+      lich_king:'rgba(124,58,237,0.15)',sea_serpent:'rgba(37,99,235,0.12)'};
+    const borderColors={rat:'rgba(156,163,175,0.3)',bat:'rgba(107,114,128,0.3)',skeleton:'rgba(209,213,219,0.3)',
+      drake:'rgba(239,68,68,0.5)',dark_mage:'rgba(168,85,247,0.5)',ghost:'rgba(229,231,235,0.3)',
+      beetle:'rgba(101,163,13,0.4)',zombie:'rgba(107,114,128,0.3)',harpy:'rgba(96,165,250,0.4)',
+      warlock:'rgba(147,51,234,0.5)',inferno_dragon:'rgba(220,38,38,0.6)',
+      lich_king:'rgba(124,58,237,0.6)',sea_serpent:'rgba(37,99,235,0.5)'};
+    const div=document.createElement('div');
+    div.className='monster-card';
+    div.style.cssText=`background:${bgColors[m.id?.split('_')[0]]||bgColors[m.id]||'rgba(255,255,255,0.04)'};border-color:${borderColors[m.id?.split('_')[0]]||borderColors[m.id]||'rgba(255,255,255,0.15)'};animation-delay:${i*0.1}s;margin-bottom:10px;`;
+    div.innerHTML=`
+      <div style="text-align:center;">
+        <div class="monster-icon">${m.icon}</div>
+        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:${m.color||'var(--text)'};">${m.name}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">${m.hp}/${m.maxHp} HP</div>
+      </div>
+      <div class="hp-wrap" style="margin:10px 0;height:10px;"><div class="hp-bar ${hpClass}" style="width:${hpPct}%;"></div></div>
+      ${statusHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${statusHtml}</div>`:''}
+      ${telegraphHtml}
+      ${m.desc?`<div style="font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;">${m.desc}</div>`:''}`;
+    sec.appendChild(div);
+  });
+  document.getElementById('hand-section').style.display='block';
+}
+
+// ════════════════════════════════════
+// NON-COMBAT RENDER
+// ════════════════════════════════════
+function renderNonCombat(data,room,phase){
+  const sec=document.getElementById('event-section');
+  const monSec=document.getElementById('monsters-section');
+  monSec.style.display='none';
+  document.getElementById('hand-section').style.display='none';
+  document.getElementById('confirm-wrap').style.display='none';
+  sec.style.display='block';
+
+  if(phase==='loot'){
+    const loot=room?.loot||data.pendingLoot;
+    if(!loot){sec.innerHTML='';return;}
+    sec.innerHTML=`
+      <div class="card" style="text-align:center;animation:revealRoom 0.5s ease both;">
+        <div style="font-size:56px;margin-bottom:12px;animation:float 2s ease-in-out infinite;">💰</div>
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);margin-bottom:6px;">Treasure Found!</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">+${loot.gold||0} gold</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;" id="loot-items"></div>
+        <button class="btn btn-gold" onclick="proceedRoom()">Take Loot & Continue →</button>
+      </div>`;
+    const li=document.getElementById('loot-items');
+    (loot.items||[]).forEach(key=>{
+      const item=ITEMS[key];if(!item)return;
+      const d=document.createElement('div');
+      d.className='item-card';
+      d.innerHTML=`<span class="item-icon">${item.icon}</span><div class="item-info"><h4>${item.name}</h4><p>${item.desc}</p><span class="item-rarity rarity-${item.rarity}">${item.rarity}</span></div>`;
+      li.appendChild(d);
+    });
+  } else if(phase==='rest'){
+    sec.innerHTML=`
+      <div class="card" style="text-align:center;animation:revealRoom 0.5s ease both;">
+        <div style="font-size:56px;margin-bottom:12px;animation:float 2s ease-in-out infinite;">🛌</div>
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#22c55e;margin-bottom:6px;">Rest Site</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">The party takes a moment to recover...</p>
+        <button class="btn btn-green" onclick="proceedRoom()">Rest & Continue →</button>
+      </div>`;
+  } else if(phase==='shop'){
+    sec.innerHTML=`
+      <div class="card" style="animation:revealRoom 0.5s ease both;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:40px;margin-bottom:8px;">🏪</div>
+          <h3 style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);">Wandering Merchant</h3>
+        </div>
+        <div id="shop-items" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+        <button class="btn btn-outline" onclick="proceedRoom()">Leave Shop →</button>
+      </div>`;
+    const shopEl=document.getElementById('shop-items');
+    const shopPool=Object.keys(ITEMS).sort(()=>Math.random()-0.5).slice(0,3);
+    shopPool.forEach(key=>{
+      const item=ITEMS[key];if(!item)return;
+      const price=item.rarity==='epic'?60:item.rarity==='rare'?35:20;
+      const d=document.createElement('div');
+      d.className='item-card';
+      d.innerHTML=`<span class="item-icon">${item.icon}</span><div class="item-info"><h4>${item.name}</h4><p>${item.desc}</p><span class="item-rarity rarity-${item.rarity}">${item.rarity}</span></div><button class="btn btn-gold btn-sm" onclick="buyItem('${key}',${price})" style="margin-left:auto;white-space:nowrap;">${price}g</button>`;
+      shopEl.appendChild(d);
+    });
+  } else if(phase==='event'){
+    const events=[
+      {icon:'🗺️',title:'Ancient Map',desc:'You find an old map hinting at riches ahead.',effect:'gold',val:25},
+      {icon:'⚗️',title:'Mysterious Potion',desc:'A bubbling flask left by a wizard.',effect:'heal',val:30},
+      {icon:'💀',title:'Cursed Altar',desc:'Dark energy surges through the party.',effect:'dmg',val:15},
+      {icon:'📜',title:'Enchanted Scroll',desc:'A spell inscription glows before you.',effect:'card',val:0},
+    ];
+    const ev=randFrom(events);
+    sec.innerHTML=`
+      <div class="card" style="text-align:center;animation:revealRoom 0.5s ease both;">
+        <div style="font-size:56px;margin-bottom:12px;animation:float 2s ease-in-out infinite;">${ev.icon}</div>
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:var(--purple3);margin-bottom:6px;">${ev.title}</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">${ev.desc}</p>
+        <button class="btn btn-purple" onclick="resolveEvent('${ev.effect}',${ev.val})">Proceed →</button>
+      </div>`;
+  }
+}
+
+// ════════════════════════════════════
+// HAND + CARD SELECTION
+// ════════════════════════════════════
+function renderHand(data){
+  const me=data.players?.[myId];if(!me)return;
+  const grid=document.getElementById('hand-grid');
+  const phase=data.phase;
+  if(!['combat','boss'].includes(phase)){return;}
+  const done=cardSubmitted||!!(data.actions?.[myId]);
+  document.getElementById('action-status').textContent=done?'✅ Card played! Waiting...':'Pick a card to fight!';
+  grid.innerHTML='';
+  (me.hand||[]).forEach((key,i)=>{
+    const el=ELEMENTS[key];if(!el)return;
+    const isSelected=selectedCardIdx===i;
+    const disabled=done||(phase!=='combat'&&phase!=='boss');
+    const div=document.createElement('div');
+    div.className=`el-card${isSelected?' selected':''}${disabled?' disabled':''}${el.rare?' rare':''}`;
+    div.style.cssText=`border-color:${isSelected?'#a855f7':el.color+'88'};background:${el.color}18;`;
+    div.innerHTML=`<div class="el-icon">${el.icon}</div><div class="el-name" style="color:${el.color}">${el.name}</div><div class="el-dmg">${el.baseDmg>0?el.baseDmg+'⚔':''}${el.rare?'⭐':''}</div>`;
+    div.title=el.desc;
+    if(!disabled) div.onclick=()=>{selectedCardIdx=i;renderHand(data);updateConfirmBtn(data);};
+    grid.appendChild(div);
+  });
+}
+
+function updateConfirmBtn(data){
+  const wrap=document.getElementById('confirm-wrap');
+  const btn=document.getElementById('btn-confirm');
+  if(selectedCardIdx===null||cardSubmitted){wrap.style.display='none';return;}
+  const me=data.players?.[myId];
+  const el=ELEMENTS[me?.hand?.[selectedCardIdx]];
+  wrap.style.display='block';
+  if(el) btn.textContent=`⚡ Use ${el.icon} ${el.name}!`;
+}
+
+async function confirmCard(){
+  if(cardSubmitted||selectedCardIdx===null)return;
+  const me=gameState?.players?.[myId];if(!me)return;
+  const cardKey=me.hand[selectedCardIdx];
+  cardSubmitted=true;
+  await roomRef.child('actions/'+myId).set({card:cardKey,cardIdx:selectedCardIdx,ts:Date.now()});
+  document.getElementById('confirm-wrap').style.display='none';
+  document.getElementById('action-status').textContent='✅ Card played!';
+  toast(`${ELEMENTS[cardKey]?.icon} ${ELEMENTS[cardKey]?.name} unleashed!`);
+  if(isHost) checkAllActed();
+}
+
+function checkAllActed(){
+  roomRef.once('value').then(snap=>{
+    const d=snap.val();if(!d||!['combat','boss'].includes(d.phase))return;
+    const alive=Object.values(d.players||{}).filter(p=>p.alive);
+    const acts=Object.keys(d.actions||{});
+    if(alive.every(p=>acts.includes(p.id))){clearTimeout(hostPhaseTimeout);resolveCombat(d);}
+  });
+}
+
+// ════════════════════════════════════
+// ITEMS
+// ════════════════════════════════════
+function renderItems(data){
+  const me=data.players?.[myId];if(!me)return;
+  const sec=document.getElementById('items-section');
+  const grid=document.getElementById('items-grid');
+  const items=me.items||[];
+  if(items.length===0){sec.style.display='none';return;}
+  sec.style.display='block';
+  grid.innerHTML='';
+  items.forEach((key,i)=>{
+    const item=ITEMS[key];if(!item)return;
+    const d=document.createElement('div');
+    d.className='item-card';
+    d.style.animationDelay=`${i*50}ms`;
+    d.innerHTML=`<span class="item-icon">${item.icon}</span><div class="item-info"><h4>${item.name}</h4><p>${item.desc}</p></div>
+      ${item.usable?`<button class="btn btn-purple btn-sm" onclick="useItem('${key}',${i})" style="margin-left:auto;">Use</button>`:''}`;
+    grid.appendChild(d);
+  });
+}
+
+async function useItem(key,idx){
+  const item=ITEMS[key];if(!item?.usable)return;
+  const me=gameState?.players?.[myId];if(!me)return;
+  const items=[...(me.items||[])];items.splice(idx,1);
+  if(item.useEffect==='heal40'){
+    const newHp=clamp((me.hp||0)+40,0,me.maxHp||100);
+    await roomRef.child('players/'+myId).update({hp:newHp,items});
+    roomRef.child('log').push({msg:`💊 ${me.name} used Health Potion! +40 HP`,type:'heal'});
+    toast(`💊 +40 HP restored!`);
+  } else if(item.useEffect==='power'){
+    await roomRef.child('players/'+myId).update({items,powerPotion:true});
+    toast(`⚡ Next card deals ×2 damage!`);
+  }
+}
+
+async function buyItem(key,price){
+  const me=gameState?.players?.[myId];if(!me)return;
+  if((me.gold||0)<price){toast(`⚠️ Need ${price}g!`);return;}
+  const items=[...(me.items||[]),key];
+  await roomRef.child('players/'+myId).update({gold:(me.gold||0)-price,items});
+  toast(`${ITEMS[key]?.icon} ${ITEMS[key]?.name} purchased!`);
+}
+
+// ════════════════════════════════════
+// TIMER
+// ════════════════════════════════════
+function startLocalTimer(data){
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  const timerEnd=data.timerEnd;if(!timerEnd)return;
+  const maxT=data.config?.timer||20;
+  function tick(){
+    const rem=Math.max(0,Math.round((timerEnd-Date.now())/1000));
+    const el=document.getElementById('timer-num');
+    if(el){el.textContent=rem;el.className='timer-num'+(rem<=5?' urgent':'');}
+    if(rem<=0){clearInterval(localTimerInterval);localTimerInterval=null;}
+  }
+  tick();localTimerInterval=setInterval(tick,1000);
+  if(isHost){
+    const delay=Math.max(500,timerEnd-Date.now());
+    hostPhaseTimeout=setTimeout(()=>{
+      hostPhaseTimeout=null;
+      roomRef.once('value').then(snap=>{
+        const d=snap.val();
+        if(d&&['combat','boss'].includes(d.phase)) resolveCombat(d);
+      });
+    },delay+600);
+  }
+}
+
+// ════════════════════════════════════
+// RESOLVE COMBAT
+// ════════════════════════════════════
+let isResolving=false;
+async function resolveCombat(data){
+  if(!isHost||isResolving)return;
+  try{
+    isResolving=true;
+    const players=JSON.parse(JSON.stringify(data.players||{}));
+    const dungeon=JSON.parse(JSON.stringify(data.dungeon||{}));
+    const actions=data.actions||{};
+    const cfg=data.config||{timer:20,diff:'normal'};
+    const logs=[];
+    const floor=dungeon.floors[dungeon.currentFloor];
+    const room=floor?.rooms?.[dungeon.currentRoom];
+    const isBoss=room?.type==='boss';
+    const monsters=isBoss?[room.monster]:(room?.monsters||[]);
+    const playerList=Object.values(players).filter(p=>p.alive);
+    const diffMult=cfg.diff==='hard'?1.3:1;
+
+    logs.push({msg:`⚔️ Round ${(room?.round||0)+1} —`,type:'system'});
+    if(room) room.round=(room.round||0)+1;
+
+    // ── STEP 1: Check stunned players ──
+    const stunnedPlayers=new Set();
+    playerList.forEach(p=>{if((p.statusEffects?.stun||0)>0)stunnedPlayers.add(p.id);});
+
+    // ── STEP 2: Holy first ──
+    Object.entries(actions).forEach(([pid,act])=>{
+      if(act.card!=='holy')return;
+      const p=players[pid];if(!p||!p.alive)return;
+      p.statusEffects={};
+      const healAmt=p.class==='druid'?25:15;
+      playerList.forEach(ally=>{ally.hp=clamp((ally.hp||0)+healAmt,0,ally.maxHp);});
+      const cIdx=(p.hand||[]).indexOf('holy');if(cIdx>=0)p.hand.splice(cIdx,1);p.hand.push(getNewCard(p.class));
+      logs.push({msg:`✨ ${p.name} casts Holy! Party healed ${healAmt}HP!`,type:'heal'});
+      stunnedPlayers.delete(pid);
+    });
+
+    // ── STEP 3: Player attacks ──
+    // Check synergy
+    const cards=Object.values(actions).map(a=>a.card).filter(Boolean);
+    if(cards.length>=2){
+      const syn=SYNERGIES[cards[0]+'+'+cards[1]]||SYNERGIES[cards[1]+'+'+cards[0]];
+      if(syn){
+        logs.push({msg:`💥 SYNERGY: ${syn}`,type:'combo'});
+        monsters.forEach(m=>{m.hp=clamp((m.hp||0)-30,0,m.maxHp);});
+      }
+    }
+
+    Object.entries(actions).forEach(([pid,act])=>{
+      if(act.card==='holy')return;
+      const p=players[pid];if(!p||!p.alive)return;
+      const el=ELEMENTS[act.card];if(!el)return;
+      const cIdx=(p.hand||[]).indexOf(act.card);if(cIdx>=0)p.hand.splice(cIdx,1);p.hand.push(getNewCard(p.class));
+      if(stunnedPlayers.has(pid)){logs.push({msg:`😵 ${p.name} is stunned!`,type:'system'});return;}
+
+      // Self cards
+      if(act.card==='water'){
+        const heal=p.class==='druid'?25:20;
+        p.hp=clamp((p.hp||0)+heal,0,p.maxHp);
+        logs.push({msg:`💧 ${p.name} healed ${heal}HP!`,type:'heal'});return;
+      }
+      if(act.card==='earth'){
+        p.statusEffects=p.statusEffects||{};p.statusEffects.shield=30;
+        logs.push({msg:`🌿 ${p.name} raised a shield (30 dmg block)!`,type:'system'});return;
+      }
+
+      // Compute damage
+      let dmg=el.baseDmg||20;
+      // Class passives
+      if(p.class==='warrior'&&act.card==='fire') dmg+=2;
+      if(p.class==='ranger'&&act.card==='wind') dmg+=2;
+      if(p.class==='mage'&&(act.card==='shadow'||act.card==='holy')) dmg+=3;
+      // Power potion
+      if(p.powerPotion){dmg*=2;p.powerPotion=false;logs.push({msg:`⚡ Power Potion! Double damage!`,type:'combo'});}
+      // Items
+      (p.items||[]).forEach(ikey=>{
+        if(ikey==='iron_sword') dmg+=3;
+        if(ikey==='hunters_bow'&&act.card==='arrow') dmg+=5;
+        if(ikey==='arcane_staff'&&(act.card==='shadow'||act.card==='holy')) dmg+=5;
+      });
+
+      // AOE (wind/meteor) hits all monsters
+      const isAoe=act.card==='wind'||act.card==='meteor_scroll';
+      const targets=isAoe?monsters:[monsters[0]].filter(Boolean);
+
+      targets.forEach(m=>{
+        if(!m||m.hp<=0)return;
+        // Aerial check
+        if(m.abilities?.includes('aerial')&&act.card!=='arrow'&&act.card!=='thunder'){
+          logs.push({msg:`🦅 ${m.name} is aerial! Only arrows/thunder hit.`,type:'system'});return;
+        }
+        // Phase
+        if((m.statusEffects?.phase||0)>0){
+          logs.push({msg:`👻 ${m.name} is ethereal! Attack passes through.`,type:'system'});return;
+        }
+        // Shadow double
+        let finalDmg=dmg;
+        if(act.card==='shadow'){
+          const hasDebuff=Object.entries(m.statusEffects||{}).some(([k,v])=>v>0&&['burn','stun','poison'].includes(k));
+          if(hasDebuff){finalDmg*=(p.class==='mage'?3:2);logs.push({msg:`🌑 ${p.name} shadow combo! ×${p.class==='mage'?3:2}!`,type:'combo'});}
+        }
+        // Armor check
+        if(m.abilities?.includes('armor')) finalDmg=Math.floor(finalDmg*0.5);
+        m.hp=clamp((m.hp||0)-finalDmg,0,m.maxHp);
+        p.dmgDealt=(p.dmgDealt||0)+finalDmg;
+        logs.push({msg:`${el.icon} ${p.name} → ${m.name}: ${finalDmg} dmg!`,type:'dmg'});
+        // Debuffs
+        if(act.card==='fire'){m.statusEffects=m.statusEffects||{};m.statusEffects.burn=2;logs.push({msg:`🔥 ${m.name} is burning!`,type:'system'});}
+        if(act.card==='thunder'){m.statusEffects=m.statusEffects||{};m.statusEffects.stun=1;logs.push({msg:`⚡ ${m.name} stunned!`,type:'system'});}
+        if(m.hp<=0){
+          logs.push({msg:`💀 ${m.name} defeated!`,type:'death'});
+          p.monstersKilled=(p.monstersKilled||0)+1;
+        }
+      });
+    });
+
+    // ── STEP 4: Monsters attack ──
+    const aliveMonsters=monsters.filter(m=>m.hp>0);
+    aliveMonsters.forEach(m=>{
+      if((m.statusEffects?.stun||0)>0){logs.push({msg:`😵 ${m.name} is stunned!`,type:'system'});return;}
+      // Regen
+      if(m.abilities?.includes('regen')&&m.hp<m.maxHp){m.hp=clamp(m.hp+5,0,m.maxHp);logs.push({msg:`🧟 ${m.name} regenerates 5HP!`,type:'system'});}
+      // Boss special phases
+      if(isBoss&&m.id==='sea_serpent'&&room.round%2===0){
+        m.hp=clamp(m.hp+30,0,m.maxHp);logs.push({msg:`🌊 Sea Serpent heals 30HP!`,type:'heal'});return;
+      }
+      if(isBoss&&m.id==='inferno_dragon'&&m.hp<m.maxHp*0.5){
+        // AOE rage
+        playerList.forEach(p=>{
+          if(!p.alive)return;
+          const sh=p.statusEffects?.shield||0;
+          const dmg=Math.max(0,Math.round(m.atk*diffMult*0.6)-sh);
+          if(sh>0)p.statusEffects.shield=Math.max(0,sh-Math.round(m.atk*diffMult*0.6));
+          p.hp=clamp(p.hp-dmg,0,p.maxHp);
+          p.hp>0&&logs.push({msg:`🔥 Dragon RAGE hits ${p.name} for ${dmg}!`,type:'dmg'});
+        });
+        return;
+      }
+      if(isBoss&&m.id==='lich_king'&&room.round%2===0){
+        logs.push({msg:`💀 Lich King summons Skeleton!`,type:'boss'});
+        monsters.push({...MONSTERS.skeleton,id:'summon_'+room.round,hp:20,maxHp:20,statusEffects:{}});
+      }
+      // Normal attack on random alive player
+      const targets=playerList.filter(p=>p.alive&&(p.statusEffects?.immune||0)<=0);
+      if(!targets.length)return;
+      const target=randFrom(targets);
+      const sh=target.statusEffects?.shield||0;
+      let atkDmg=Math.round(m.atk*diffMult);
+      const dodge=target.items?.includes('shadow_cloak')&&Math.random()<0.2;
+      if(dodge){logs.push({msg:`🧥 ${target.name} dodges!`,type:'system'});return;}
+      const finalDmg=Math.max(0,atkDmg-sh);
+      if(sh>0)target.statusEffects.shield=Math.max(0,sh-atkDmg);
+      target.hp=clamp((target.hp||0)-finalDmg,0,target.maxHp);
+      logs.push({msg:`${m.icon} ${m.name} attacks ${target.name} for ${finalDmg} dmg!`,type:'dmg'});
+      if(m.abilities?.includes('fire_breath')){target.statusEffects=target.statusEffects||{};target.statusEffects.burn=2;}
+      if(m.abilities?.includes('stun')&&Math.random()<0.3){target.statusEffects=target.statusEffects||{};target.statusEffects.stun=1;logs.push({msg:`⚡ ${target.name} stunned by ${m.name}!`,type:'system'});}
+      if(m.abilities?.includes('curse')){target.maxHp=Math.max(10,target.maxHp-10);logs.push({msg:`💀 Curse! ${target.name} max HP -10!`,type:'dmg'});}
+    });
+
+    // ── STEP 5: Burn ticks / status ──
+    [...playerList,...monsters.filter(m=>m.hp>0)].forEach(e=>{
+      if(!e.statusEffects)e.statusEffects={};
+      if(e.statusEffects.burn>0){const who=e.name||'?';e.hp=clamp(e.hp-5,0,e.maxHp||100);e.statusEffects.burn--;logs.push({msg:`🔥 ${who} takes 5 burn dmg!`,type:'dmg'});}
+      ['stun','phase','immune','shield'].forEach(k=>{if(e.statusEffects[k]>0)e.statusEffects[k]--;});
+      if(isBoss&&monsters[0]?.abilities?.includes('phase')&&room.round%3===0){monsters[0].statusEffects.phase=1;}
+    });
+
+    // ── STEP 6: Telegraph next monster action ──
+    monsters.filter(m=>m.hp>0).forEach(m=>{
+      const acts=['attack','attack','attack','special'];
+      if(m.abilities?.includes('bone_shield'))acts.push('defend');
+      if(m.abilities?.includes('phase'))acts.push('phase');
+      m.telegraphAction=randFrom(acts);
+    });
+
+    // ── STEP 7: Death check ──
+    playerList.forEach(p=>{
+      if(p.hp<=0){p.hp=0;p.alive=false;logs.push({msg:`💀 ${p.name} has fallen!`,type:'death'});}
+    });
+
+    const aliveCount=playerList.filter(p=>p.alive).length;
+    const aliveMonsters2=monsters.filter(m=>m.hp>0);
+
+    // Update players
+    playerList.forEach(p=>{players[p.id]=p;});
+    if(isBoss) room.monster=monsters[0];
+    else room.monsters=monsters;
+
+    // ── STEP 8: Determine next phase ──
+    let nextPhase, nextRoom=dungeon.currentRoom, nextFloor=dungeon.currentFloor;
+    let pendingLoot=null;
+
+    if(aliveCount===0){
+      // Party wipe
+      nextPhase='defeat';
+      logs.push({msg:`💀 The party has fallen... darkness claims you.`,type:'death'});
+    } else if(aliveMonsters2.length===0){
+      // All monsters dead
+      room.completed=true;
+      logs.push({msg:`✅ Victory! Room cleared!`,type:'combo'});
+      // Generate loot
+      const loot=generateLoot(dungeon.currentFloor+1);
+      loot.items.forEach(key=>{
+        playerList.filter(p=>p.alive).forEach(p=>{p.items=p.items||[];p.items.push(key);});
+      });
+      playerList.filter(p=>p.alive).forEach(p=>{p.gold=(p.gold||0)+loot.gold;});
+      pendingLoot=loot;
+      logs.push({msg:`💰 Found: +${loot.gold}g and ${loot.items.length} item(s)!`,type:'loot'});
+      // Next room/floor
+      const floor2=dungeon.floors[dungeon.currentFloor];
+      if(dungeon.currentRoom+1<floor2.rooms.length){
+        nextRoom=dungeon.currentRoom+1;
+        const nextRm=floor2.rooms[nextRoom];
+        nextPhase=nextRm.type==='boss'?'boss':nextRm.type==='combat'?'combat':nextRm.type;
+        if(nextRm.type==='combat'&&nextRm.monsters) nextRm.monsters=telegraphMonsters(nextRm.monsters);
+        if(nextRm.type==='boss') nextRm.monster=telegraphMonsters([nextRm.monster])[0];
+      } else if(dungeon.currentFloor+1<dungeon.floors.length){
+        nextFloor=dungeon.currentFloor+1;nextRoom=0;
+        dungeon.floors[nextFloor].rooms[0].monsters=telegraphMonsters(dungeon.floors[nextFloor].rooms[0].monsters||[]);
+        nextPhase=dungeon.floors[nextFloor].rooms[0].type==='boss'?'boss':'combat';
+        logs.push({msg:`🗺️ Floor ${nextFloor+1} — descending deeper...`,type:'system'});
+      } else {
+        nextPhase='victory';
+        logs.push({msg:`🏆 THE DUNGEON IS CONQUERED! You are heroes!`,type:'combo'});
+      }
+      dungeon.currentRoom=nextRoom;dungeon.currentFloor=nextFloor;
+    } else {
+      // Combat continues
+      nextPhase=isBoss?'boss':'combat';
+    }
+
+    const existingLog=Array.isArray(data.log)?data.log:Object.values(data.log||{});
+    const newLog=[...existingLog,...logs].slice(-80);
+    const timerEnd=Date.now()+(cfg.timer||20)*1000;
+
+    const updates={phase:nextPhase,dungeon,players,actions:{},log:newLog};
+    if(pendingLoot) updates.pendingLoot=pendingLoot;
+    if(['combat','boss'].includes(nextPhase)) updates.timerEnd=timerEnd;
+    await roomRef.update(updates);
+
+  }catch(err){
+    console.error('Combat error:',err);isResolving=false;
+    roomRef.update({phase:'combat',timerEnd:Date.now()+20000});
+  }finally{isResolving=false;}
+}
+
+function getNewCard(className){
+  const cls=CLASSES[className]||CLASSES.warrior;
+  const extras=['fire','water','thunder','earth','wind','shadow','holy'];
+  const pool=[...cls.startCards,...extras];
+  const roll=Math.random();
+  if(roll<0.08) return 'meteor_scroll';
+  if(roll<0.15) return 'barrier_potion';
+  return randFrom(pool);
+}
+
+// ════════════════════════════════════
+// PROCEED / EVENT
+// ════════════════════════════════════
+async function proceedRoom(){
+  if(!isHost)return;
+  const data=gameState;
+  const dungeon=JSON.parse(JSON.stringify(data.dungeon||{}));
+  const floor=dungeon.floors[dungeon.currentFloor];
+  const room=floor?.rooms?.[dungeon.currentRoom];
+  if(!room)return;
+  room.completed=true;
+
+  // Heal on rest
+  if(data.phase==='rest'){
+    const players=JSON.parse(JSON.stringify(data.players||{}));
+    Object.values(players).forEach(p=>{if(p.alive)p.hp=clamp(p.hp+Math.round(p.maxHp*0.3),0,p.maxHp);});
+    await roomRef.update({players});
+    toast('🛌 Party rested! +30% HP restored.');
+  }
+
+  // Next room
+  let nextRoom=dungeon.currentRoom+1,nextFloor=dungeon.currentFloor,nextPhase;
+  if(nextRoom>=floor.rooms.length){
+    nextFloor++;nextRoom=0;
+    if(nextFloor>=dungeon.floors.length){await roomRef.update({phase:'victory',dungeon});return;}
+  }
+  dungeon.currentRoom=nextRoom;dungeon.currentFloor=nextFloor;
+  const next=dungeon.floors[nextFloor].rooms[nextRoom];
+  if(next.type==='combat'){next.monsters=telegraphMonsters(next.monsters||[]);nextPhase='combat';}
+  else if(next.type==='boss'){next.monster=telegraphMonsters([next.monster])[0];nextPhase='boss';}
+  else nextPhase=next.type;
+
+  const timerEnd=Date.now()+(data.config?.timer||20)*1000;
+  const updates={phase:nextPhase,dungeon,actions:{},pendingLoot:null};
+  if(['combat','boss'].includes(nextPhase)) updates.timerEnd=timerEnd;
+  await roomRef.update(updates);
+}
+
+async function resolveEvent(effect,val){
+  if(!isHost)return;
+  const players=JSON.parse(JSON.stringify(gameState.players||{}));
+  if(effect==='gold') Object.values(players).forEach(p=>{if(p.alive)p.gold=(p.gold||0)+val;});
+  if(effect==='heal') Object.values(players).forEach(p=>{if(p.alive)p.hp=clamp(p.hp+val,0,p.maxHp);});
+  if(effect==='dmg') Object.values(players).forEach(p=>{if(p.alive)p.hp=clamp(p.hp-val,0,p.maxHp);});
+  if(effect==='card'){Object.values(players).forEach(p=>{if(p.alive){p.hand=p.hand||[];p.hand.push(getNewCard(p.class));}});}
+  await roomRef.update({players});
+  await proceedRoom();
+}
+
+// ════════════════════════════════════
+// COMBAT LOG
+// ════════════════════════════════════
+function renderCombatLog(data){
+  const logEl=document.getElementById('combat-log');if(!logEl)return;
+  const logs=Array.isArray(data.log)?data.log:Object.values(data.log||{});
+  logEl.innerHTML='';
+  logs.slice(-30).forEach(l=>{
+    const d=document.createElement('div');
+    d.className='log-line '+(l.type||'system');
+    d.textContent=l.msg;
+    logEl.appendChild(d);
+  });
+  logEl.scrollTop=logEl.scrollHeight;
+}
+
+// ════════════════════════════════════
+// END SCREEN
+// ════════════════════════════════════
+function renderEnd(data){
+  showScreen('end');
+  if(localTimerInterval){clearInterval(localTimerInterval);localTimerInterval=null;}
+  if(hostPhaseTimeout){clearTimeout(hostPhaseTimeout);hostPhaseTimeout=null;}
+  document.getElementById('room-overlay').classList.remove('active');
+  const isVictory=data.phase==='victory';
+  const players=Object.values(data.players||{});
+  document.getElementById('end-icon').textContent=isVictory?'🏆':'💀';
+  document.getElementById('end-title').textContent=isVictory?'Dungeon Conquered!':'Party Defeated...';
+  document.getElementById('end-title').style.background=isVictory?'linear-gradient(135deg,var(--gold),var(--gold3))':'linear-gradient(135deg,#ef4444,#dc2626)';
+  document.getElementById('end-title').style.webkitBackgroundClip='text';
+  document.getElementById('end-title').style.webkitTextFillColor='transparent';
+  document.getElementById('end-sub').textContent=isVictory?'Your legend will be told for generations! ⚔️':'The darkness was too great. Return and try again.';
+  const statsEl=document.getElementById('end-stats');
+  statsEl.innerHTML='';
+  players.forEach((p,i)=>{
+    const cls=CLASSES[p.class]||CLASSES.warrior;
+    const div=document.createElement('div');
+    div.style.cssText=`background:rgba(255,255,255,0.03);border:1px solid ${cls.color}30;border-radius:16px;padding:16px;text-align:center;animation:popIn 0.4s ease both;`;
+    div.style.animationDelay=`${i*100}ms`;
+    div.innerHTML=`<div style="font-size:36px;">${cls.icon}</div>
+      <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:${cls.color};margin-top:6px;">${p.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">${cls.name}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.8;">
+        ⚔️ ${p.dmgDealt||0} dmg dealt<br>
+        💀 ${p.monstersKilled||0} monsters slain<br>
+        💰 ${p.gold||0} gold collected<br>
+        ${p.alive?'❤️ Survived!':'💀 Fallen'}
+      </div>`;
+    statsEl.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
