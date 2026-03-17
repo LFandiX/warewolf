@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Elemental Duel</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
-</head>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <style>
 :root {
   --fire:#FF4500; --water:#00BFFF; --thunder:#FFD700; --earth:#7CBA3C;
@@ -75,7 +73,23 @@ select option{background:#0d1020;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes hpBar{from{width:var(--from)}to{width:var(--to)}}
 @keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.4)}}
-@keyframes revealCard{0%{transform:rotateY(90deg) scale(0.8);opacity:0}100%{transform:rotateY(0deg) scale(1);opacity:1}}
+@keyframes projectile{
+  0%{transform:translate(0,0) scale(1);opacity:1;}
+  100%{transform:translate(var(--tx),var(--ty)) scale(1.5);opacity:0;}
+}
+@keyframes hitFlash{
+  0%{background:rgba(255,255,255,0.8);box-shadow:0 0 30px #fff;}
+  100%{background:transparent;box-shadow:none;}
+}
+.projectile-icon{
+  position:fixed;z-index:9999;font-size:40px;pointer-events:none;
+  text-shadow:0 0 15px currentColor;
+  animation:projectile 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.hit-effect{
+  position:absolute;inset:0;z-index:5;pointer-events:none;
+  animation:hitFlash 0.3s ease-out forwards;
+}
 @keyframes comboFlash{0%,100%{background:transparent}50%{background:rgba(255,215,0,0.15)}}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
@@ -188,17 +202,6 @@ select option{background:#0d1020;}
 /* ── SPECTATE BADGE ── */
 .spectate-badge{background:rgba(100,150,255,0.15);border:1px solid rgba(100,150,255,0.4);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;color:rgba(150,180,255,0.9);display:flex;align-items:center;gap:6px;}
 
-/* Config */
-.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
-.cfg-row label{font-size:14px;font-weight:600;}
-.cfg-row select{width:auto;padding:8px 12px;font-size:13px;}
-
-@media(max-width:500px){
-  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
-  .el-card{min-height:90px;padding:10px 6px;}
-  .el-card .el-icon{font-size:26px;}
-}
-
 /* ── TEAM BATTLE STYLES ── */
 :root{
   --teamA:#FF4500; --teamA-bg:rgba(255,69,0,0.12); --teamA-border:rgba(255,69,0,0.4);
@@ -267,7 +270,8 @@ select option{background:#0d1020;}
 .role-catburglar{background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.35);color:#00FF88;}
 /* FFA role select section */
 #ffa-role-section{margin-top:10px;}
-.ffa-role-header{font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;}background:rgba(0,191,255,0.1);border:1.5px solid rgba(0,191,255,0.4);border-radius:14px;color:#66DDFF;font-family:'Cinzel',serif;font-size:13px;font-weight:700;padding:12px;width:100%;cursor:pointer;transition:all 0.2s;letter-spacing:1px;}
+.ffa-role-header{font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;}
+.cover-btn{background:rgba(0,191,255,0.1);border:1.5px solid rgba(0,191,255,0.4);border-radius:14px;color:#66DDFF;font-family:'Cinzel',serif;font-size:13px;font-weight:700;padding:12px;width:100%;cursor:pointer;transition:all 0.2s;letter-spacing:1px;}
 .cover-btn:hover{background:rgba(0,191,255,0.2);transform:translateY(-2px);}
 .cover-btn.active{background:rgba(0,191,255,0.25);border-color:#00BFFF;box-shadow:0 0 16px rgba(0,191,255,0.3);}
 .cover-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;}
@@ -328,10 +332,66 @@ select option{background:#0d1020;}
 
 /* Awakening names in ultimate button */
 .ult-btn .ult-name{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:2px;letter-spacing:0;}
+
+/* ── PROJECTILE & HIT EFFECTS ── */
+@keyframes projectile{
+  0%{transform:translate(0,0) scale(1);opacity:1;}
+  100%{transform:translate(var(--tx),var(--ty)) scale(1.5);opacity:0;}
+}
+@keyframes hitFlash{
+  0%{background:rgba(255,255,255,0.8);box-shadow:0 0 30px #fff;}
+  100%{background:transparent;box-shadow:none;}
+}
+.projectile-icon{
+  position:fixed;z-index:9999;font-size:40px;pointer-events:none;
+  text-shadow:0 0 15px currentColor;
+  animation:projectile 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.hit-effect{
+  position:absolute;inset:0;z-index:5;pointer-events:none;
+  animation:hitFlash 0.3s ease-out forwards;
+}
+
+/* ── MUSIC CONTROLS ── */
+.music-controls {
+  position: fixed; top: 16px; right: 16px; z-index: 1000;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 50%; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; color: var(--text);
+  font-size: 14px; backdrop-filter: blur(10px);
+}
+.music-controls:hover { transform: scale(1.1); border-color: var(--fire); }
+.music-controls.off { color: var(--muted); opacity: 0.5; }
+
+/* Config */
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.07);}
+.cfg-row label{font-size:14px;font-weight:600;}
+.cfg-row select{width:auto;padding:8px 12px;font-size:13px;}
+
+@media(max-width:500px){
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
+  .el-card{min-height:90px;padding:10px 6px;}
+  .el-card .el-icon{font-size:26px;}
+}
 </style>
 </head>
 <body>
 <div id="app">
+
+<!-- BGM Player -->
+<audio id="bgm-lobby" loop autoplay>
+  <source src="https://www.chosic.com/wp-content/uploads/2021/04/Adventure-Fantasy-Music.mp3" type="audio/mpeg">
+</audio>
+<!-- 
+Adventure by Alexander Nakarada | https://creatorchords.com
+Music promoted by https://www.chosic.com/free-music/all/
+Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/ -->
+ 
+<div class="music-controls" id="btn-music" onclick="toggleMusic()" title="Toggle Music">
+  <span id="music-icon">🔇</span>
+</div>
 
 <!-- ── REVEAL OVERLAY ── -->
 <div id="reveal-overlay">
@@ -386,7 +446,7 @@ select option{background:#0d1020;}
       <button class="btn btn-secondary" style="width:auto;padding:12px 18px;white-space:nowrap;" onclick="goJoin()">Enter →</button>
     </div>
      <div class="div"></div>
-    <a href="rules.html" target="_blank" style="text-decoration:none;">
+    <a href="rules_VS.html" target="_blank" style="text-decoration:none;">
       <button class="btn btn-ghost" style="width:100%;font-family:'Exo 2',sans-serif;font-size:13px;letter-spacing:0.5px;">📖 View Rules & Element Guide</button>
     </a>
   </div>
@@ -536,6 +596,12 @@ select option{background:#0d1020;}
       <div style="color:#AAAAEE;">🛡 Iron Aura — +30% dmg</div>
       <div style="color:#88CCFF;">👁 Farsight — Spy enemy card</div>
       <div style="color:#FFCC33;">👑 Sovereign — Nullify (1×/game)</div>
+    </div>
+    <div class="div"></div>
+    <!-- Music Credit -->
+    <div style="font-size:9px;color:var(--muted);text-align:center;line-height:1.4;">
+      🎵 Lobby Music: <b>Adventure</b> by Alexander Nakarada<br>
+      Licensed under CC BY 4.0 | Source: <a href="https://www.chosic.com/free-music/all/" target="_blank" style="color:inherit;">Chosic</a>
     </div>
   </div>
 </div>
@@ -713,6 +779,27 @@ function getAdvantage(attacker, defender) {
 }
 
 const AVATARS = ['🧙','⚔️','🏹','🗡️','🔮','🌊','🌋','🌩️','🌿','👁️','🦅','🐉'];
+
+// ── MUSIC SYSTEM ──
+let isMusicOn = false;
+function toggleMusic() {
+  const bgm = document.getElementById('bgm-lobby');
+  const icon = document.getElementById('music-icon');
+  const btn = document.getElementById('btn-music');
+  
+  if (!isMusicOn) {
+    bgm.volume = 0.5;
+    bgm.play().catch(e => console.log("Music blocked by browser. Interaction needed."));
+    icon.textContent = '🔊';
+    btn.classList.remove('off');
+    isMusicOn = true;
+  } else {
+    bgm.pause();
+    icon.textContent = '🔇';
+    btn.classList.add('off');
+    isMusicOn = false;
+  }
+}
 
 // ═══════════════ STATE ═══════════════
 let myId=null, myName='', roomCode='', roomRef=null;
@@ -1178,8 +1265,20 @@ function toast(msg,dur=3000){ const t=document.getElementById('toast'); t.textCo
 function randEl(){ const keys=Object.keys(ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; }
 function randCard(){
   const roll=Math.random();
-  if(roll<0.04){ const keys=Object.keys(CURSED_FRUITS); return keys[Math.floor(Math.random()*keys.length)]; } // 4% cursed fruit
-  if(roll<0.14){ const keys=Object.keys(RARE_ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; } // 10% rare
+  // Increase Cursed Fruit chance to 8% (from 4%)
+  if(roll<0.08){ 
+    const fruits = Object.keys(CURSED_FRUITS);
+    // Weighted randomness: Sanctum (index 4) should be 3x rarer than others
+    const weights = [3, 3, 3, 3, 1]; 
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * totalWeight;
+    for (let i = 0; i < fruits.length; i++) {
+      if (r < weights[i]) return fruits[i];
+      r -= weights[i];
+    }
+    return fruits[0];
+  } 
+  if(roll<0.18){ const keys=Object.keys(RARE_ELEMENTS); return keys[Math.floor(Math.random()*keys.length)]; } // 10% rare
   return randEl();
 }
 function dealCards(n){ return Array.from({length:n},()=>randCard()); }
@@ -1208,6 +1307,11 @@ window.onload = () => {
   localStorage.setItem('ed_uid',myId);
   myName = localStorage.getItem('ed_name')||'';
   if(myName) document.getElementById('inp-name').value=myName;
+  
+  // Set initial volume
+  const bgm = document.getElementById('bgm-lobby');
+  if(bgm) bgm.volume = 0.5;
+
   if(FIREBASE_CONFIG.apiKey==='GANTI_API_KEY_KAMU'){ showScreen('home'); return; }
   showScreen('home');
 };
@@ -1688,15 +1792,34 @@ function renderHand(data){
   handSection.style.display='block';
   const myAction=data.actions?.[myId];
   const actionDone=!!myAction||actionSubmitted;
-  document.getElementById('action-status').textContent=actionDone?'✅ Action submitted!':'Choose a card to play';
+  
+  // Clearer status text for Blademaster Ultimate
+  let statusText = actionDone ? '✅ Action submitted!' : 'Choose a card to play';
+  if(!actionDone && ultActive && me.role === 'blademaster') {
+    const pickedCount = (window._tridentCards?.length || 0);
+    statusText = pickedCount === 0 ? '⚔️ SELECT FIRST CARD' : (pickedCount === 1 ? '⚔️ SELECT SECOND CARD' : '⚔️ CARDS SELECTED');
+  }
+  document.getElementById('action-status').textContent = statusText;
+
   grid.innerHTML='';
   (me.hand||[]).forEach((key,i)=>{
     const el=getEl(key); if(!el) return;
-    const isSelected=selectedCard===i;
+    // Highlight if selected OR if it's currently staged in Trident Storm
+    const isStaged = window._tridentCards?.some(c => c.idx === i);
+    const isSelected = selectedCard === i || isStaged;
+    
     const disabled=actionDone||phase!=='choose';
     const div=document.createElement('div');
     div.className=`el-card bg-${key} ${isSelected?'selected':''} ${disabled?'disabled':''} ${el.rare?'rare':''}`;
-    div.style.borderColor=el.color;
+    
+    // Add extra visual pop for staged cards
+    if(isStaged) {
+      div.style.boxShadow = '0 0 20px #FFD700, inset 0 0 10px #FFD700';
+      div.style.borderColor = '#FFD700';
+    } else {
+      div.style.borderColor=el.color;
+    }
+    
     div.innerHTML=`<div class="el-icon">${el.icon}</div><div class="el-name" style="color:${el.color}">${el.name}</div><div class="el-dmg">${el.baseDmg>0?el.baseDmg+'⚔':''}${el.rare?'⭐':''}</div>`;
     div.title=el.desc;
     if(!disabled) div.onclick=()=>selectCard(i,data);
@@ -2227,9 +2350,77 @@ async function resolveRound(data){
 }
 
 
+// ── COMBAT ANIMATION SYSTEM ──
+function triggerCombatAnimation(attackerId, act, cardEl, data) {
+  const players = data.players || {};
+  const targetId = act.target;
+  const isTrident = !!act.isTrident;
+  
+  // Skip if self-buff cards (unless we want to show projectile to self)
+  const selfCards = ['water', 'holy', 'earth', 'barrier', 'alchemy', 'aegis'];
+  if (selfCards.includes(act.card) && !isTrident) return;
+
+  // Find target element in arena
+  const targetCards = document.querySelectorAll('.arena-player');
+  let targetEl = null;
+  targetCards.forEach(el => {
+    if (el.innerText.includes(players[targetId]?.name)) targetEl = el;
+  });
+
+  if (!targetEl || !cardEl) return;
+
+  // Get positions
+  const cardRect = cardEl.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+  
+  const startX = cardRect.left + cardRect.width / 2;
+  const startY = cardRect.top + cardRect.height / 2;
+  const endX = targetRect.left + targetRect.width / 2;
+  const endY = targetRect.top + targetRect.height / 2;
+
+  // Launch Projectile
+  const elData = getEl(act.card);
+  const proj = document.createElement('div');
+  proj.className = 'projectile-icon';
+  proj.textContent = elData?.icon || '⚔️';
+  proj.style.left = startX + 'px';
+  proj.style.top = startY + 'px';
+  proj.style.setProperty('--tx', (endX - startX) + 'px');
+  proj.style.setProperty('--ty', (endY - startY) + 'px');
+  document.body.appendChild(proj);
+
+  // Trigger hit effect when projectile "arrives"
+  setTimeout(() => {
+    proj.remove();
+    playSfx(elData?.effect || 'cast');
+    
+    // Shake target
+    targetEl.classList.add('targeted');
+    
+    // Hit flash
+    const flash = document.createElement('div');
+    flash.className = 'hit-effect';
+    targetEl.appendChild(flash);
+    
+    // Damage number
+    const el = getEl(act.card);
+    if(el && el.baseDmg > 0) {
+        const dmg = act.isBurst ? el.baseDmg * 2 : el.baseDmg;
+        spawnDmgNumber('-' + dmg, el.color, endX, endY);
+    }
+
+    setTimeout(() => {
+      targetEl.classList.remove('targeted');
+      flash.remove();
+    }, 500);
+  }, 600);
+}
+
 // ═══════════════ REVEAL OVERLAY ═══════════════
 function renderRevealOverlay(data){
   const overlay=document.getElementById('reveal-overlay');
+  overlay.style.backdropFilter = 'blur(4px)';
+  overlay.style.background = 'rgba(0,0,0,0.7)';
   const container=document.getElementById('reveal-cards');
   container.innerHTML='';
   const actions=data.actions||{};
@@ -2237,68 +2428,82 @@ function renderRevealOverlay(data){
   const isTeam=data.config?.mode==='team';
   let delay=0;
 
-  function makeCard(pid, act){
+  function makeCard(pid, act, customCard = null){
     const p=players[pid]; if(!p) return null;
-    const el=getEl(act.card); if(!el) return null;
+    const cardKey = customCard || act.card;
+    const el=getEl(cardKey); if(!el) return null;
     const targetP=players[act.target];
-    const specialLabel=act.card==='cover'?'🛡️ COVER':act.card==='aegis'?'✨ AEGIS':null;
+    const specialLabel=cardKey==='cover'?'🛡️ COVER':cardKey==='aegis'?'✨ AEGIS':null;
     const div=document.createElement('div');
-    div.className=`reveal-card bg-${act.card}`;
+
+    setTimeout(() => {
+      triggerCombatAnimation(pid, act, div, data);
+    }, delay + 600);
+
+    div.className=`reveal-card bg-${cardKey}`;
     div.style.cssText=`border:2px solid ${el.color};animation-delay:${delay}ms;flex-shrink:0;`;
+    
+    // Show Trident icon if it's part of the ultimate
+    const tridentTag = act.isTrident ? '<div style="font-size:10px;color:#FFD700;margin-bottom:2px;font-weight:700;">⚔️ TRIDENT</div>' : '';
+    
     div.innerHTML=`
+      ${tridentTag}
       <div style="font-size:36px;">${el.icon}</div>
       <div class="cinzel" style="font-size:12px;font-weight:700;color:${el.color};margin-top:5px;">${specialLabel||el.name}</div>
       <div style="font-size:20px;margin-top:4px;">${p.avatar}</div>
       <div style="font-size:12px;font-weight:700;">${p.name}</div>
-      ${targetP&&targetP.id!==pid&&!['cover','aegis'].includes(act.card)?`<div style="font-size:10px;color:var(--muted);margin-top:3px;">→ ${targetP.avatar} ${targetP.name}</div>`:''}
+      ${targetP&&targetP.id!==pid&&!['cover','aegis'].includes(cardKey)?`<div style="font-size:10px;color:var(--muted);margin-top:3px;">→ ${targetP.avatar} ${targetP.name}</div>`:''}
       ${act.isBurst?`<div style="font-size:10px;color:#FFD700;margin-top:3px;font-weight:700;">💥 BURST</div>`:''}
     `;
-    delay+=150;
+    delay+=300;
     return div;
   }
 
   if(isTeam){
-    // Group by team with colored headers
     const teamDefs=[
       {id:'A', label:'🔥 Team Red',   color:'var(--teamA)',  border:'var(--teamA-border)', bg:'var(--teamA-bg)'},
       {id:'B', label:'💧 Team Blue',  color:'var(--teamB)',  border:'var(--teamB-border)', bg:'var(--teamB-bg)'},
     ];
+    const teamColumns = [];
     teamDefs.forEach(td=>{
       const teamPlayers=Object.entries(actions).filter(([pid])=>players[pid]?.team===td.id);
       if(!teamPlayers.length) return;
-      // Team column wrapper
       const col=document.createElement('div');
       col.style.cssText=`display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 16px;border-radius:18px;border:1.5px solid ${td.border};background:${td.bg};min-width:140px;`;
-      // Team header
       const hdr=document.createElement('div');
       hdr.style.cssText=`font-family:'Cinzel',serif;font-size:12px;font-weight:900;letter-spacing:2px;color:${td.color};margin-bottom:2px;`;
       hdr.textContent=td.label;
       col.appendChild(hdr);
-      // Cards row inside column
       const row=document.createElement('div');
       row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;justify-content:center;';
       teamPlayers.forEach(([pid,act])=>{
         const card=makeCard(pid,act);
         if(card) row.appendChild(card);
+        if(act.isTrident && act.tridentCard2){
+          const card2=makeCard(pid,act,act.tridentCard2);
+          if(card2) row.appendChild(card2);
+        }
       });
       col.appendChild(row);
-      container.appendChild(col);
+      teamColumns.push(col);
     });
-    // VS badge between teams
-    if(Object.keys(actions).length>0){
-      const vs=document.createElement('div');
-      vs.style.cssText='display:flex;align-items:center;align-self:center;font-family:"Cinzel",serif;font-weight:900;font-size:22px;background:linear-gradient(135deg,var(--teamA),var(--teamB));-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:0 8px;';
-      vs.textContent='VS';
-      // Insert VS between the two team columns
-      if(container.children.length>=2){
-        container.insertBefore(vs, container.children[1]);
+    teamColumns.forEach((col, idx) => {
+      container.appendChild(col);
+      if(idx === 0 && teamColumns.length > 1) {
+        const vs=document.createElement('div');
+        vs.style.cssText='display:flex;align-items:center;align-self:center;font-family:"Cinzel",serif;font-weight:900;font-size:22px;background:linear-gradient(135deg,var(--teamA),var(--teamB));-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:0 8px;';
+        vs.textContent='VS';
+        container.appendChild(vs);
       }
-    }
+    });
   } else {
-    // FFA — flat list like before
     Object.entries(actions).forEach(([pid,act])=>{
       const card=makeCard(pid,act);
       if(card) container.appendChild(card);
+      if(act.isTrident && act.tridentCard2){
+        const card2=makeCard(pid,act,act.tridentCard2);
+        if(card2) container.appendChild(card2);
+      }
     });
   }
 
@@ -2307,7 +2512,11 @@ function renderRevealOverlay(data){
   const cdEl=document.getElementById('reveal-countdown');
   const cdInt=setInterval(()=>{
     cd--; cdEl.textContent=`Resolving in ${cd}...`;
-    if(cd<=0){ clearInterval(cdInt); overlay.classList.remove('active'); }
+    if(cd<=0){ 
+      clearInterval(cdInt); 
+      overlay.classList.remove('active'); 
+      overlay.style.backdropFilter = 'blur(10px)';
+    }
   },1000);
   cdEl.textContent=`Resolving in ${cd}...`;
 }
