@@ -181,7 +181,7 @@ select option{background:#0d1020;}
 /* ── REVEAL OVERLAY ── */
 #reveal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;backdrop-filter:blur(10px);}
 #reveal-overlay.active{display:flex;}
-#reveal-cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:flex-start;max-width:720px;padding:0 16px;}
+#reveal-cards{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;max-width:720px;padding:0 16px;}
 .reveal-card{animation:revealCard 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;border-radius:16px;padding:16px 18px;text-align:center;min-width:120px;}
 
 /* ── DAMAGE NUMBERS ── */
@@ -354,7 +354,7 @@ select option{background:#0d1020;}
 
 /* ── MUSIC CONTROLS ── */
 .music-controls {
-  position: fixed; top: 16px; right: 16px; z-index: 1000;
+  position: fixed; bottom: 16px; right: 16px; z-index: 1000;
   background: rgba(255,255,255,0.05); border: 1px solid var(--border);
   border-radius: 50%; width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
@@ -462,9 +462,11 @@ https://creativecommons.org/licenses/by/4.0/ -->
   <div class="card" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;">
     <div id="host-cfg" style="display:none;flex-direction:column;gap:10px;">
       <h3 class="cinzel" style="font-size:14px;color:var(--muted);">⚙ ARENA SETTINGS</h3>
-      <div class="cfg-row"><label>❤️ Starting HP</label><select id="cfg-hp"><option value="80">80</option><option value="100" selected>100</option><option value="150">150</option></select></div>
+      <div class="cfg-row"><label>❤️ Starting HP</label><select id="cfg-hp"><option value="80">80</option><option value="100" selected>100</option><option value="150">150</option><option value="200">200</option></select></div>
       <div class="cfg-row"><label>⏱ Action Timer</label><select id="cfg-timer"><option value="15">15s</option><option value="20" selected>20s</option><option value="30">30s</option></select></div>
       <div class="cfg-row"><label>🃏 Starting Cards</label><select id="cfg-cards"><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option></select></div>
+      <div class="cfg-row"><label>🌟 Enable Ultimate</label><select id="cfg-ult"><option value="yes" selected>Yes</option><option value="no">No</option></select></div>
+      <div class="cfg-row"><label>🌀 Enable Aura</label><select id="cfg-aura"><option value="yes" selected>Yes</option><option value="no">No</option></select></div>
       <div class="div"></div>
     </div>
     <h3 class="cinzel" style="font-size:14px;display:flex;align-items:center;gap:8px;">
@@ -509,25 +511,25 @@ https://creativecommons.org/licenses/by/4.0/ -->
           <div class="role-card r-strawhat" id="rc-strawhat" onclick="selectRole('strawhat')">
             <div class="r-icon">🎩</div>
             <div class="r-name" style="color:#FF8855;">Straw-Hat</div>
-            <div class="r-hp">120 HP · High DMG</div>
+            <div class="r-hp">+20 HP · High DMG</div>
             <div class="r-ult">💥 Primordial Awakening<br>All effects ×2</div>
           </div>
           <div class="role-card r-flowerscholar" id="rc-flowerscholar" onclick="selectRole('flowerscholar')">
             <div class="r-icon">🌸</div>
             <div class="r-name" style="color:#66DDFF;">Flower-Scholar</div>
-            <div class="r-hp">100 HP · Cover + Support</div>
+            <div class="r-hp">+0 HP · Cover + Support</div>
             <div class="r-ult">🌸 Thornwall Bloom<br>Team immune + counter</div>
           </div>
           <div class="role-card r-blademaster" id="rc-blademaster" onclick="selectRole('blademaster')">
             <div class="r-icon">⚔️</div>
             <div class="r-name" style="color:#FFD700;">2-Blade Master</div>
-            <div class="r-hp">110 HP · Double Strike</div>
+            <div class="r-hp">+10 HP · Double Strike</div>
             <div class="r-ult">⚔️ Trident Storm<br>Play 2 cards instantly</div>
           </div>
           <div class="role-card r-catburglar" id="rc-catburglar" onclick="selectRole('catburglar')">
             <div class="r-icon">🐱</div>
             <div class="r-name" style="color:#00FF88;">Cat-Burglar</div>
-            <div class="r-hp">100 HP · Dispel + AOE</div>
+            <div class="r-hp">+0 HP · Dispel + AOE</div>
             <div class="r-ult">⚡ Stormweaver's Wrath<br>Dispel all + 15 AOE dmg</div>
           </div>
         </div>
@@ -543,25 +545,25 @@ https://creativecommons.org/licenses/by/4.0/ -->
       <div class="role-card r-strawhat" id="ffa-rc-strawhat" onclick="selectRoleFFA('strawhat')">
         <div class="r-icon">🎩</div>
         <div class="r-name" style="color:#FF8855;">Straw-Hat</div>
-        <div class="r-hp">120 HP · High DMG</div>
+        <div class="r-hp">+20 HP · High DMG</div>
         <div class="r-ult">💥 Primordial Awakening<br>All effects ×2</div>
       </div>
       <div class="role-card r-flowerscholar" id="ffa-rc-flowerscholar" onclick="selectRoleFFA('flowerscholar')">
         <div class="r-icon">🌸</div>
         <div class="r-name" style="color:#66DDFF;">Flower-Scholar</div>
-        <div class="r-hp">100 HP · Cleanse Shield</div>
+        <div class="r-hp">+0 HP · Cleanse Shield</div>
         <div class="r-ult">🌸 Thornwall Bloom<br>Self-immune + counter</div>
       </div>
       <div class="role-card r-blademaster" id="ffa-rc-blademaster" onclick="selectRoleFFA('blademaster')">
         <div class="r-icon">⚔️</div>
         <div class="r-name" style="color:#FFD700;">2-Blade Master</div>
-        <div class="r-hp">110 HP · Double Strike</div>
+        <div class="r-hp">+10 HP · Double Strike</div>
         <div class="r-ult">⚔️ Trident Storm<br>Play 2 cards instantly</div>
       </div>
       <div class="role-card r-catburglar" id="ffa-rc-catburglar" onclick="selectRoleFFA('catburglar')">
         <div class="r-icon">🐱</div>
         <div class="r-name" style="color:#00FF88;">Cat-Burglar</div>
-        <div class="r-hp">100 HP · Dispel + AOE</div>
+        <div class="r-hp">+0 HP · Dispel + AOE</div>
         <div class="r-ult">⚡ Stormweaver's Wrath<br>Dispel all + 15 AOE dmg</div>
       </div>
     </div>
@@ -638,12 +640,6 @@ https://creativecommons.org/licenses/by/4.0/ -->
       <div id="team-arena" style="display:none;" class="team-arena"></div>
     </div>
 
-    <!-- Target select (3+ players / team mode) -->
-    <div id="target-section" style="display:none;">
-      <h3 class="cinzel" style="font-size:12px;color:rgba(255,68,68,0.8);margin-bottom:8px;letter-spacing:1px;">🎯 SELECT TARGET</h3>
-      <div id="target-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-    </div>
-
     <!-- Team actions: Cover + Ultimate (team mode only) -->
     <div id="team-actions" style="display:none;">
       <div style="display:flex;gap:8px;">
@@ -670,6 +666,12 @@ https://creativecommons.org/licenses/by/4.0/ -->
           <button class="aura-btn aura-sovereign" id="btn-aura-sovereign" disabled onclick="activateAura('sovereign')">👑 Sovereign<br><span style="font-size:9px;font-weight:400;">Nullify target</span></button>
         </div>
       </div>
+    </div>
+
+    <!-- Target select (3+ players / team mode) -->
+    <div id="target-section" style="display:none;">
+      <h3 class="cinzel" style="font-size:12px;color:rgba(255,68,68,0.8);margin-bottom:8px;letter-spacing:1px;">🎯 SELECT TARGET</h3>
+      <div id="target-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
     </div>
 
     <!-- My hand -->
@@ -910,10 +912,10 @@ let ultActive=false;
 
 // ── ROLE DATA TABLE ──
 const ROLES = {
-  strawhat:     { icon:'🎩', label:'Straw-Hat',      hp:120, ultName:'💥 Primordial Awakening', ultSub:'All effects ×2' },
-  flowerscholar:{ icon:'🌸', label:'Flower-Scholar',  hp:100, ultName:'🌸 Thornwall Bloom',      ultSub:'Immune + counter' },
-  blademaster:  { icon:'⚔️', label:'2-Blade Master',  hp:110, ultName:'⚔️ Trident Storm',        ultSub:'Play 2 cards now' },
-  catburglar:   { icon:'🐱', label:'Cat-Burglar',     hp:100, ultName:'⚡ Stormweaver\'s Wrath',  ultSub:'Dispel all + 15 AOE' },
+  strawhat:     { icon:'🎩', label:'Straw-Hat',      hpBonus:20, ultName:'💥 Primordial Awakening', ultSub:'All effects ×2' },
+  flowerscholar:{ icon:'🌸', label:'Flower-Scholar',  hpBonus:0,  ultName:'🌸 Thornwall Bloom',      ultSub:'Immune + counter' },
+  blademaster:  { icon:'⚔️', label:'2-Blade Master',  hpBonus:10, ultName:'⚔️ Trident Storm',        ultSub:'Play 2 cards now' },
+  catburglar:   { icon:'🐱', label:'Cat-Burglar',     hpBonus:0,  ultName:'⚡ Stormweaver\'s Wrath',  ultSub:'Dispel all + 15 AOE' },
 };
 
 // ── AURA STATE ──
@@ -953,13 +955,13 @@ function selectRole(role){
   if(!roomRef||!myTeam) return;
   playSfx('click');
   myRole=role;
-  const rd=ROLES[role]||ROLES.strawhat;
-  roomRef.child('players/'+myId).update({role, maxHp:rd.hp, hp:rd.hp, isSpectator: false});
+  roomRef.child('players/'+myId).update({role, isSpectator: false});
   // Update visual selection
   ['strawhat','flowerscholar','blademaster','catburglar'].forEach(r=>{
     const el=document.getElementById('rc-'+r);
     if(el) el.classList.toggle('selected', r===role);
   });
+  const rd=ROLES[role]||ROLES.strawhat;
   toast(`${rd.icon} ${rd.label} ready!`);
 }
 
@@ -967,13 +969,13 @@ function selectRoleFFA(role){
   if(!roomRef) return;
   playSfx('click');
   myRole=role;
-  const rd=ROLES[role]||ROLES.strawhat;
-  roomRef.child('players/'+myId).update({role, maxHp:rd.hp, hp:rd.hp});
+  roomRef.child('players/'+myId).update({role});
   // Update visual selection
   ['strawhat','flowerscholar','blademaster','catburglar'].forEach(r=>{
     const el=document.getElementById('ffa-rc-'+r);
     if(el) el.classList.toggle('selected', r===role);
   });
+  const rd=ROLES[role]||ROLES.strawhat;
   toast(`${rd.icon} ${rd.label} ready!`);
 }
 
@@ -1109,7 +1111,8 @@ function activateUltimate(){
 // ═══════════════ AURA SYSTEM ═══════════════
 function renderAuraUI(me){
   const section=document.getElementById('aura-section');
-  if(!me?.alive){ section.style.display='none'; return; }
+  const auraEnabled=gameState?.config?.auraEnabled!==false;
+  if(!me?.alive || !auraEnabled){ section.style.display='none'; return; }
   section.style.display='block';
 
   const charge=me.auraCharge||0;
@@ -1221,7 +1224,10 @@ function showFarsightPopup(target, el){
 function renderUltimateUI(me){
   const section=document.getElementById('team-actions');
   const isTeam=gameState?.config?.mode==='team';
-  if(!me?.alive){ section.style.display='none'; return; }
+  const ultEnabled=gameState?.config?.ultEnabled!==false;
+  const auraEnabled=gameState?.config?.auraEnabled!==false;
+
+  if(!me?.alive || (!ultEnabled && !auraEnabled && !isTeam)){ section.style.display='none'; return; }
   section.style.display='block';
 
   const role=me.role||'strawhat';
@@ -1234,7 +1240,7 @@ function renderUltimateUI(me){
 
   // Ultimate gauge (always show if team mode or if has role)
   const ultWrap=document.getElementById('team-actions').querySelector('div:nth-child(2)');
-  const showUlt = isTeam || !!me.role;
+  const showUlt = (isTeam || !!me.role) && ultEnabled;
   if(ultWrap) ultWrap.style.display=showUlt?'block':'none';
 
   if(showUlt){
@@ -1381,8 +1387,38 @@ function setupRoom(){
 function listenRoom(){
   roomRef.on('value',snap=>{
     const data=snap.val(); if(!data) return;
+    
+    // Check if I'm still in the room
+    if(!data.players?.[myId]){
+      roomRef.off();
+      roomRef = null;
+      gameState = null;
+      showScreen('home');
+      toast('🚫 You have been removed from the arena.');
+      return;
+    }
+    
     gameState=data;
     const phase=data.phase;
+
+    // ── HOST: PRESENCE CLEANUP ──
+    if(isHost){
+      Object.values(data.players || {}).forEach(p => {
+        if(p.online === false && p.id !== myId){
+          if(phase === 'lobby'){
+            // Just remove them from lobby
+            roomRef.child('players/'+p.id).remove();
+          } else if(phase !== 'end' && p.alive){
+            // Mark as dead/AFK in-game
+            roomRef.child('players/'+p.id).update({
+              alive: false,
+              hp: 0,
+              name: p.name.includes('[AFK]') ? p.name : p.name + ' [AFK]'
+            });
+          }
+        }
+      });
+    }
     
     // ── HOST MIGRATION ──
     const players=data.players||{};
@@ -1451,7 +1487,8 @@ function showBridge(data, roundNum) {
 // ═══════════════ LOBBY ═══════════════
 function renderLobby(data){
   showScreen('lobby');
-  const players=Object.values(data.players||{});
+  // Filter out offline players immediately
+  const players=Object.values(data.players||{}).filter(p => p.online !== false || p.id === myId);
   const isTeamMode=data.config?.mode==='team';
   document.getElementById('lobby-pcount').textContent=players.length;
   const list=document.getElementById('lobby-players');
@@ -1460,7 +1497,11 @@ function renderLobby(data){
     const d=document.createElement('div');
     d.className='player-chip'+(p.isHost?' host':'');
     const teamTag=p.team?` <span style="font-size:10px;opacity:0.7;">[${p.team==='A'?'🔥Red':'💧Blue'}]</span>`:'';
-    d.innerHTML=`${p.avatar} ${p.name}${p.id===myId?' (You)':''}${p.isHost?' 👑':''}${teamTag}`;
+    
+    // Kick button for host (not for self)
+    const kickBtn = (isHost && p.id !== myId) ? `<span onclick="kickPlayer('${p.id}')" style="margin-left:8px;cursor:pointer;color:var(--danger);font-weight:900;" title="Kick Player">❌</span>` : '';
+    
+    d.innerHTML=`${p.avatar} ${p.name}${p.id===myId?' (You)':''}${p.isHost?' 👑':''}${teamTag}${kickBtn}`;
     list.appendChild(d);
   });
   renderTeamLobby(data);
@@ -1514,10 +1555,19 @@ async function backToLobby(){
   }
 }
 
+function kickPlayer(pid){
+  if(!isHost || !roomRef) return;
+  if(!confirm("Are you sure you want to kick this player?")) return;
+  roomRef.child('players/'+pid).remove();
+  toast('🚫 Player kicked!');
+}
+
 async function hostStart(){
   const hp=parseInt(document.getElementById('cfg-hp').value);
   const timer=parseInt(document.getElementById('cfg-timer').value);
   const cards=parseInt(document.getElementById('cfg-cards').value);
+  const ultEnabled=document.getElementById('cfg-ult').value==='yes';
+  const auraEnabled=document.getElementById('cfg-aura').value==='yes';
   const mode=gameState?.config?.mode||gameMode;
   const players=JSON.parse(JSON.stringify(gameState.players));
   Object.values(players).forEach(p=>{
@@ -1525,9 +1575,8 @@ async function hostStart(){
       p.hand=[]; p.hp=0; p.maxHp=0; p.alive=false;
     } else {
       const rd=ROLES[p.role];
-      // Team mode uses role HP; FFA uses role HP if role chosen, else cfg HP
-      const roleHp = rd ? rd.hp : hp;
-      const finalHp = mode==='team' ? roleHp : (p.role ? roleHp : hp);
+      const bonus = rd ? (rd.hpBonus || 0) : 0;
+      const finalHp = hp + bonus;
       p.hand=dealCards(cards);
       p.hp=finalHp; p.maxHp=finalHp;
       p.alive=true; p.statusEffects={}; p.kills=0; p.dmgDealt=0; p.dmgReceived=0; p.eliminated=0;
@@ -1536,7 +1585,7 @@ async function hostStart(){
     }
   });
   const timerEnd=Date.now()+timer*1000;
-  await roomRef.update({phase:'choose',round:1,config:{hp,timer,cards,mode},players,actions:{},log:[],timerEnd});
+  await roomRef.update({phase:'choose',round:1,config:{hp,timer,cards,mode,ultEnabled,auraEnabled},players,actions:{},log:[],timerEnd});
 }
 
 // ═══════════════ GAME RENDER ═══════════════
@@ -1597,6 +1646,12 @@ function renderArena(data){
     const hpClass=hpPct>60?'high':hpPct>30?'mid':'low';
     const statuses=p.statusEffects||{};
     const statusHtml=Object.entries(statuses).filter(([k,v])=>v>0).map(([k,v])=>`<span class="status-badge status-${k}">${k==='burn'?'🔥':k==='stun'?'⚡':k==='freeze'?'🧊':k==='shield'?'🌿':k==='immune'?'✨':k==='thornwall'?'🌸':'?'} ${k} ${v}</span>`).join('');
+    
+    // Check if player is AFK (offline or has AFK tag)
+    const isAFK = p.online === false || p.name.includes('[AFK]');
+    const showDeadBanner = !p.alive || isAFK;
+    const bannerText = isAFK ? '🚫 AFK' : (isMe ? '👁 SPECTATING' : '💀 FALLEN');
+
     const div=document.createElement('div');
     div.className='arena-player'+(isMe?' self-card':'')+(isTarget?' selected-target':'');
     const roleHtml=p.role&&ROLES[p.role]?`<span class="role-badge role-${p.role}" style="font-size:9px;margin-top:2px;display:inline-flex;">${ROLES[p.role].icon} ${ROLES[p.role].label}</span>`:'';
@@ -1614,7 +1669,7 @@ function renderArena(data){
       <div class="hp-wrap"><div class="hp-bar ${hpClass}" style="width:${hpPct}%;"></div></div>
       ${ultBarHtml}
       ${statusHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${statusHtml}</div>`:''}
-      ${!p.alive?`<div class="${isMe?'spectate-banner':'dead-banner'}">${isMe?'👁 SPECTATING':'💀 FALLEN'}</div>`:''}
+      ${showDeadBanner?`<div class="${isMe?'spectate-banner':'dead-banner'}">${bannerText}</div>`:''}
     `;
     grid.appendChild(div);
   });
@@ -1639,6 +1694,12 @@ function renderTeamArena(data){
     const statusHtml=Object.entries(statuses).filter(([k,v])=>v>0).map(([k,v])=>`<span class="status-badge status-${k}" style="font-size:9px;">${k==='burn'?'🔥':k==='stun'?'⚡':k==='freeze'?'🧊':k==='immune'?'✨':k==='thornwall'?'🌸':'🌿'} ${v}</span>`).join('');
     const isLastStand=(p.alive&&!Object.values(players).find(q=>q.team===p.team&&q.alive&&q.id!==p.id));
     const ultPct=Math.min(100,p.ultimateCharge||0);
+    
+    // AFK detection
+    const isAFK = p.online === false || p.name.includes('[AFK]');
+    const showDeadBanner = !p.alive || isAFK;
+    const bannerText = isAFK ? '🚫 AFK' : (p.id === myId ? '👁' : '💀');
+
     const div=document.createElement('div');
     div.className=`arena-player team-${p.team?.toLowerCase()||'a'}${isMe?' self-card':''}${isTarget?' selected-target':''}${isLastStand&&p.alive?' last-stand':''}`;
     div.innerHTML=`
@@ -1654,7 +1715,7 @@ function renderTeamArena(data){
       <div class="hp-wrap"><div class="hp-bar ${hpClass}" style="width:${hpPct}%;"></div></div>
       <div class="ult-wrap" style="margin-top:4px;"><div class="ult-bar${ultPct>=100?' ult-ready':''}" style="width:${ultPct}%;"></div></div>
       ${statusHtml?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;">${statusHtml}</div>`:''}
-      ${!p.alive?`<div class="${isMe?'spectate-banner':'dead-banner'}">${isMe?'👁':'💀'}</div>`:''}
+      ${showDeadBanner?`<div class="${isMe?'spectate-banner':'dead-banner'}">${bannerText}</div>`:''}
     `;
     return div;
   }
@@ -1925,7 +1986,11 @@ async function resolveRound(data){
       if (!p.statusEffects) p.statusEffects = {};
       if (act.card === 'earth')   p.statusEffects.shield = (p.statusEffects.shield||0) + 25;
       if (act.card === 'barrier') p.statusEffects.immune = (p.statusEffects.immune||0) + 2;
-      if (act.card === 'alchemy') { p.hand = dealCards(cfg.cards||5); logs.push({msg:`⚗️ ${p.name} rerolled hand!`,type:'system'}); }
+      if (act.card === 'alchemy') { 
+        const currentSize = (p.hand || []).length;
+        p.hand = dealCards(currentSize); 
+        logs.push({msg:`⚗️ ${p.name} rerolled hand! (${currentSize} cards)`,type:'system'}); 
+      }
       if (act.card === 'aegis' && isTeam) {
         const teammates = Object.values(players).filter(q => q.team === p.team && q.alive);
         teammates.forEach(tm => {
@@ -2198,7 +2263,17 @@ async function resolveRound(data){
       // Standard element effects
       if(act.card==='thunder'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed stun!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.stun=2;}}
       if(act.card==='fire'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed burn!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.burn=2;}}
-      if(act.card==='wind'&&(finalTarget.hand||[]).length>0){const s=finalTarget.hand.splice(Math.floor(Math.random()*finalTarget.hand.length),1)[0];attacker.hand.push(s);logs.push({msg:`🌪️ ${attacker.name} stole ${getEl(s)?.icon||'?'} from ${finalTarget.name}!`,type:'combo'});}
+      if(act.card==='wind'&&(finalTarget.hand||[]).length>0){
+        const s=finalTarget.hand.splice(Math.floor(Math.random()*finalTarget.hand.length),1)[0];
+        attacker.hand.push(s);
+        logs.push({msg:`🌪️ ${attacker.name} stole ${getEl(s)?.icon||'?'} from ${finalTarget.name}!`,type:'combo'});
+        // Replenish if target cards < 4
+        if(finalTarget.hand.length < 4){
+          finalTarget.hand.push(randCard());
+          finalTarget.hand.push(randCard());
+          logs.push({msg:`🃏 ${finalTarget.name}'s cards were low! System gave 2 bonus cards.`, type:'system'});
+        }
+      }
 
       // ── CURSED FRUIT EFFECTS ──
       if (act.card === 'glacialcurse') {
@@ -2275,11 +2350,14 @@ async function resolveRound(data){
     });
 
     // STEP 8: Ultimate charge + Aura charge (both modes)
+    const ultEnabled = cfg.ultEnabled !== false;
+    const auraEnabled = cfg.auraEnabled !== false;
+
     Object.entries(actions).forEach(([pid, act]) => {
       const p = players[pid]; if(!p||!p.alive) return;
 
       // Ultimate charge (team only, or FFA with role)
-      if (isTeam || p.role) {
+      if (ultEnabled && (isTeam || p.role)) {
         if (act.isBurst || act.card === 'aegis' || act.card==='stormburglar' || act.isTrident) {
           p.ultimateCharge = 0;
         } else {
@@ -2289,11 +2367,13 @@ async function resolveRound(data){
       }
 
       // Aura charge (all modes) — gain 20-35 per round, reset on use
-      if (act.ironAura || act.card === 'farsight' || act.sovereignOn) {
-        p.auraCharge = 0; // used this round
-      } else {
-        const auraGain = 20 + Math.min(15, Math.floor((p.dmgDealt||0)/6));
-        p.auraCharge = Math.min(100, (p.auraCharge||0) + auraGain);
+      if (auraEnabled) {
+        if (act.ironAura || act.card === 'farsight' || act.sovereignOn) {
+          p.auraCharge = 0; // used this round
+        } else {
+          const auraGain = 20 + Math.min(15, Math.floor((p.dmgDealt||0)/6));
+          p.auraCharge = Math.min(100, (p.auraCharge||0) + auraGain);
+        }
       }
     });
 
@@ -2426,6 +2506,11 @@ function renderRevealOverlay(data){
   const actions=data.actions||{};
   const players=data.players||{};
   const isTeam=data.config?.mode==='team';
+  
+  // Mobile-friendly vertical stack for team battle
+  if(isTeam) container.style.flexDirection = 'column';
+  else container.style.flexDirection = 'row';
+
   let delay=0;
 
   function makeCard(pid, act, customCard = null){
