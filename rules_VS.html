@@ -320,6 +320,54 @@ body::before{content:'';position:fixed;inset:0;
   .role-grid-4{grid-template-columns:1fr 1fr;}
   .aura-grid{grid-template-columns:1fr;}
 }
+
+/* 4 New Roles */
+:root{
+  --ironclad:#A8E060;--phantomblade:#F080A8;--stormbringer:#AFA9EC;--soulmender:#5DCAA5;
+}
+.role-card.ironclad{background:linear-gradient(135deg,rgba(168,224,96,0.12),rgba(168,224,96,0.04));border-color:rgba(168,224,96,0.4);}
+.role-card.ironclad:hover{box-shadow:0 8px 32px rgba(168,224,96,0.2);}
+.role-card.phantomblade{background:linear-gradient(135deg,rgba(240,128,168,0.12),rgba(240,128,168,0.04));border-color:rgba(240,128,168,0.4);}
+.role-card.phantomblade:hover{box-shadow:0 8px 32px rgba(240,128,168,0.2);}
+.role-card.stormbringer{background:linear-gradient(135deg,rgba(175,169,236,0.12),rgba(175,169,236,0.04));border-color:rgba(175,169,236,0.4);}
+.role-card.stormbringer:hover{box-shadow:0 8px 32px rgba(175,169,236,0.2);}
+.role-card.soulmender{background:linear-gradient(135deg,rgba(93,202,165,0.12),rgba(93,202,165,0.04));border-color:rgba(93,202,165,0.4);}
+.role-card.soulmender:hover{box-shadow:0 8px 32px rgba(93,202,165,0.2);}
+.role-ult.ironclad-ult{background:rgba(168,224,96,0.08);border:1px solid rgba(168,224,96,0.3);}
+.role-ult.phantomblade-ult{background:rgba(240,128,168,0.08);border:1px solid rgba(240,128,168,0.3);}
+.role-ult.stormbringer-ult{background:rgba(175,169,236,0.08);border:1px solid rgba(175,169,236,0.3);}
+.role-ult.soulmender-ult{background:rgba(93,202,165,0.08);border:1px solid rgba(93,202,165,0.3);}
+
+/* Hero Sprite in rulebook */
+.hero-sprite-wrap{display:flex;justify-content:center;margin:10px 0 6px;}
+.hero-sprite-wrap svg{width:72px;height:72px;filter:drop-shadow(0 4px 12px currentColor);}
+.role-grid-8{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:20px;}
+
+/* Draft Ban section */
+.ban-demo{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;}
+.ban-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(255,50,50,0.12);border:1.5px solid rgba(255,80,80,0.35);font-size:13px;font-weight:700;color:#FF8888;}
+
+/* AI Bot section */
+.bot-diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.bot-diff-card{border-radius:14px;border:1.5px solid;padding:14px;text-align:center;animation:fadeUp 0.5s ease both;}
+.bot-diff-card.easy{background:rgba(68,255,136,0.06);border-color:rgba(68,255,136,0.3);}
+.bot-diff-card.medium{background:rgba(255,215,0,0.06);border-color:rgba(255,215,0,0.3);}
+.bot-diff-card.hard{background:rgba(255,68,68,0.06);border-color:rgba(255,68,68,0.3);}
+.bot-icon{font-size:28px;margin-bottom:6px;}
+.bot-name{font-family:'Cinzel',serif;font-size:12px;font-weight:700;margin-bottom:4px;}
+.bot-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+
+/* Card Preview tooltip illustration */
+.preview-demo{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;}
+.preview-icon-big{font-size:48px;filter:drop-shadow(0 4px 16px rgba(255,100,100,0.4));}
+.preview-stats{display:flex;flex-direction:column;gap:4px;}
+.preview-stat{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.preview-tip{font-size:11px;color:rgba(255,165,0,0.8);margin-top:8px;padding:8px;background:rgba(255,165,0,0.06);border-radius:8px;line-height:1.5;}
+
+@media(max-width:600px){
+  .role-grid-8{grid-template-columns:1fr 1fr;}
+  .bot-diff-grid{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -328,7 +376,7 @@ body::before{content:'';position:fixed;inset:0;
 <div class="page">
   <!-- TOPBAR -->
   <div class="topbar">
-    <a href="elemental-duel-v4.html" class="back-btn">← Back</a>
+    <a href="elemental-duel-v15.html" class="back-btn">← Back</a>
     <div class="topbar-title">📖 RULES & GUIDE</div>
     <div style="width:130px;"></div>
   </div>
@@ -352,7 +400,10 @@ body::before{content:'';position:fixed;inset:0;
       <a href="#status-effects" class="toc-item">💫 Status Effects</a>
       <a href="#aura-system" class="toc-item" style="background:rgba(170,170,238,0.1);border-color:rgba(170,170,238,0.35);color:#AAAAEE;">🌀 Aura System</a>
       <a href="#team-battle" class="toc-item" style="background:rgba(255,165,0,0.1);border-color:rgba(255,165,0,0.35);color:#FFD700;">🛡️ 2v2 Team Battle</a>
-      <a href="#roles" class="toc-item">⚔️ Roles</a>
+      <a href="#roles" class="toc-item">⚔️ Roles (8)</a>
+      <a href="#draft-ban" class="toc-item" style="background:rgba(255,50,50,0.08);border-color:rgba(255,80,80,0.3);color:#FF8888;">🚫 Draft Ban</a>
+      <a href="#ai-bot" class="toc-item" style="background:rgba(100,200,255,0.08);border-color:rgba(100,200,255,0.3);color:#66DDFF;">🤖 AI Bot</a>
+      <a href="#card-preview" class="toc-item">🔍 Card Preview</a>
       <a href="#cover" class="toc-item">🛡️ Cover</a>
       <a href="#ultimate" class="toc-item">⚡ Ultimate</a>
       <a href="#synergy" class="toc-item">💥 Synergy</a>
@@ -380,8 +431,8 @@ body::before{content:'';position:fixed;inset:0;
         <div class="step-num">2</div>
         <div class="step-body">
           <h3>Pilih Role (Opsional di FFA, Wajib di Team)</h3>
-          <p>Di lobby, setiap player bisa memilih dari 4 role unik: 🎩 Straw-Hat, 🌸 Flower-Scholar, ⚔️ 2-Blade Master, atau 🐱 Cat-Burglar. Role mempengaruhi HP dan Ultimate. Di Free For All bersifat opsional; di Team Battle wajib dipilih.</p>
-          <div class="tag">🗡 4 Role tersedia — masing-masing punya Ultimate unik</div>
+          <p>Di lobby, setiap player bisa memilih dari <strong style="color:var(--text)">8 role unik</strong>: 🎩 Straw-Hat, 🌸 Flower-Scholar, ⚔️ 2-Blade Master, 🐱 Cat-Burglar, 🛡️ Iron-Clad, 🗡️ Phantom-Blade, ⛈️ Storm-Bringer, dan 💠 Soul-Mender. Role mempengaruhi HP dan Ultimate. Di Free For All bersifat opsional; di Team Battle wajib dipilih.</p>
+          <div class="tag">🗡 8 Role tersedia — masing-masing punya Ultimate + Passive unik</div>
         </div>
       </div>
       <div class="step" style="animation-delay:0.13s">
@@ -832,12 +883,12 @@ body::before{content:'';position:fixed;inset:0;
     <div class="team-vs">
       <div class="team-block red">
         <div class="team-block-name">🔥 Team Red</div>
-        <div class="team-block-roles">🎩 Straw-Hat (120 HP)<br>🌸 Flower-Scholar (100 HP)<br>⚔️ 2-Blade Master (110 HP)<br>🐱 Cat-Burglar (100 HP)</div>
+        <div class="team-block-roles">🎩 Straw-Hat (120 HP)<br>🌸 Flower-Scholar (100 HP)<br>⚔️ 2-Blade Master (110 HP)<br>🐱 Cat-Burglar (100 HP)<br>🛡️ Iron-Clad (140 HP)<br>🗡️ Phantom-Blade (90 HP)<br>⛈️ Storm-Bringer (100 HP)<br>💠 Soul-Mender (110 HP)</div>
       </div>
       <div class="vs-badge">VS</div>
       <div class="team-block blue">
         <div class="team-block-name">💧 Team Blue</div>
-        <div class="team-block-roles">🎩 Straw-Hat (120 HP)<br>🌸 Flower-Scholar (100 HP)<br>⚔️ 2-Blade Master (110 HP)<br>🐱 Cat-Burglar (100 HP)</div>
+        <div class="team-block-roles">🎩 Straw-Hat (120 HP)<br>🌸 Flower-Scholar (100 HP)<br>⚔️ 2-Blade Master (110 HP)<br>🐱 Cat-Burglar (100 HP)<br>🛡️ Iron-Clad (140 HP)<br>🗡️ Phantom-Blade (90 HP)<br>⛈️ Storm-Bringer (100 HP)<br>💠 Soul-Mender (110 HP)</div>
       </div>
     </div>
 
@@ -862,7 +913,7 @@ body::before{content:'';position:fixed;inset:0;
         <div class="step-num">3</div>
         <div class="step-body">
           <h3>Pilih Role</h3>
-          <p>Setelah join tim, setiap player wajib memilih salah satu dari 4 role: <strong>🎩 Straw-Hat</strong>, <strong>🌸 Flower-Scholar</strong>, <strong>⚔️ 2-Blade Master</strong>, atau <strong>🐱 Cat-Burglar</strong>. Role menentukan HP dan Ultimate. Lihat section Roles di bawah.</p>
+          <p>Setelah join tim, setiap player wajib memilih salah satu dari <strong>8 role unik</strong>: 🎩 Straw-Hat, 🌸 Flower-Scholar, ⚔️ 2-Blade Master, 🐱 Cat-Burglar, 🛡️ Iron-Clad, 🗡️ Phantom-Blade, ⛈️ Storm-Bringer, atau 💠 Soul-Mender. Role menentukan HP dan Ultimate. Lihat section Roles di bawah.</p>
           <div class="tag">⚠️ Host tidak bisa start sebelum semua player punya role</div>
         </div>
       </div>
@@ -888,94 +939,146 @@ body::before{content:'';position:fixed;inset:0;
   <div class="section" id="roles">
     <div class="section-label">
       <div class="icon">⚔️</div>
-      <h2>Roles</h2>
+      <h2>Roles — 8 Heroes</h2>
       <div class="line"></div>
     </div>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:8px;">Setiap player memilih satu role sebelum battle. Role mempengaruhi HP, cara bermain, dan Ultimate. Di <strong style="color:var(--text)">Team Battle</strong> wajib dipilih; di <strong style="color:var(--text)">Free For All</strong> bersifat opsional tapi sangat disarankan.</p>
-    <p style="font-size:13px;color:rgba(255,215,0,0.7);margin-bottom:20px;">💡 Di FFA, memilih role memberikan akses ke Ultimate gauge — tanpa role, kamu tidak punya Ultimate.</p>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:8px;">Setiap player memilih satu role sebelum battle. Role mempengaruhi HP, gaya main, Passive otomatis, dan Ultimate. Di <strong style="color:var(--text)">Team Battle</strong> wajib dipilih; di <strong style="color:var(--text)">Free For All</strong> bersifat opsional tapi sangat disarankan.</p>
+    <p style="font-size:13px;color:rgba(255,215,0,0.7);margin-bottom:20px;">💡 Setiap role punya <strong>Passive</strong> yang aktif otomatis + <strong>Ultimate</strong> saat gauge penuh (100%).</p>
 
-    <div class="role-grid-4">
+    <div class="role-grid-8">
 
       <!-- Straw-Hat -->
       <div class="role-card strawhat" style="animation-delay:0.05s">
+        <div class="hero-sprite-wrap" style="color:var(--strawhat)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><path d="M18 38 Q12 50 14 58 L20 56Z" fill="#CC5522"/><path d="M46 38 Q52 50 50 58 L44 56Z" fill="#CC5522"/><rect x="22" y="30" width="20" height="22" rx="4" fill="#FF8855"/><circle cx="32" cy="38" r="4" fill="#FFAA88" opacity="0.8"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#CC5522"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#CC5522"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><ellipse cx="32" cy="10" rx="16" ry="4" fill="#DEB887"/><ellipse cx="32" cy="10" rx="10" ry="1.5" fill="#FF8855"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
         <div class="role-icon">🎩</div>
         <div class="role-name" style="color:var(--strawhat)">Straw-Hat</div>
-        <div class="role-hp" style="color:var(--strawhat)">❤️ 120 HP</div>
+        <div class="role-hp" style="color:var(--strawhat)">❤️ 120 HP (+20)</div>
         <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Damage Dealer</span></div>
-        <div class="role-stat"><span class="role-stat-label">Cover</span><span class="role-stat-val" style="color:var(--muted)">❌ Tidak bisa</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val" style="color:var(--muted)">—</span></div>
         <div class="role-ult strawhat-ult">
           <strong>💥 PRIMORDIAL AWAKENING</strong>
-          Pilih kartu apapun → semua efek ×2 (damage, heal, burn, dll). Meteor jadi 80 dmg ke semua musuh!
+          Semua efek kartu yang dimainkan ×2 (damage, heal, burn, dll). Meteor jadi 80 dmg ke semua musuh!
         </div>
       </div>
 
       <!-- Flower-Scholar -->
       <div class="role-card flowerscholar" style="animation-delay:0.08s">
+        <div class="hero-sprite-wrap" style="color:var(--flowerscholar)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><path d="M20 40 Q16 52 18 60 L28 58 L32 52 L36 58 L46 60 Q48 52 44 40Z" fill="#2299CC"/><rect x="21" y="26" width="22" height="18" rx="5" fill="#66DDFF" opacity="0.92"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#2299CC"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#2299CC"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><circle cx="32" cy="5" r="3.5" fill="#99EEFF"/><circle cx="25" cy="9" r="2.5" fill="#99EEFF" opacity="0.8"/><circle cx="39" cy="9" r="2.5" fill="#99EEFF" opacity="0.8"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
         <div class="role-icon">🌸</div>
         <div class="role-name" style="color:var(--flowerscholar)">Flower-Scholar</div>
-        <div class="role-hp" style="color:var(--flowerscholar)">❤️ 100 HP</div>
+        <div class="role-hp" style="color:var(--flowerscholar)">❤️ 100 HP (+0)</div>
         <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Support / Tank</span></div>
-        <div class="role-stat"><span class="role-stat-label">Cover</span><span class="role-stat-val" style="color:#44FF88">✅ Bisa setiap ronde</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val">🛡️ Cover teammate</span></div>
         <div class="role-ult flowerscholar-ult">
           <strong>🌸 THORNWALL BLOOM</strong>
-          Seluruh tim Immune 1 ronde + heal 20 HP masing-masing + counter-attack 20 dmg ke setiap penyerang!
+          Seluruh tim Immune 1 ronde + heal 20 HP + counter 20 dmg ke setiap penyerang!
         </div>
       </div>
 
       <!-- 2-Blade Master -->
       <div class="role-card blademaster" style="animation-delay:0.11s">
+        <div class="hero-sprite-wrap" style="color:var(--blademaster)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><rect x="20" y="28" width="24" height="22" rx="5" fill="#FFD700"/><rect x="24" y="30" width="16" height="16" rx="3" fill="#AA8800" opacity="0.8"/><rect x="13" y="29" width="9" height="13" rx="3" fill="#AA8800"/><rect x="42" y="29" width="9" height="13" rx="3" fill="#AA8800"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#AA8800"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#AA8800"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><rect x="21" y="13" width="22" height="5" rx="2" fill="#FFD700" opacity="0.85"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
         <div class="role-icon">⚔️</div>
         <div class="role-name" style="color:var(--blademaster)">2-Blade Master</div>
-        <div class="role-hp" style="color:var(--blademaster)">❤️ 110 HP</div>
+        <div class="role-hp" style="color:var(--blademaster)">❤️ 110 HP (+10)</div>
         <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Double Striker</span></div>
-        <div class="role-stat"><span class="role-stat-label">Cover</span><span class="role-stat-val" style="color:var(--muted)">❌ Tidak bisa</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val" style="color:var(--muted)">—</span></div>
         <div class="role-ult blademaster-ult">
           <strong>⚔️ TRIDENT STORM</strong>
-          Mainkan 2 kartu berbeda sekaligus dalam satu ronde! Tidak ada synergy bonus. Setelah itu dapat 2 kartu pengganti agar tangan tidak habis.
+          Mainkan 2 kartu berbeda sekaligus dalam satu ronde! +2 kartu pengganti otomatis.
         </div>
       </div>
 
       <!-- Cat-Burglar -->
       <div class="role-card catburglar" style="animation-delay:0.14s">
+        <div class="hero-sprite-wrap" style="color:var(--catburglar)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><rect x="21" y="26" width="22" height="24" rx="6" fill="#00FF88" opacity="0.88"/><rect x="13" y="27" width="8" height="14" rx="4" fill="#00FF88" opacity="0.9"/><rect x="43" y="27" width="8" height="14" rx="4" fill="#00FF88" opacity="0.9"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#009944"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#009944"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><polygon points="20,8 24,2 28,9" fill="#00FF88"/><polygon points="36,9 40,2 44,8" fill="#00FF88"/><rect x="22" y="10" width="20" height="7" rx="3.5" fill="rgba(0,0,0,0.4)"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
         <div class="role-icon">🐱</div>
         <div class="role-name" style="color:var(--catburglar)">Cat-Burglar</div>
-        <div class="role-hp" style="color:var(--catburglar)">❤️ 100 HP</div>
+        <div class="role-hp" style="color:var(--catburglar)">❤️ 100 HP (+0)</div>
         <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Dispel + AOE</span></div>
-        <div class="role-stat"><span class="role-stat-label">Cover</span><span class="role-stat-val" style="color:var(--muted)">❌ Tidak bisa</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val" style="color:var(--muted)">—</span></div>
         <div class="role-ult catburglar-ult">
           <strong>⚡ STORMWEAVER'S WRATH</strong>
-          Hapus SEMUA buff (shield, immune, thornwall) dari seluruh musuh + 15 thunder dmg ke semua + stun 1 ronde. Submit otomatis tanpa pilih kartu.
+          Hapus SEMUA buff dari seluruh musuh + 15 thunder dmg ke semua + stun 1 ronde.
         </div>
       </div>
 
-    </div>
-
-    <!-- Trident Storm detail box -->
-    <div style="background:rgba(255,215,0,0.06);border:1.5px solid rgba(255,215,0,0.25);border-radius:16px;padding:18px;margin-bottom:16px;">
-      <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">⚔️ Cara Pakai Trident Storm (2-Blade Master)</div>
-      <div class="steps" style="gap:0;">
-        <div class="step" style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <div class="step-num" style="width:28px;height:28px;font-size:12px;">1</div>
-          <div class="step-body"><p style="font-size:13px;">Tekan tombol <strong>Ultimate</strong> saat gauge 100%</p></div>
-        </div>
-        <div class="step" style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <div class="step-num" style="width:28px;height:28px;font-size:12px;">2</div>
-          <div class="step-body"><p style="font-size:13px;">Pilih <strong>kartu pertama</strong> dari tangan — status bar menunjukkan "Card 1 of 2"</p></div>
-        </div>
-        <div class="step" style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <div class="step-num" style="width:28px;height:28px;font-size:12px;">3</div>
-          <div class="step-body"><p style="font-size:13px;">Pilih <strong>kartu kedua</strong> yang berbeda — harus kartu yang berbeda dari kartu pertama</p></div>
-        </div>
-        <div class="step" style="padding:10px 0;">
-          <div class="step-num" style="width:28px;height:28px;font-size:12px;">4</div>
-          <div class="step-body"><p style="font-size:13px;">Tekan <strong>Confirm</strong> → kedua kartu menyerang serentak. Setelahnya <strong>+2 kartu pengganti</strong> otomatis masuk ke tangan!</p></div>
+      <!-- Iron-Clad -->
+      <div class="role-card ironclad" style="animation-delay:0.17s">
+        <div class="hero-sprite-wrap" style="color:var(--ironclad)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><rect x="18" y="28" width="28" height="24" rx="4" fill="#5A9020"/><rect x="20" y="30" width="24" height="20" rx="3" fill="#A8E060" opacity="0.85"/><rect x="8" y="28" width="12" height="18" rx="5" fill="#A8E060" opacity="0.85"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#5A9020"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#5A9020"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><rect x="19" y="11" width="26" height="8" rx="3" fill="#A8E060" opacity="0.9"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
+        <div class="role-icon">🛡️</div>
+        <div class="role-name" style="color:var(--ironclad)">Iron-Clad</div>
+        <div class="role-hp" style="color:var(--ironclad)">❤️ 140 HP (+40)</div>
+        <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Tank / Reflect</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val">—</span></div>
+        <div class="role-ult ironclad-ult">
+          <strong>🔩 IRON FORTRESS</strong>
+          Blok 100% semua damage 1 ronde + pantulan 50% dari setiap serangan masuk ke penyerang!
         </div>
       </div>
-      <div style="margin-top:10px;font-size:12px;color:rgba(255,215,0,0.6);">⚠️ Tidak ada synergy bonus saat Trident Storm — kedua kartu diprosess secara independen.</div>
+
+      <!-- Phantom-Blade -->
+      <div class="role-card phantomblade" style="animation-delay:0.2s">
+        <div class="hero-sprite-wrap" style="color:var(--phantomblade)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><rect x="22" y="27" width="20" height="23" rx="6" fill="#F080A8" opacity="0.85"/><rect x="14" y="28" width="8" height="13" rx="4" fill="#F080A8" opacity="0.9"/><rect x="44" y="28" width="8" height="13" rx="4" fill="#F080A8" opacity="0.9"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#A04070"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#A04070"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><rect x="22" y="10" width="20" height="8" rx="4" fill="rgba(0,0,0,0.4)"/><circle cx="27" cy="14" r="3" fill="none" stroke="#FFB8D0" stroke-width="1.2"/><circle cx="37" cy="14" r="3" fill="none" stroke="#FFB8D0" stroke-width="1.2"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
+        <div class="role-icon">🗡️</div>
+        <div class="role-name" style="color:var(--phantomblade)">Phantom-Blade</div>
+        <div class="role-hp" style="color:var(--phantomblade)">❤️ 90 HP (−10)</div>
+        <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Burst Assassin</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val">+5 dmg jika target HP &gt; milikmu</span></div>
+        <div class="role-ult phantomblade-ult">
+          <strong>👻 ECLIPSE STRIKE</strong>
+          Deal 2× damage kartu terkuat di tangan ke target, lalu <em>vanish</em> (immune 1 ronde) — tidak bisa diserang!
+        </div>
+      </div>
+
+      <!-- Storm-Bringer -->
+      <div class="role-card stormbringer" style="animation-delay:0.23s">
+        <div class="hero-sprite-wrap" style="color:var(--stormbringer)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><path d="M20 42 Q14 56 16 62 L24 59Z" fill="#6055BB" opacity="0.8"/><path d="M44 42 Q50 56 48 62 L40 59Z" fill="#6055BB" opacity="0.8"/><rect x="22" y="27" width="20" height="20" rx="5" fill="#AFA9EC" opacity="0.9"/><circle cx="32" cy="37" r="6" fill="#6055BB" opacity="0.7"/><circle cx="32" cy="37" r="3.5" fill="#D8D5F8" opacity="0.9"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#6055BB"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#6055BB"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><circle cx="32" cy="2" r="3.5" fill="#D8D5F8"/><circle cx="25" cy="7" r="2" fill="#D8D5F8" opacity="0.8"/><circle cx="39" cy="7" r="2" fill="#D8D5F8" opacity="0.8"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
+        <div class="role-icon">⛈️</div>
+        <div class="role-name" style="color:var(--stormbringer)">Storm-Bringer</div>
+        <div class="role-hp" style="color:var(--stormbringer)">❤️ 100 HP (+0)</div>
+        <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">AOE Chain Mage</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val">+10 Aura charge/ronde</span></div>
+        <div class="role-ult stormbringer-ult">
+          <strong>🌩️ ELEMENTAL CHAIN</strong>
+          Efek kartu menyebar ke SEMUA musuh — 100% ke target utama, 50% ke sisanya. Burn, stun, freeze, steal semua chain!
+        </div>
+      </div>
+
+      <!-- Soul-Mender -->
+      <div class="role-card soulmender" style="animation-delay:0.26s">
+        <div class="hero-sprite-wrap" style="color:var(--soulmender)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72">
+      <ellipse cx="32" cy="61" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/><path d="M20 38 Q14 52 16 60 L24 57Z" fill="#2A8065" opacity="0.8"/><path d="M44 38 Q50 52 48 60 L40 57Z" fill="#2A8065" opacity="0.8"/><rect x="22" y="26" width="20" height="20" rx="5" fill="#5DCAA5" opacity="0.88"/><path d="M28 34 Q32 28 36 34 Q38 38 32 42 Q26 38 28 34Z" fill="white" opacity="0.4"/><rect x="22" y="49" width="9" height="12" rx="3" fill="#2A8065"/><rect x="34" y="49" width="9" height="12" rx="3" fill="#2A8065"/><circle cx="17" cy="42" r="4" fill="#F5CBA7"/><circle cx="47" cy="42" r="4" fill="#F5CBA7"/><rect x="28" y="21" width="8" height="7" rx="3" fill="#F5CBA7"/><ellipse cx="32" cy="16" rx="11" ry="12" fill="#F5CBA7"/><path d="M22 11 Q26 5 32 4 Q38 5 42 11" fill="white" opacity="0.3"/><circle cx="32" cy="4" r="3" fill="#99E0CC" opacity="0.8"/><ellipse cx="28" cy="15" rx="2.5" ry="2.5" fill="#222"/><ellipse cx="36" cy="15" rx="2.5" ry="2.5" fill="#222"/><circle cx="29" cy="14" r="0.8" fill="#fff"/><circle cx="37" cy="14" r="0.8" fill="#fff"/>
+    </svg></div>
+        <div class="role-icon">💠</div>
+        <div class="role-name" style="color:var(--soulmender)">Soul-Mender</div>
+        <div class="role-hp" style="color:var(--soulmender)">❤️ 110 HP (+10)</div>
+        <div class="role-stat"><span class="role-stat-label">Gaya Main</span><span class="role-stat-val">Battle Medic</span></div>
+        <div class="role-stat"><span class="role-stat-label">Passive</span><span class="role-stat-val">+5 HP setiap ada yang pakai Water</span></div>
+        <div class="role-ult soulmender-ult">
+          <strong>✨ LAST RITES</strong>
+          Pulihkan ally ke 50% maxHP (bisa revive dari mati!) + transfer 20 HP dari dirimu ke target.
+        </div>
+      </div>
+
     </div>
 
     <div style="background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.2);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.7;">
-      💡 <strong style="color:var(--text)">Tips Pemilihan Role:</strong> Untuk komposisi tim yang solid, kombinasikan Straw-Hat (damage) + Flower-Scholar (support). Atau 2-Blade Master untuk presser + Cat-Burglar untuk counter saat musuh full buff. Di FFA, Straw-Hat dan 2-Blade Master adalah pilihan agresif; Cat-Burglar dan Flower-Scholar lebih utilitas.
+      💡 <strong style="color:var(--text)">Tips Pemilihan Role:</strong> Iron-Clad + Soul-Mender = duo hampir tidak bisa mati. Phantom-Blade + Storm-Bringer = burst kill dalam 1 ronde (stun chain → Eclipse Strike). Straw-Hat + Flower-Scholar = klasik damage + support. Cat-Burglar counter semua hero yang stack buff.
     </div>
   </div>
 
@@ -1066,7 +1169,7 @@ body::before{content:'';position:fixed;inset:0;
       </div>
     </div>
 
-    <!-- 4 ultimate cards -->
+    <!-- 8 ultimate cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:8px;">
       <div style="background:rgba(255,69,0,0.08);border:1.5px solid rgba(255,69,0,0.3);border-radius:16px;padding:16px;">
         <div style="font-size:26px;margin-bottom:6px;">💥</div>
@@ -1091,6 +1194,31 @@ body::before{content:'';position:fixed;inset:0;
         <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--catburglar);margin-bottom:4px;">Stormweaver's Wrath</div>
         <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);margin-bottom:8px;">🐱 CAT-BURGLAR ONLY</div>
         <div style="font-size:12px;color:var(--muted);line-height:1.6;">Hapus semua buff musuh + <strong style="color:var(--text)">15 AOE dmg + stun 1 ronde</strong>. Submit otomatis — langsung aktif tanpa pilih kartu.</div>
+      </div>
+      <!-- Added 4 New Ultimates -->
+      <div style="background:rgba(168,224,96,0.08);border:1.5px solid rgba(168,224,96,0.3);border-radius:16px;padding:16px;">
+        <div style="font-size:26px;margin-bottom:6px;">🔩</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--ironclad);margin-bottom:4px;">Iron Fortress</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);margin-bottom:8px;">🛡️ IRON-CLAD ONLY</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">Blok <strong style="color:var(--text)">100% semua damage</strong> 1 ronde + <strong style="color:var(--text)">pantulan 50%</strong> dari setiap serangan masuk ke penyerang!</div>
+      </div>
+      <div style="background:rgba(240,128,168,0.08);border:1.5px solid rgba(240,128,168,0.3);border-radius:16px;padding:16px;">
+        <div style="font-size:26px;margin-bottom:6px;">👻</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--phantomblade);margin-bottom:4px;">Eclipse Strike</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);margin-bottom:8px;">🗡️ PHANTOM-BLADE ONLY</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">Deal <strong style="color:var(--text)">2× damage</strong> kartu terkuat di tangan ke target, lalu <strong style="color:var(--text)">vanish (immune 1 ronde)</strong> — tidak bisa diserang!</div>
+      </div>
+      <div style="background:rgba(175,169,236,0.08);border:1.5px solid rgba(175,169,236,0.3);border-radius:16px;padding:16px;">
+        <div style="font-size:26px;margin-bottom:6px;">🌩️</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--stormbringer);margin-bottom:4px;">Elemental Chain</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);margin-bottom:8px;">⛈️ STORM-BRINGER ONLY</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">Efek kartu <strong style="color:var(--text)">menyebar ke SEMUA musuh</strong> — 100% ke target utama, 50% ke sisanya. Burn, stun, freeze, steal semua chain!</div>
+      </div>
+      <div style="background:rgba(93,202,165,0.08);border:1.5px solid rgba(93,202,165,0.3);border-radius:16px;padding:16px;">
+        <div style="font-size:26px;margin-bottom:6px;">✨</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--soulmender);margin-bottom:4px;">Last Rites</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);margin-bottom:8px;">💠 SOUL-MENDER ONLY</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">Pulihkan ally ke <strong style="color:var(--text)">50% maxHP</strong> (bisa revive dari mati!) + <strong style="color:var(--text)">transfer 20 HP</strong> dari dirimu ke target.</div>
       </div>
     </div>
   </div>
@@ -1240,6 +1368,130 @@ body::before{content:'';position:fixed;inset:0;
     </div>
   </div>
 
+
+  <!-- SECTION: Draft Ban Phase -->
+  <div class="section" id="draft-ban">
+    <div class="section-label">
+      <div class="icon">🚫</div>
+      <h2>Draft Ban Phase</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Fitur opsional khusus <strong style="color:var(--text)">Team Battle</strong>. Sebelum battle dimulai, setiap pemain bergiliran <strong style="color:var(--text)">memilih elemen yang dilarang</strong> sepanjang pertandingan. Elemen yang di-ban tidak akan muncul di tangan siapapun.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">🚫</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;margin-bottom:4px;">No Ban</div>
+        <div style="font-size:11px;color:var(--muted);">Langsung battle tanpa fase ban</div>
+      </div>
+      <div style="background:rgba(255,80,80,0.08);border:1.5px solid rgba(255,80,80,0.3);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">👑</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;margin-bottom:4px;color:#FF8888;">1 Ban</div>
+        <div style="font-size:11px;color:var(--muted);">Kapten tiap tim ban 1 elemen (2 total)</div>
+      </div>
+      <div style="background:rgba(255,80,80,0.08);border:1.5px solid rgba(255,80,80,0.3);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">👥</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;margin-bottom:4px;color:#FF8888;">2 Bans</div>
+        <div style="font-size:11px;color:var(--muted);">Semua anggota ban, urutan A→B→A→B</div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">CONTOH BAN PHASE</div>
+      <div class="ban-demo">
+        <div class="ban-pill">🔥 Fire — by Red Team</div>
+        <div class="ban-pill">⚡ Thunder — by Blue Team</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;">Setelah ban, elemen Fire dan Thunder tidak akan muncul di tangan siapapun sepanjang battle. Semua Rare dan Cursed Fruit juga bisa di-ban!</div>
+    </div>
+
+    <div class="tips-list">
+      <div class="tip">
+        <div class="tip-icon">💡</div>
+        <div class="tip-text"><strong>Ban kartu counter hero musuh.</strong> Musuh pakai Iron-Clad? Ban Fire (burn bypass shield). Musuh pakai Soul-Mender? Ban Water (block passive heal).</div>
+      </div>
+      <div class="tip">
+        <div class="tip-icon">🍑</div>
+        <div class="tip-text"><strong>Cursed Fruit bisa di-ban!</strong> Tremor Tyrant (AOE+stun) dan Sanctum (HP Swap) adalah target ban tinggi di meta kompetitif.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: AI Bot -->
+  <div class="section" id="ai-bot">
+    <div class="section-label">
+      <div class="icon">🤖</div>
+      <h2>AI Bot — Solo Practice</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Host bisa menambahkan AI Bot ke room saat pemain kurang dari minimum. Bot tersedia di mode <strong style="color:var(--text)">FFA</strong> dan <strong style="color:var(--text)">Team Battle</strong>. Maksimal 3 bot total, maksimal 2 bot per tim.</p>
+
+    <div class="bot-diff-grid" style="margin-bottom:20px;">
+      <div class="bot-diff-card easy" style="animation-delay:0.05s">
+        <div class="bot-icon">🤖</div>
+        <div class="bot-name" style="color:#44FF88;">🟢 Easy</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:#44FF88;margin-bottom:6px;">Rookie-Bot</div>
+        <div class="bot-desc">Pilih kartu dan target secara <strong>acak</strong> setiap ronde. Sangat mudah dikalahkan, cocok untuk belajar mekanik dasar.</div>
+      </div>
+      <div class="bot-diff-card medium" style="animation-delay:0.1s">
+        <div class="bot-icon">🤖</div>
+        <div class="bot-name" style="color:#FFD700;">🟡 Medium</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:#FFD700;margin-bottom:6px;">Tactician-X</div>
+        <div class="bot-desc">Punya <strong>4 prioritas</strong>: heal jika HP &lt;30%, Shadow jika musuh debuffed, kartu damage tertinggi, serang musuh HP terendah.</div>
+      </div>
+      <div class="bot-diff-card hard" style="animation-delay:0.15s">
+        <div class="bot-icon">🤖</div>
+        <div class="bot-name" style="color:#FF8888;">🔴 Hard</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:#FF8888;margin-bottom:6px;">TERMINUS</div>
+        <div class="bot-desc"><strong>6 lapis AI</strong>: killing blow, heal kritis, counter shield, crowd control, debuff combo (Shadow), AOE timing (Meteor saat 2+ musuh).</div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.8;">
+      <strong style="color:var(--text);">Cara menambah Bot:</strong> Di lobby (host only), scroll ke bawah setelah pemilihan role → section <em>"🤖 ADD AI BOT"</em>. Pilih difficulty, lalu klik <em>"+ Bot"</em> (FFA) atau <em>"+ Bot → 🔥 Red / 💧 Blue"</em> (Team). Bot terhitung sebagai pemain penuh dan muncul di bracket skor akhir.
+    </div>
+  </div>
+
+  <!-- SECTION: Card Preview -->
+  <div class="section" id="card-preview">
+    <div class="section-label">
+      <div class="icon">🔍</div>
+      <h2>Card Preview Tooltip</h2>
+      <div class="line"></div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Saat memilih kartu di tangan, hover (PC) atau tahan 300ms (mobile) untuk melihat detail lengkap kartu — damage, efek, advantage chart, dan tips strategi terbaik.</p>
+
+    <div class="preview-demo" style="margin-bottom:16px;">
+      <div class="preview-icon-big">🔥</div>
+      <div class="preview-stats">
+        <div style="font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--fire);margin-bottom:6px;">Fire</div>
+        <div class="preview-stat"><span style="color:var(--muted);">⚔️ Damage</span><span style="color:#FF8888;font-weight:700;">25 HP</span></div>
+        <div class="preview-stat"><span style="color:var(--muted);">✦ Effect</span><span style="font-weight:700;">🔥 Burn × 2 rounds</span></div>
+        <div class="preview-stat"><span style="color:var(--muted);">Beats →</span><span style="color:#44FF88;font-weight:700;">🌪️ Wind</span></div>
+        <div class="preview-stat"><span style="color:var(--muted);">Loses to →</span><span style="color:#FF8888;font-weight:700;">💧 Water</span></div>
+        <div class="preview-tip">💡 Best against Earth & Wind users. Combo with Shadow for double-burn damage.</div>
+      </div>
+    </div>
+
+    <div class="mechanic-grid">
+      <div class="mechanic-card">
+        <div class="mechanic-icon">🖥️</div>
+        <div class="mechanic-title">Desktop</div>
+        <div class="mechanic-desc">Arahkan mouse ke kartu → tooltip muncul otomatis. Pindahkan mouse keluar → tooltip hilang setelah 120ms.</div>
+      </div>
+      <div class="mechanic-card">
+        <div class="mechanic-icon">📱</div>
+        <div class="mechanic-title">Mobile</div>
+        <div class="mechanic-desc">Tahan kartu 300ms → preview muncul dan hilang otomatis setelah 2 detik. Tap biasa tetap memilih kartu.</div>
+      </div>
+      <div class="mechanic-card">
+        <div class="mechanic-icon">⚡</div>
+        <div class="mechanic-title">Element Advantage</div>
+        <div class="mechanic-desc">Tooltip menampilkan mini-chart: elemen mana yang dikalahkan (hijau) dan elemen mana yang mengalahkan kartu ini (merah).</div>
+      </div>
+    </div>
+  </div>
+
   <!-- BACK TO TOP -->
   <div class="back-top">
     <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ Back to Top</a>
@@ -1277,7 +1529,7 @@ loop();
 const observer = new IntersectionObserver(entries=>{
   entries.forEach(e=>{ if(e.isIntersecting) e.target.style.animationPlayState='running'; });
 },{threshold:0.1});
-document.querySelectorAll('.el-card,.rare-card,.mechanic-card,.status-card,.tip,.step,.lb-row,.synergy-row,.resolve-step,.role-card,.win-card,.aura-card').forEach(el=>{
+document.querySelectorAll('.el-card,.rare-card,.mechanic-card,.status-card,.tip,.step,.lb-row,.synergy-row,.resolve-step,.role-card,.win-card,.aura-card,.bot-diff-card').forEach(el=>{
   el.style.animationPlayState='paused'; observer.observe(el);
 });
 </script>
