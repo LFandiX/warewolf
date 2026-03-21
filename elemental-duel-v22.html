@@ -2347,7 +2347,7 @@ async function renderProfileHistory() {
     // Sort by ts descending (newest first), show last 5
     items.sort((a,b) => (b.ts||0) - (a.ts||0));
     const recent = items.slice(0, 5);
-    listEl.innerHTML = recent.map((m, i) => {
+    listEl.innerHTML = items.map((m, i) => {
       const win = m.result === 'win';
       const date = m.ts ? new Date(m.ts).toLocaleDateString('id-ID', {day:'2-digit', month:'short'}) : '?';
       const modeLabel = m.mode === 'team' ? '🛡 Team Duel' : '⚔️ Free For All';
